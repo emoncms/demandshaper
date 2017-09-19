@@ -15,6 +15,7 @@ Developed as part of the CydYnni EnergyLocal project, see:
 - Emoncms device-support branch
 - Device module device-integration branch
 - MQTT Mosquitto broker and MQTT emoncms setup as per emonSD image
+- Redis
 
 ## Installation 
 
@@ -31,4 +32,12 @@ Copy smartplug device template to device module:
 
     cp demandshaper/demandshaper-module/smartplug.json /var/www/emoncms/Modules/device/data/smartplug.json
 
+## Run
 
+The demand shaper background process is called run.php. It can be ran manually with:
+
+    php run.php
+    
+The demand shaper process publishes the device state to an MQTT topic of the form:
+
+    emon/devicename/state
