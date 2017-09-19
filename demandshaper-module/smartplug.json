@@ -1,0 +1,40 @@
+{
+	"name": "smartplug",
+	"category": "OpenEnergyMonitor",
+	"group": "smartplug",
+    "description": "smartplug",
+    "inputs": [
+        {
+            "name": "period",
+            "description": "period",
+            "processList": []
+        },
+        {
+            "name": "end",
+            "description": "end",
+            "processList": []
+        },
+        {
+            "name": "interruptible",
+            "description": "interruptible",
+            "processList": []
+        },
+        {
+            "name": "status",
+            "description": "status",
+            "processList": []
+        }
+    ],
+
+    "feeds": [],
+    
+    "control": 
+    {
+        "period": {"name":"Run period", "type":"time","default":0,"resolution":0.5},
+        "end": {"name":"Complete by", "type":"time","default":0,"resolution":0.5},
+        "repeat": {"type":"weekly-scheduler","default":[1,1,1,1,1,0,0]},
+        "interruptible": {"type":"checkbox","default":0},
+        "runonce": {"type":"","default":true},
+        "basic": {"type":"","default":0}
+    }
+}
