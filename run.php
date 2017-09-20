@@ -109,13 +109,13 @@ while(true)
                         print "remove $laststatus[$device]\n";
                         unset($schedule->periods[$laststatus[$device]]);
                         if (count($schedule->periods)==0) {
-                            $schedules = array();
+                            $schedules = new stdClass();
                             
                             $r = schedule($schedule);
                             $schedule->periods = $r["periods"];
                             $schedule->probability = $r["probability"];
-                        
-                            $schedules[] = $schedule;
+                            
+                            $schedules->$device = $schedule;
                             $redis->set("schedules",json_encode($schedules));
                         }
                     }
