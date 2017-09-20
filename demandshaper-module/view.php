@@ -89,7 +89,7 @@ var device_type = false;
 
 $.ajax({ url: path+"device/list.json", dataType: 'json', async: false, success: function(devicelist) { 
    for (var z in devicelist) {
-       if (devicelist[z].name==device) device_type = devicelist[z].type;
+       if (devicelist[z].nodeid==device) device_type = devicelist[z].type;
    }
 }});
 
