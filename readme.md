@@ -19,24 +19,29 @@ Developed as part of the CydYnni EnergyLocal project, see:
 
 ## Installation 
 
-Download or git clone the demandscheduler repository to your home folder:
+Download or git clone the demandshaper repository to your home folder:
 
     cd
-    git clone https://github.com/emoncms/demandscheduler.git
+    git clone https://github.com/emoncms/demandshaper.git
     
-Link the 'demandscheduler-module' into the emoncms Modules folder:
+Link the 'demandshaper-module' into the emoncms Modules folder:
 
-    ln -s /home/pi/demandscheduler/demandscheduler-module /var/www/emoncms/Modules/demandscheduler
+    ln -s /home/pi/demandshaper/demandshaper-module /var/www/emoncms/Modules/demandshaper
     
 Copy smartplug device template to device module:
 
-    cp demandshaper/demandshaper-module/smartplug.json /var/www/emoncms/Modules/device/data/smartplug.json
+    cp /home/pi/demandshaper/demandshaper-module/smartplug.json /var/www/emoncms/Modules/device/data/smartplug.json
 
 ## Run
 
 The demand shaper background process is called run.php. It can be ran manually with:
 
     php run.php
+
+Or from cron with:
+
+    crontab -e
+    * * * * * php /home/pi/demandshaper/run.php 2>&1
     
 The demand shaper process publishes the device state to an MQTT topic of the form:
 
