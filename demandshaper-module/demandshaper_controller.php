@@ -57,7 +57,7 @@ function demandshaper_controller()
                     $device = $schedule->device;
                     
                     $schedules = json_decode($redis->get("schedules"));
-                    if (!$schedules) $schedules = new stdClass();
+                    if (!$schedules || !is_object($schedules)) $schedules = new stdClass();
                     $schedules->$device = $schedule;
                     $redis->set("schedules",json_encode($schedules));
                     
