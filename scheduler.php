@@ -53,7 +53,7 @@ function schedule($schedule)
                          0.63,0.64,0.65,0.65,0.7,0.7,0.7,0.7,0.5,0.5,0.4,0.4,0.3,0.3,0.15,0.15,0.1,0.1,0.3,0.3,0.5,0.5,0.6,0.6);
     
 
-    /*
+    
     // -----------------------------------------------------------------------------
     // Fetch demand shaper
     // -----------------------------------------------------------------------------
@@ -71,8 +71,8 @@ function schedule($schedule)
         if ($probability[$i]<$min) $min = $probability[$i];
     }
     $max = $max += -1*$min;
-    for ($i=0; $i<$len; $i++) $probability[$i] = ($probability[$i] + -1*$min) / $max;
-    */
+    for ($i=0; $i<$len; $i++) $probability[$i] = 1.0 - (($probability[$i] + -1*$min) / $max);
+    
     
     // transpose include keys
     $tmp = array();               
