@@ -111,7 +111,7 @@ while(true)
                         if (count($schedule->periods)==0) {
                             $schedules = new stdClass();
                             
-                            $r = schedule($schedule);
+                            $r = schedule($redis,$schedule);
                             $schedule->periods = $r["periods"];
                             $schedule->probability = $r["probability"];
                             

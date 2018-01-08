@@ -49,7 +49,7 @@ function demandshaper_controller()
                     
                     if ($schedule->runonce) $schedule->runonce = time();
                     
-                    $result = schedule($schedule);
+                    $result = schedule($redis,$schedule);
                     
                     $schedule->periods = $result["periods"];
                     $schedule->probability = $result["probability"];
@@ -75,7 +75,16 @@ function demandshaper_controller()
                     $schedules = json_decode($redis->get("schedules"));
                     $device = $_GET['device'];
                     if (isset($schedules->$device)) $schedule = $schedules->$device;
-                    else $schedule = array();
+                    else {
+                        // Calculate an empty schedule to show in graph view
+                        include "$homedir/demandshaper/scheduler.php";
+                        $schedule = new stdClass();
+                        $schedule->end = 0;
+                        $schedule->period = 0;
+                        $schedule->interruptible = 0;
+                        $schedule->runonce = 0;
+                        $schedule = schedule($redis,$schedule);
+                    }
                     $result = array("schedule"=>$schedule);
                 }
             }

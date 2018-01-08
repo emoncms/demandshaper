@@ -311,8 +311,38 @@ function draw_schedule_output(result)
         }
 
         $.plot($('#placeholder'), [{data:available,color:"#ff0000"},{data:unavailable,color:"#888"}], options);
-    }
+        
+    // else if schedule probability fn not defined use blank for indicative use
+    } else if (result.probability!=undefined) {
+        var probability = result.probability;
 
+        console.log(probability);
+        //var hh = 0;
+        //for (var z in probability) {
+        //    if (1*probability[z][2]==schedule.end) hh = z;
+        //}
+
+        var markings = [];
+        // { color: "#000", lineWidth: 2, xaxis: { from: probability[hh][0], to: probability[hh][0] } },
+        //if (hh>0) markings.push({ color: "rgba(0,0,0,0.1)", xaxis: { from: probability[hh][0] } });
+
+
+        options = {
+            bars: { show: true, barWidth:1800*1000*0.75 },// align: 'center'
+            xaxis: { mode: "time", timezone: "browser" },
+            yaxis: { min: 0 },
+            grid: {hoverable: true, clickable: true, markings: markings},
+            selection: { mode: "x" },
+            touch: { pan: "x", scale: "x" }
+        }
+
+        unavailable = [];
+        for (var z in probability) {
+            unavailable.push([probability[z][0],probability[z][1]]);
+        }
+
+        $.plot($('#placeholder'), [{data:unavailable,color:"#888"}], options);
+    }
 }
 
 function resize()

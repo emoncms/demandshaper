@@ -12,7 +12,7 @@ http://openenergymonitor.org
 
 */
 
-function schedule($schedule)
+function schedule($redis,$schedule)
 {   
     $debug = 0;
     
@@ -58,7 +58,7 @@ function schedule($schedule)
     // Fetch demand shaper
     // -----------------------------------------------------------------------------
 
-    $result = json_decode(file_get_contents("https://cydynni.org.uk/demandshaper"));
+    $result = json_decode($redis->get("demandshaper"));
     $probability = $result->DATA[0];
     array_shift($probability);
 
