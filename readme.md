@@ -30,8 +30,7 @@ Link the 'demandshaper-module' into the emoncms Modules folder:
     
 Copy smartplug device template to device module:
 
-    cp /home/pi/demandshaper/demandshaper-module/smartplug.json /var/www/emoncms/Modules/device/data/smartplug.json
-
+    cp -r /home/pi/demandshaper/devices/. /var/www/emoncms/Modules/device/data/
 ## Run
 
 The demand shaper background process is called run.php. It can be ran manually with:

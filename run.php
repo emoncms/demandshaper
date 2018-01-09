@@ -126,7 +126,16 @@ while(true)
                     print "\n";
                     
                     // Publish to MQTT
-                    if ($connected) $mqtt_client->publish("emon/$device/status",$status,0);
+                    if ($connected) {
+                        // SmartPlug and WIFI Relay
+
+                        if ($device=="openevse") {
+                            $charge_current = 0; if ($status) $charge_current = 13;
+                            $mqtt_client->publish("openevse/rapi/in/\$SC",$charge_current,0); 
+                        } else {
+                            $mqtt_client->publish("emon/$device/status",$status,0);
+                        }
+                    }
                     
                     $laststatus[$device] = $active_pid;
                 }
