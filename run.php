@@ -12,6 +12,8 @@ http://openenergymonitor.org
 
 */
 
+$userid = 1;
+
 define('EMONCMS_EXEC', 1);
 
 $fp = fopen("/var/lock/demandshaper.lock", "w");
@@ -30,11 +32,19 @@ $connected = false;
 $mqtt_client->onConnect('connect');
 $mqtt_client->onDisconnect('disconnect');
 
+
+$mysqli = @new mysqli($server,$username,$password,$database,$port);
+if ( $mysqli->connect_error ) {
+    echo "Can't connect to database, please verify credentials/configuration in settings.php<br />";
+    if ( $display_errors ) {
+        echo "Error message: <b>" . $mysqli->connect_error . "</b>";
+    }
+    die();
+}
+    
 // -------------------------------------------------------------------------
 // Redis Connect
 // -------------------------------------------------------------------------
-require "$homedir/demandshaper/scheduler.php";
-
 $redis = new Redis();
 if (!$redis->connect($redis_server['host'], $redis_server['port'])) { echo "Can't connect to redis"; die; }
 
@@ -42,6 +52,10 @@ if (!empty($redis_server['prefix'])) $redis->setOption(Redis::OPT_PREFIX, $redis
 if (!empty($redis_server['auth']) && !$redis->auth($redis_server['auth'])) {
     echo "Can't connect to redis, autentication failed"; die;
 }
+
+require "$homedir/demandshaper/scheduler.php";
+require "Modules/demandshaper/demandshaper_model.php";
+$demandshaper = new DemandShaper($mysqli,$redis);
 
 // -------------------------------------------------------------------------
 // Control Loop
@@ -66,7 +80,7 @@ while(true)
         $second_in_day = $now - $daystart;
 
         // Schedule definition
-        $schedules = json_decode($redis->get("schedules"));
+        $schedules = $demandshaper->get($userid);
         if ($schedules!=null) 
         {
             foreach ($schedules as $schedule)
@@ -118,7 +132,7 @@ while(true)
                                 $schedule->probability = $r["probability"];
                                 
                                 $schedules->$device = $schedule;
-                                $redis->set("schedules",json_encode($schedules));
+                                $demandshaper->set($userid,$schedules);
                             }
                         }
                     }

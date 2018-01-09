@@ -23,6 +23,9 @@ function demandshaper_controller()
     $route->format = "json";
     $result = false;
     
+    include "Modules/demandshaper/demandshaper_model.php";
+    $demandshaper = new DemandShaper($mysqli,$redis);
+    
     switch ($route->action)
     {  
         case "":
@@ -56,10 +59,9 @@ function demandshaper_controller()
                     
                     $device = $schedule->device;
                     
-                    $schedules = json_decode($redis->get("schedules"));
-                    if (!$schedules || !is_object($schedules)) $schedules = new stdClass();
+                    $schedules = $demandshaper->get($session["userid"]);
                     $schedules->$device = $schedule;
-                    $redis->set("schedules",json_encode($schedules));
+                    $demandshaper->set($session["userid"],$schedules);
                     
                     $result = array("schedule"=>$schedule);
                 } else {
@@ -72,7 +74,7 @@ function demandshaper_controller()
             if ($session["write"]) {
                 $route->format = "json";
                 if (isset($_GET['device'])) {
-                    $schedules = json_decode($redis->get("schedules"));
+                    $schedules = $demandshaper->get($session["userid"]);
                     $device = $_GET['device'];
                     if (isset($schedules->$device)) $schedule = $schedules->$device;
                     else {
