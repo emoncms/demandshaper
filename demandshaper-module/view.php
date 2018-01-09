@@ -26,12 +26,36 @@ $device = $_GET['node'];
 
 <style>
 
-.box {
-    padding:20px;
-    background-color:#f6f6f6;
-    border: 1px solid #ddd;
+#table {
     margin: 0 auto;
-    max-width:700px;
+    width:960px;
+    font-size:16px;
+}
+
+.node-scheduler {
+    padding: 5px 5px 5px 5px;
+    background-color: #ea510e;
+    text-align:left;
+}
+
+.node-scheduler-title {
+    padding: 10px;
+    background-color: #ea510e;
+    color:#fff;
+    font-weight:bold;
+}
+
+.scheduler-inner {
+    background-color:#fff;
+    padding:10px;
+    color:#ea510e;
+    font-weight:bold;
+}
+
+.scheduler-inner2 {
+    background-color:#f0f0f0;
+    padding:20px;
+    color:#ea510e;
 }
 
 .weekly-scheduler-day {
@@ -51,27 +75,40 @@ $device = $_GET['node'];
     background-image:url("<?php echo $path; ?>Modules/demandshaper/day-enabled.png");
 }
 
-.saved { color:#888 };
+.scheduler-checkbox {
+    display:inline-block;
+    width:50px;
+    height:31px;
+    background-image:url("<?php echo $path; ?>Modules/demandshaper/checkbox_inactive.png");
+    background-size:50px;
+    cursor:pointer;
+    float:left;
+}
+
+.scheduler-checkbox-label {
+  padding-top:7px;
+  padding-left:10px;
+  float:left;
+}
+
+.scheduler-checkbox[state="1"] {
+    background-image:url("<?php echo $path; ?>Modules/demandshaper/checkbox_active.png");
+}
+
+.saved { color:#888 }
+
+.scheduler-title {
+    padding-top:5px;
+    padding-bottom:10px;
+}
 
 </style>
 
 <div style="height:20px"></div>
 
-<div class="box">
-    <h2 id="devicename"></h2><hr>
-    <div id="controls"></div>
-
-    <button id="save" class="btn">Save</button>
-    <button id="clear" class="btn">Clear</button>
-    <br><br>
-    <p><b>Schedule Output:</b><div id="schedule-output"></div></p>
-    
-    <div id="placeholder_bound" style="width:100%; height:300px;">
-      <div id="placeholder" style="height:300px"></div>
-    </div>
-    
-    <p>Higher bar height equalls more power available</p>
-    
+<div id="table">
+  <div class="node-scheduler-title"><?php echo $device; ?></div>
+  <div class="node-scheduler" node="<?php echo $device; ?>"></div>
 </div>
 
 <script language="javascript" type="text/javascript" src="<?php echo $path; ?>Modules/demandshaper/scheduler.js"></script>
