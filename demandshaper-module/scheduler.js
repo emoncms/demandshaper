@@ -5,7 +5,9 @@ var available = [];
 var unavailable = [];
 var options = {};
 var schedule = {};
-
+//var scheduler_html = $(".scheduler-template").html();
+//$(".scheduler-template").html("");
+            
 function draw_scheduler(devicein) 
 {   
     device = devicein;
@@ -27,34 +29,13 @@ function draw_scheduler(devicein)
             }
             // Make schedule object global
             schedule = result.schedule;
-            if (result==null || result.schedule==null) schedule = {};
-
-            // Build scheduler UI
-            var out = "";
+            if (result==null || result.schedule==null) schedule = {};           
             
-            out += '<div class="scheduler-inner">';
-            out += '<div class="scheduler-title">Schedule</div>';
-            out += '<div class="scheduler-inner2">';
-            out +=     '<div class="scheduler-controls">'+scheduler_draw_controls()+'</div>';
-
-            out +=     '<button class="scheduler-save btn">Save</button><button class="scheduler-clear btn" style="margin-left:10px">Clear</button>';
-            out +=     '<br><br>';
-            out +=     '<p><b>Schedule Output:</b><div id="schedule-output"></div></p>';
-                
-            out +=     '<div id="placeholder_bound" style="width:100%; height:300px;">';
-            out +=       '<div id="placeholder" style="height:300px"></div>';
-            out +=     '</div>';
-                
-            out +=     'Higher bar height equalls more power available';
-            out += '</div>';
-            out += '</div>';
+            //$(".node-scheduler[node='"+device+"']").html(scheduler_html);
+            //$(".node-scheduler[node='"+device+"']").show();
             
-            $(".node-scheduler").html("");
-            $(".node-scheduler[node='"+device+"']").html(out);
-            $(".node-scheduler[node='"+device+"']").show();
-
+            scheduler_update_ui();
             draw_schedule_output(schedule);
-            scheduler_update();
 
         }});
     }});
@@ -63,6 +44,8 @@ function draw_scheduler(devicein)
 // -------------------------------------------------------------------------
 
 $("#table").on("click",".scheduler-save",function(e) {
+
+    console.log("save");
 
     var tosave = {};
     for (var property in controls) {
@@ -96,97 +79,51 @@ $("#table").on("click",".scheduler-clear",function(e) {
     }
     
     scheduler_save(tosave);
+    scheduler_update_ui();
+});
+
+$("#table").on("click",".schedule-output-heading",function(e) {
+
+   var visible = $(".schedule-output-box").is(":visible");
+
+   if (visible) {
+       $(".schedule-output-box").hide(); 
+   } else {
+       $(".schedule-output-box").show(); 
+       draw_schedule_output(schedule);
+   }
+   
+    $(this).find(".triangle-dropdown").toggle();
+    $(this).find(".triangle-pushup").toggle();
 });
 
 // -------------------------------------------------------------------------
-
-function scheduler_draw_controls() {
-    var out = "";
+function scheduler_update_ui() {
     for (var property in controls) {
-        // Use name property if present, otherwise use key
-        var name = jsUcfirst(property);
-        if (controls[property].name!=undefined) name = controls[property].name;
-        
-        if (controls[property].type=="text") {
-            out += jsUcfirst(property)+":<br><input type='text' name='"+property+"' value='"+controls[property].value+"' /><br>";
-        }
-            
         if (controls[property].type=="checkbox") {
-            console.log(property+" "+controls[property].value);
-            out += '<div name="'+property+'" state="'+controls[property].value+'" class="scheduler-checkbox"></div><div class="scheduler-checkbox-label">'+name+"</div><div style='clear:both'></div><br>";
+            $(".scheduler-checkbox[name='"+property+"']").attr("state",controls[property].value);
         }
-
-        // ----------------------------------------------------------------------------------------------------
-        // Draw time picker
-        // ----------------------------------------------------------------------------------------------------  
+        
         if (controls[property].type=="time") {
-            // Draw time picker
             var time = controls[property].value;
             var hour = Math.floor(time);
             var mins = 60*(time-hour);
             if (hour<10) hour = "0"+hour;
             if (mins<10) mins = "0"+mins;
-            
-            out += '<div style="display:inline-block; width:120px;">'+name+":</div> ";
-            out += '<input class="timepicker-hour" type="text" name="'+property+'-hour" style="width:45px" value='+hour+' /> :';
-            out += '<input class="timepicker-minute" type="text" name="'+property+'-minute" style="width:45px" value='+mins+' />';
-            out += "<br>";
+            $("input[name='"+property+"-hour']").val(hour);
+            $("input[name='"+property+"-minute']").val(mins);
         }
         
-        // ----------------------------------------------------------------------------------------------------
-        // Draw weekly scheduler
-        // ----------------------------------------------------------------------------------------------------
         if (controls[property].type=="weekly-scheduler") {
-            var days = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
-            out += '<div>';
-            out += '<p>Repeat:</p>';
-            out += '<div class="weekly-scheduler-days">';
             for (var i=0; i<7; i++) {
-                var selected = controls[property].value[i];
-                out += '<div name="'+property+'" day='+i+' val='+selected+' class="weekly-scheduler weekly-scheduler-day"><div style="padding-top:15px">'+days[i]+'</div></div>';
+                $(".weekly-scheduler[name='"+property+"'][day="+i+"]").attr("val",controls[property].value[i]);
             }
-            out += '</div>';
-            out += '</div><br>';
-        }    
-    }
-    
-    return out;
+        }
+    }   
 }
 
-function scheduler_update() {
-    /*
-    $.ajax({ url: emoncmspath+"input/get/"+device, dataType: 'json', async: true, success: function(data) {
-        inputs = data;
-        for (var property in controls) {
-            if (controls[property].type=="text" && inputs[property]!=undefined) 
-                $("input[name='"+property+"']").val(inputs[property].value);
-            if (controls[property].type=="checkbox" && inputs[property]!=undefined)
-                $(".scheduler-checkbox[name='"+property+"']").attr("state",inputs[property].value);
-        }
-    }});
-    */
-}
 
-function scheduler_save(data) {
-
-    // ----------------------------------------------------------------------------------------------------
-    // Publish control parameters to emoncms inputs & publish to MQTT
-    // ----------------------------------------------------------------------------------------------------
-    var mqttpub = {}; 
-    var count = 0;
-    for (var property in data) {
-        if (data[property].mqttpub!=undefined && data[property].mqttpub) {
-            mqttpub[property] = data[property];
-            count++;
-        }
-    }
-    
-    if (count) {
-        $.ajax({ url: emoncmspath+"input/post/"+device+"?data="+JSON.stringify(mqttpub)+"&mqttpub=1", dataType: 'text', async: true, success: function(result) {
-             if (result=="ok") $(".saved").show();
-        }});
-    }
-    
+function scheduler_save(data) {    
     // ----------------------------------------------------------------------------------------------------
     // Scheduler
     // ----------------------------------------------------------------------------------------------------
@@ -204,6 +141,28 @@ function scheduler_save(data) {
 function draw_schedule_output(schedule)
 {
     var out = jsUcfirst(device)+" scheduled to run: ";
+    
+    if (schedule.periods.length) {
+        var now = new Date();
+        var now_hours = (now.getHours() + (now.getMinutes()/60));
+        var period_start = (schedule.periods[0].start);
+        
+        var startsin = 0;
+        if (now_hours>period_start) {
+           startsin = (24 - now_hours) + period_start
+        } else {
+           startsin = period_start - now_hours
+        }
+        
+        var hour = Math.floor(startsin);
+        var mins = Math.round(60*(startsin-hour));
+        var text = "Starts in "+mins+" mins";
+        if (hour>0) text = "Starts in "+hour+" hrs "+mins+" mins";
+        if (hour>=23 && mins>=30) text = "On";
+        if (controls["active"].value==0) text = "Off"; 
+        $(".startsin").html(text);
+    } 
+    
 
     var periods = [];
     for (var z in schedule.periods) {
@@ -261,7 +220,11 @@ function draw_schedule_output(schedule)
             if (!probability[z][4]) unavailable.push([probability[z][0],probability[z][1]]);
         }
 
-        $.plot($('#placeholder'), [{data:available,color:"#ff0000"},{data:unavailable,color:"#888"}], options);
+        var width = $("#placeholder_bound").width();
+        if (width>0) {
+            $("#placeholder").width(width);
+            $.plot($('#placeholder'), [{data:available,color:"#ff0000"},{data:unavailable,color:"#888"}], options);
+        }
     }
 }
 
@@ -299,11 +262,14 @@ $("#table").on("click",".weekly-scheduler-day",function(){
 });
 
 $("#table").on("click",".scheduler-checkbox",function(){
+    var name = $(this).attr('name');
     var val = $(this).attr('state');
     if (val==0) {
         $(this).attr('state',1);
+        if (name=="active") $(".scheduler-inner").css("color","#ea510e");
     } else {
         $(this).attr('state',0);
+        if (name=="active") $(".scheduler-inner").css("color","#aaa");
     }
 });
 
