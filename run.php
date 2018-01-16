@@ -19,6 +19,13 @@ define('EMONCMS_EXEC', 1);
 $fp = fopen("/var/lock/demandshaper.lock", "w");
 if (! flock($fp, LOCK_EX | LOCK_NB)) { echo "Already running\n"; die; }
 
+$pid = getmypid();
+
+$fh = fopen("/home/pi/data/demandshaper.pid","w");
+fwrite($fh,$pid);
+fclose();
+
+
 chdir("/var/www/emoncms");
 require "process_settings.php";
 require "Lib/EmonLogger.php";
