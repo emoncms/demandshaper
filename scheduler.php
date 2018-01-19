@@ -59,20 +59,29 @@ function schedule($redis,$schedule)
     // -----------------------------------------------------------------------------
 
     $result = json_decode($redis->get("demandshaper"));
-    $probability = $result->DATA[0];
-    array_shift($probability);
-
-    $len = count($probability);
-
-    // Normalise into 0.0 to 1.0
-    $min = 1000; $max = -1000;
-    for ($i=0; $i<$len; $i++) {
-        if ($probability[$i]>$max) $max = $probability[$i];
-        if ($probability[$i]<$min) $min = $probability[$i];
-    }
-    $max = $max += -1*$min;
-    for ($i=0; $i<$len; $i++) $probability[$i] = 1.0 - (($probability[$i] + -1*$min) / $max);
     
+    // Validate demand shaper
+    if  ($result!=null && isset($result->DATA)) {
+   
+        $probability = $result->DATA[0];
+        array_shift($probability);
+
+        $len = count($probability);
+
+        // Normalise into 0.0 to 1.0
+        $min = 1000; $max = -1000;
+        for ($i=0; $i<$len; $i++) {
+            if ($probability[$i]>$max) $max = $probability[$i];
+            if ($probability[$i]<$min) $min = $probability[$i];
+        }
+        $max = $max += -1*$min;
+        for ($i=0; $i<$len; $i++) $probability[$i] = 1.0 - (($probability[$i] + -1*$min) / $max);
+        
+    } else {
+        // Use local fallback
+        $probability = array(0.80,0.83,0.85,0.87,0.9,0.93,0.95,0.97,1.0,1.0,0.75,0.7,0.4,0.4,0.3,0.3,0.2,0.2,0.3,0.3,0.4,0.4,0.55,0.55,
+                             0.63,0.64,0.65,0.65,0.7,0.7,0.7,0.7,0.5,0.5,0.4,0.4,0.3,0.3,0.15,0.15,0.1,0.1,0.3,0.3,0.5,0.5,0.6,0.6);
+    }
     
     // transpose include keys
     $tmp = array();               
