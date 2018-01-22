@@ -104,7 +104,7 @@ while(true)
                         $start = ($period->start * 3600);
                         $end = ($period->end * 3600);
                         
-                        if ($start<$end) {
+                        if ($start<=$end) {
                             if ($second_in_day>=$start && $second_in_day<$end) $status = 1;
                         } else {
                             if ($second_in_day>=$start && $second_in_day<24*3600) $status = 1;

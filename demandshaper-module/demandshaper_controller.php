@@ -91,6 +91,22 @@ function demandshaper_controller()
                 }
             }
             break;
+
+            
+        case "delete":
+            if ($session["write"] && isset($_GET['device'])) {
+                $device = $_GET['device'];
+                $schedules = $demandshaper->get($session["userid"]);
+                if (isset($schedules->$device)) {
+                    unset ($schedules->$device);
+                    $demandshaper->set($session["userid"],$schedules);
+                    $result = array("success"=>true, "message"=>"device deleted");
+                } else {
+                    $result = array("success"=>false, "message"=>"device does not exist");
+                }
+                $route->format = "json";
+            }
+            break;
     }
     
     return array("content"=>$result);   
