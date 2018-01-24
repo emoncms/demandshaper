@@ -23,8 +23,7 @@ $pid = getmypid();
 
 $fh = fopen("/home/pi/data/demandshaper.pid","w");
 fwrite($fh,$pid);
-fclose();
-
+fclose($fh);
 
 chdir("/var/www/emoncms");
 require "process_settings.php";
@@ -95,7 +94,7 @@ while(true)
                 if ($schedule->active)
                 {
                     $device = $schedule->device;
-                    print "Schedule:$device";
+                    print date("Y-m-d H:i:s")." Schedule:$device";
                     $status = 0;
                     
                     $active_pid = -1;
@@ -122,25 +121,22 @@ while(true)
                         if (!$schedule->repeat[$date->format("N")-1]) $status = 0;
                     }
 
-                    print " status:$status";
+                    if ($status) print " ON\t"; else print " OFF\t";
                     
                     if (isset($laststatus[$device])) {
                         print " $active_pid:$laststatus[$device]";
                         print " ".json_encode($schedule->periods);
                         
                         if ($laststatus[$device]!=-1 && $active_pid==-1) {
-                            print "remove $laststatus[$device]\n";
-                            unset($schedule->periods[$laststatus[$device]]);
-                            if (count($schedule->periods)==0) {
-                                $schedules = new stdClass();
-                                
-                                $r = schedule($redis,$schedule);
-                                $schedule->periods = $r["periods"];
-                                $schedule->probability = $r["probability"];
-                                
-                                $schedules->$device = $schedule;
-                                $demandshaper->set($userid,$schedules);
-                            }
+                            print "\n remove $laststatus[$device]";
+
+                            $r = schedule($redis,$schedule);
+                            $schedule->periods = $r["periods"];
+                            $schedule->probability = $r["probability"];
+                            print "\n new schedule: $device ".json_encode($schedule->periods);
+                            
+                            $schedules->$device = $schedule;
+                            $demandshaper->set($userid,$schedules);
                         }
                     }
                     
@@ -152,7 +148,7 @@ while(true)
 
                         if ($device=="openevse") {
                             $charge_current = 0; if ($status) $charge_current = 13;
-                            $mqtt_client->publish("openevse/rapi/in/\$SC",$charge_current,0); 
+                            // $mqtt_client->publish("openevse/rapi/in/\$SC",$charge_current,0); 
                         } else {
                             $mqtt_client->publish("emon/$device/status",$status,0);
                         }
