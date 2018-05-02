@@ -71,11 +71,14 @@ function schedule($redis,$schedule)
         // Normalise into 0.0 to 1.0
         $min = 1000; $max = -1000;
         for ($i=0; $i<$len; $i++) {
-            if ($probability[$i]>$max) $max = $probability[$i];
-            if ($probability[$i]<$min) $min = $probability[$i];
+            $val = (float) $probability[$i];
+            if ($val>$max) $max = $val;
+            if ($val<$min) $min = $val;
         }
+        
         $max = $max += -1*$min;
         for ($i=0; $i<$len; $i++) $probability[$i] = 1.0 - (($probability[$i] + -1*$min) / $max);
+        
         
     } else {
         // Use local fallback
