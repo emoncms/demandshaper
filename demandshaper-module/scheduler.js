@@ -14,7 +14,7 @@ function draw_scheduler(devicein)
     $("#devicename").html(jsUcfirst(device));
     
     // 1. Load device template to get the control definition
-    $.ajax({ url: emoncmspath+"device/template/get.json?device="+devices[device].type, dataType: 'json', async: true, success: function(template) { 
+    $.ajax({ url: emoncmspath+"device/template/get.json?type="+devices[device].type, dataType: 'json', async: true, success: function(template) { 
         controls = template.control;
         
         // 2. Fetch device settings stored in the demandshaper module
