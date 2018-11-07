@@ -44,46 +44,52 @@ function schedule($redis,$schedule)
     $start_hour = floor($start_hour*2)/2;
     $end_time = floor($end_time*2)/2;
     
-    // 24h dummy data
-    //                      0   1   2   3   4   5   6   7   8   9   10  11  12  13  14  15  16  17  18  19  20  21  22  23
-    // $probability = array(0.7,1.0,1.0,0.8,0.6,0.4,0.2,0.2,0.3,0.5,0.6,0.6,0.7,0.8,0.7,0.6,0.5,0.4,0.3,0.1,0.1,0.3,0.5,0.6);
+    // -----------------------------------------------------------------------------   
+    $signal = "cydynni"; // cydynni, example, carbonintensity
     
-    // 24h HH dummy data
+
+    // -----------------------------------------------------------------------------
+    // Default demand shaper
+    // ----------------------------------------------------------------------------- 
     $probability = array(0.80,0.83,0.85,0.87,0.9,0.93,0.95,0.97,1.0,1.0,0.75,0.7,0.4,0.4,0.3,0.3,0.2,0.2,0.3,0.3,0.4,0.4,0.55,0.55,
                          0.63,0.64,0.65,0.65,0.7,0.7,0.7,0.7,0.5,0.5,0.4,0.4,0.3,0.3,0.15,0.15,0.1,0.1,0.3,0.3,0.5,0.5,0.6,0.6);
-    
 
-    
     // -----------------------------------------------------------------------------
-    // Fetch demand shaper
+    // EnergyLocal demand shaper
+    // -----------------------------------------------------------------------------  
+    if ($signal=="cydynni") {
+        $result = json_decode($redis->get("demandshaper"));
+        
+        // Validate demand shaper
+        if  ($result!=null && isset($result->DATA)) {
+       
+            $probability = $result->DATA[0];
+            array_shift($probability);
+
+            $len = count($probability);
+
+            // Normalise into 0.0 to 1.0
+            $min = 1000; $max = -1000;
+            for ($i=0; $i<$len; $i++) {
+                $val = (float) $probability[$i];
+                if ($val>$max) $max = $val;
+                if ($val<$min) $min = $val;
+            }
+            
+            $max = $max += -1*$min;
+            for ($i=0; $i<$len; $i++) $probability[$i] = 1.0 - (($probability[$i] + -1*$min) / $max);
+        }
     // -----------------------------------------------------------------------------
-
-    $result = json_decode($redis->get("demandshaper"));
-    
-    // Validate demand shaper
-    if  ($result!=null && isset($result->DATA)) {
-   
-        $probability = $result->DATA[0];
-        array_shift($probability);
-
-        $len = count($probability);
-
-        // Normalise into 0.0 to 1.0
-        $min = 1000; $max = -1000;
-        for ($i=0; $i<$len; $i++) {
-            $val = (float) $probability[$i];
-            if ($val>$max) $max = $val;
-            if ($val<$min) $min = $val;
+    // Economy 7 
+    // ----------------------------------------------------------------------------- 
+    } else if ($signal=="economy7") {
+        $economy7 = array();
+        for ($i=0; $i<48; $i++) {
+            $h = $i*0.5;
+            if ($h>=0.0 && $h<7.0) $economy7[$i] = 1.0; else $economy7[$i] = 0.5;
         }
         
-        $max = $max += -1*$min;
-        for ($i=0; $i<$len; $i++) $probability[$i] = 1.0 - (($probability[$i] + -1*$min) / $max);
-        
-        
-    } else {
-        // Use local fallback
-        $probability = array(0.80,0.83,0.85,0.87,0.9,0.93,0.95,0.97,1.0,1.0,0.75,0.7,0.4,0.4,0.3,0.3,0.2,0.2,0.3,0.3,0.4,0.4,0.55,0.55,
-                             0.63,0.64,0.65,0.65,0.7,0.7,0.7,0.7,0.5,0.5,0.4,0.4,0.3,0.3,0.15,0.15,0.1,0.1,0.3,0.3,0.5,0.5,0.6,0.6);
+        $probability = $economy7;
     }
     
     // transpose include keys
