@@ -20,6 +20,10 @@ function schedule($redis,$schedule)
     $period = $schedule->period;
     $interruptible = $schedule->interruptible;
     
+    // Default demand shaper: carbon intensity
+    $signal = "carbonintensity";
+    if (isset($schedule->signal)) $signal = $schedule->signal;
+    
     // Basic mode
     if (isset($schedule->basic) && $schedule->basic) {
         $periods = array();
@@ -41,11 +45,8 @@ function schedule($redis,$schedule)
     $end_time = floor($end_time / 0.5)*0.5;
     
     // -----------------------------------------------------------------------------   
-    $signal = "carbonintensity"; // cydynni, example, carbonintensity
-    
     $forecast = array();
     $available = 1;
-    
     define("MAX",1);
     define("MIN",0);
     
