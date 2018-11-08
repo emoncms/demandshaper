@@ -28,100 +28,133 @@ function schedule($redis,$schedule)
         $periods[] = array("start"=>$start, "end"=>$end);
         return $periods;
     }
-    
-    $now = time();
+
+    $timestamp = floor(time()/1800)*1800;
     $date = new DateTime();
     $date->setTimezone(new DateTimeZone("Europe/London"));
-    $date->setTimestamp($now);
-    $date->modify("midnight");
-    $daystart = $date->getTimestamp();
+
+    $date->setTimestamp($timestamp);
+    $h = 1*$date->format('H');
+    $m = 1*$date->format('i')/60;
+    $start_hour = $h + $m;
     
-    $seconds = $now - $daystart;
-    $minutes = floor($seconds/60);
-    $start_hour = $minutes/60;
-    
-    // limit to half hour resolution
-    $start_hour = floor($start_hour*2)/2;
-    $end_time = floor($end_time*2)/2;
+    $end_time = floor($end_time / 0.5)*0.5;
     
     // -----------------------------------------------------------------------------   
-    $signal = "cydynni"; // cydynni, example, carbonintensity
+    $signal = "carbonintensity"; // cydynni, example, carbonintensity
     
-
+    $forecast = array();
+    $available = 1;
+    
+    define("MAX",1);
+    define("MIN",0);
+    
     // -----------------------------------------------------------------------------
-    // Default demand shaper
+    // Grid carbon intensity
     // ----------------------------------------------------------------------------- 
-    $probability = array(0.80,0.83,0.85,0.87,0.9,0.93,0.95,0.97,1.0,1.0,0.75,0.7,0.4,0.4,0.3,0.3,0.2,0.2,0.3,0.3,0.4,0.4,0.55,0.55,
-                         0.63,0.64,0.65,0.65,0.7,0.7,0.7,0.7,0.5,0.5,0.4,0.4,0.3,0.3,0.15,0.15,0.1,0.1,0.3,0.3,0.5,0.5,0.6,0.6);
+    if ($signal=="carbonintensity") {
+        $optimise = MIN;
+        $start = $date->format('Y-m-d\TH:i\Z');
+        $result = json_decode(file_get_contents("https://api.carbonintensity.org.uk/intensity/$start/fw24h"));
+
+        if ($result!=null && isset($result->data)) {
+            for ($i=0; $i<count($result->data); $i++) {
+            
+                $datetimestr = $result->data[$i]->from;
+                $co2intensity = $result->data[$i]->intensity->forecast;
+                
+                $date = new DateTime($datetimestr);
+                $timestamp = $date->getTimestamp();
+                
+                $h = 1*$date->format('H');
+                $m = 1*$date->format('i')/60;
+                $hour = $h + $m;
+                
+                if ($hour==$end_time && $start_hour!=$end_time) $available = 0;
+                
+                $forecast[] = array($timestamp*1000,$co2intensity,$hour,$available,0);
+            }
+        }
+    }
 
     // -----------------------------------------------------------------------------
     // EnergyLocal demand shaper
     // -----------------------------------------------------------------------------  
-    if ($signal=="cydynni") {
+    else if ($signal=="cydynni") {
+        $optimise = MAX;
         $result = json_decode($redis->get("demandshaper"));
         
         // Validate demand shaper
         if  ($result!=null && isset($result->DATA)) {
        
-            $probability = $result->DATA[0];
-            array_shift($probability);
+            $EL_signal = $result->DATA[0];
+            array_shift($EL_signal);
+            $len = count($EL_signal);
 
-            $len = count($probability);
-
+            //------------------------
             // Normalise into 0.0 to 1.0
             $min = 1000; $max = -1000;
             for ($i=0; $i<$len; $i++) {
-                $val = (float) $probability[$i];
+                $val = (float) $EL_signal[$i];
                 if ($val>$max) $max = $val;
                 if ($val<$min) $min = $val;
             }
             
+            $tmp = array();
             $max = $max += -1*$min;
-            for ($i=0; $i<$len; $i++) $probability[$i] = 1.0 - (($probability[$i] + -1*$min) / $max);
+            for ($i=0; $i<$len; $i++) $tmp[$i*0.5] = 1.0 - (($EL_signal[$i] + -1*$min) / $max);
+            $EL_signal = $tmp;
+            
+            //------------------------
+            
+            for ($i=0; $i<48; $i++) {
+
+                $date->setTimestamp($timestamp);
+                $h = 1*$date->format('H');
+                $m = 1*$date->format('i')/60;
+                $hour = $h + $m;
+                
+                if ($hour==$end_time && $start_hour!=$end_time) $available = 0;
+                
+                $forecast[] = array($timestamp*1000,$EL_signal[$hour],$hour,$available,0);
+                $timestamp += 1800; 
+            }
         }
     // -----------------------------------------------------------------------------
     // Economy 7 
     // ----------------------------------------------------------------------------- 
     } else if ($signal=="economy7") {
-        $economy7 = array();
+        $optimise = MIN;
         for ($i=0; $i<48; $i++) {
-            $h = $i*0.5;
-            if ($h>=0.0 && $h<7.0) $economy7[$i] = 1.0; else $economy7[$i] = 0.5;
+
+            $date->setTimestamp($timestamp);
+            $h = 1*$date->format('H');
+            $m = 1*$date->format('i')/60;
+            $hour = $h + $m;
+            
+            if ($hour>=0.0 && $hour<7.0) $economy7 = 0.07; else $economy7 = 0.15;
+            
+            if ($hour==$end_time && $start_hour!=$end_time) $available = 0;
+            
+            $forecast[] = array($timestamp*1000,$economy7,$hour,$available,0);
+            $timestamp += 1800; 
         }
-        
-        $probability = $economy7;
     }
     
-    // transpose include keys
-    $tmp = array();               
-    for ($i=0; $i<48; $i++) $tmp["".($i*0.5)] = $probability[$i];
-    $probability = $tmp;
-
-    // generate array of half hours from start time to end time.
-    $tmp2 = array();
-    $hour = $start_hour;
-    $timestamp = $daystart+($hour*3600);
-    $available = 1;
-              
-    for ($i=0; $i<48; $i++)
-    {
-        if ($hour==$end_time && $start_hour!=$end_time) $available = 0;
-        
-        $state = 0;
-    
-        $tmp2[] = array($timestamp*1000,$probability[$hour],$hour,$available,$state);
-        $timestamp += 1800;
-        $hour += 0.5;
-        if ($hour>23.5) $hour = 0.0;
+    // get max and min values of forecast
+    $forecast_min = 1000000; $forecast_max = -1000000;
+    for ($i=0; $i<count($forecast); $i++) {
+        $val = (float) $forecast[$i][1];
+        if ($val>$forecast_max) $forecast_max = $val;
+        if ($val<$forecast_min) $forecast_min = $val;
     }
-    $forecast = $tmp2;
-
+    
     if (!$interruptible) 
     {
 
         // We are trying to find the start time that results in the maximum sum of the available power
         // $max is used to find the point in the forecast that results in the maximum sum..
-        $max = 0;
+        $threshold = 0;
 
         // When $max available power is found, $start_time is set to this point
         $pos = 0;
@@ -135,14 +168,23 @@ function schedule($redis,$schedule)
 
              // Calculate sum of probability function values for block of demand covering hours in period
              $sum = 0;
+             $valid_block = 1;
              for ($i=0; $i<$period*2; $i++) {
-                 if (isset($forecast[$hh+$i]) && $forecast[$hh+$i][3]) $sum += $forecast[$hh+$i][1];
+                 
+                 if (isset($forecast[$hh+$i])) {
+                     if (!$forecast[$hh+$i][3]) $valid_block = 0;
+                     $sum += $forecast[$hh+$i][1];
+                 }
              }
              
+             if ($hh==0) $threshold = $sum;
+             
              // Determine the start_time which gives the maximum sum of available power
-             if ($sum>$max) {
-                 $max = $sum;
-                 $pos = $hh;
+             if ($valid_block) {
+                 if (($optimise==MIN && $sum<$threshold) || ($optimise==MAX && $sum>$threshold)) {
+                     $threshold = $sum;
+                     $pos = $hh;
+                 }
              }
         }
         
@@ -170,7 +212,7 @@ function schedule($redis,$schedule)
         // For each hour of demand
         for ($p=0; $p<$period*2; $p++) {
 
-            $max = 0;
+            if ($optimise==MIN) $threshold = $forecast_max; else $threshold = $forecast_min;
             $pos = -1;
             // for each hour in probability profile
             for ($hh=0; $hh<48; $hh++) {
@@ -179,9 +221,11 @@ function schedule($redis,$schedule)
                 // if available && !allocated && $val>$max
                 $val = $forecast[$hh][1];
                 
-                if ($forecast[$hh][3] && !$forecast[$hh][4] && $val>$max) {
-                    $max = $val;
-                    $pos = $hh;
+                if ($forecast[$hh][3] && !$forecast[$hh][4]) {
+                    if (($optimise==MIN && $val<=$threshold) || ($optimise==MAX && $val>=$threshold)) {
+                        $threshold = $val;
+                        $pos = $hh;
+                    }
                 }
             }
             
