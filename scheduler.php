@@ -77,6 +77,39 @@ function schedule($redis,$schedule)
             }
         }
     }
+    
+    // -----------------------------------------------------------------------------
+    // Octopus
+    // ----------------------------------------------------------------------------- 
+    if ($signal=="octopus") {
+        $optimise = MIN;
+        $result = json_decode(file_get_contents("https://api.octopus.energy/v1/products/AGILE-18-02-21/electricity-tariffs/E-1R-AGILE-18-02-21-D/standard-unit-rates/"));
+
+        $start = $timestamp;
+        $hh = 0;
+
+        if ($result!=null && isset($result->results)) {
+            for ($i=count($result->results)-1; $i>0; $i--) {
+            
+                $datetimestr = $result->results[$i]->valid_from;
+                $co2intensity = $result->results[$i]->value_inc_vat;
+                
+                $date = new DateTime($datetimestr);
+                $timestamp = $date->getTimestamp();
+                if ($timestamp>=$start && $hh<48) {
+                    
+                    $h = 1*$date->format('H');
+                    $m = 1*$date->format('i')/60;
+                    $hour = $h + $m;
+                    
+                    if ($hour==$end_time && $start_hour!=$end_time) $available = 0;
+                    
+                    $forecast[] = array($timestamp*1000,$co2intensity,$hour,$available,0);
+                    $hh++;
+                }
+            }
+        }
+    }
 
     // -----------------------------------------------------------------------------
     // EnergyLocal demand shaper
