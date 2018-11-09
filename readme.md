@@ -68,8 +68,10 @@ Add the cron entry:
 
 2. Enable the UDP broadcast script on the emonbase/emonpi:
 
+<pre>
     crontab -e
     * * * * * php /home/pi/emonpi/UDPBroadcast/broadcast.php 2>&1
+</pre>
 
 3. Install the demand shaper module as above and make sure that you have the latest emoncms master branch and latest emoncms device module installed.
 
