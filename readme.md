@@ -77,7 +77,7 @@ Add the cron entry:
 
 **User guide**
 
-1. The Sonoff S20 smartplug creates a WIFI access point, connect to the access point and enter home WIFI network.
+1. The Sonoff S20 smartplug creates a WIFI access point, connect to the access point and enter home WIFI network. That is all the configuration required.
 
 <table><tr><td>
 ![emonesp1.png](images/emonesp1.png)
@@ -96,3 +96,7 @@ Add the cron entry:
 4. Click on the clock icon to load the demandshaper module, where the smart plug can be scheduled:
 
 ![demandshaper.png](images/demandshaper.png)
+
+5. Wait for the plug to turn on! :)
+
+![smartplug_on.png](images/smartplug_on.png)
