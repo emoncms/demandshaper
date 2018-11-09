@@ -60,3 +60,26 @@ Add the cron entry:
 
     0 * * * * php /home/username/demandshaper/emoncms_remote_cache.php >> /var/log/demandshaper-cache.log
 
+## Using the Demand Shaper module with a SonOff S20 smart plug
+
+**Preperation**
+
+1. Install the EmonESP (control\_merge branch) firmware on a Sonoff S20 smartplug. See guide here:<br>[https://github.com/openenergymonitor/EmonESP/blob/control_merge/sonoffS20.md](https://github.com/openenergymonitor/EmonESP/blob/control_merge/sonoffS20.md)
+
+2. Enable the UDP broadcast script on the emonbase/emonpi:
+
+3. Install the demand shaper module as above and make sure that you have the latest emoncms master branch and latest emoncms device module installed.
+
+**User guide**
+
+2. The Sonoff S20 smartplug creates a WIFI access point, connect to the access point and enter home WIFI network.
+
+3. Connect back to your home WIFI network. Login to emoncms and navigate to inputs. Refresh the page until a popup appears asking to connect:
+
+4. After clicking allow the smart plug will then appear in the inputs list with a small icon identifying it as a schedulable device: 
+
+![schedulericon.png](images/schedulericon.png)
+
+5. Click on the clock icon to load the demandshaper module, where the smart plug can be scheduled:
+
+![demandshaper.png](images/demandshaper.png)
