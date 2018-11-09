@@ -77,7 +77,15 @@ Add the cron entry:
 
 1. The Sonoff S20 smartplug creates a WIFI access point, connect to the access point and enter home WIFI network.
 
+<table><tr><td>
+![emonesp1.png](images/emonesp1.png)
+</td><td>
+![emonesp2.png](images/emonesp2.png)
+</td></tr></table>
+
 2. Connect back to your home WIFI network. Login to emoncms and navigate to inputs. Refresh the page until a popup appears asking to connect:
+
+![emoncms_allow.png](images/emoncms_allow.png)
 
 3. After clicking allow the smart plug will then appear in the inputs list with a small icon identifying it as a schedulable device: 
 
