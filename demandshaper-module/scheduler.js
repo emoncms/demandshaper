@@ -45,7 +45,7 @@ function draw_scheduler(devicein)
 
 $("#table").on("click",".scheduler-save",function(e) {
 
-    console.log("save");
+    //console.log("save");
 
     var tosave = {};
     for (var property in controls) {
@@ -59,12 +59,15 @@ $("#table").on("click",".scheduler-save",function(e) {
             tosave[property] = $(".scheduler-checkbox[name='"+property+"']").attr("state")*1;
         if (controls[property].type=="time")
             tosave[property] = (1*$("input[name='"+property+"-hour']").val()) + ($("input[name='"+property+"-minute']").val()/60);
+        if (controls[property].type=="select") 
+            tosave[property] = $("select[name='"+property+"']").val();
         if (controls[property].type=="weekly-scheduler") {
             tosave[property] = [];
             for (var i=0; i<7; i++) {
                 tosave[property][i] = $(".weekly-scheduler[name='"+property+"'][day="+i+"]").attr("val")*1;
                 if (tosave[property][i]) tosave.runonce = false;
             }
+            if (tosave.runonce) $(".scheduler-checkbox[name='runonce']").attr("state",1);
         }
     }
     
@@ -103,7 +106,11 @@ function scheduler_update_ui() {
         if (controls[property].type=="checkbox") {
             $(".scheduler-checkbox[name='"+property+"']").attr("state",controls[property].value);
         }
-        
+
+        if (controls[property].type=="select") {
+            $("select[name='"+property+"']").val(controls[property].value);
+        }
+                
         if (controls[property].type=="time") {
             var time = controls[property].value;
             var hour = Math.floor(time);
@@ -119,6 +126,17 @@ function scheduler_update_ui() {
                 $(".weekly-scheduler[name='"+property+"'][day="+i+"]").attr("val",controls[property].value[i]);
             }
         }
+    } 
+    
+    var runonce = true;
+    for (var i=0; i<7; i++) {
+        var dayval = $(".weekly-scheduler[name='repeat'][day="+i+"]").attr("val")*1;
+        if (dayval) runonce = false;
+    }
+    if (runonce) {
+        $(".scheduler-checkbox[name='runonce']").attr("state",1);
+    } else {
+        $(".scheduler-checkbox[name='runonce']").attr("state",0);
     }   
 }
 

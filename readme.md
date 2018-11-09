@@ -9,11 +9,12 @@ Developed as part of the CydYnni EnergyLocal project, see:
 
 ![demandshaper.png](images/demandshaper.png)
 
+**9th November 2018:** The demand shaper module now supports the use of the UK grid carbon intensity and Octopus Agile forecasts.
 
 ## Requirements
 
-- Emoncms device-support branch
-- Device module device-integration branch
+- Emoncms
+- Emoncms Device module
 - MQTT Mosquitto broker and MQTT emoncms setup as per emonSD image
 - Redis
 
@@ -26,11 +27,8 @@ Download or git clone the demandshaper repository to your home folder:
     
 Link the 'demandshaper-module' into the emoncms Modules folder:
 
-    ln -s /home/pi/demandshaper/demandshaper-module /var/www/emoncms/Modules/demandshaper
+    ln -s /home/pi/demandshaper/demandshaper-module /var/www/emoncms/Modules/demandshaper 
     
-Copy smartplug device template to device module:
-
-    cp -r /home/pi/demandshaper/devices/. /var/www/emoncms/Modules/device/data/
 ## Run
 
 The demand shaper background process is called run.php. It can be ran manually with:
@@ -45,3 +43,20 @@ Or from cron with:
 The demand shaper process publishes the device state to an MQTT topic of the form:
 
     emon/devicename/state
+
+## Remote Cache
+
+The remote cache currently run's on emoncms.org to reduce the potential API load on the Octopus and CarbonIntensity servers. The cache provides the following routes:
+
+    https://emoncms.org/demandshaper/carbonintensity
+    https://emoncms.org/demandshaper/octopus
+
+To install and use the cache on your own server. Symlink emoncms-remote module to Modules folder:
+
+    ln -s /home/username/demandshaper/emoncms-remote /var/www/emoncms/Modules/demandshaper
+
+
+Add the cron entry:
+
+    0 * * * * php /home/username/demandshaper/emoncms_remote_cache.php >> /var/log/demandshaper-cache.log
+
