@@ -48,5 +48,12 @@ The demand shaper process publishes the device state to an MQTT topic of the for
 
 ## Remote Cache
 
-    ln -s /home/remoteusername/demandshaper/emoncms-remote /var/www/emoncms/Modules/demandshaper
+Symlink emoncms-remote module to Modules folder:
+
+    ln -s /home/username/demandshaper/emoncms-remote /var/www/emoncms/Modules/demandshaper
+
+
+Cron entry:
+
+    0 * * * * php /home/username/demandshaper/emoncms_remote_cache.php >> /var/log/demandshaper-cache.log
 
