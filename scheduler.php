@@ -56,8 +56,8 @@ function schedule($redis,$schedule)
     if ($signal=="carbonintensity") {
         $optimise = MIN;
         $start = $date->format('Y-m-d\TH:i\Z');
-        $result = json_decode(file_get_contents("https://api.carbonintensity.org.uk/intensity/$start/fw24h"));
-
+        //$result = json_decode(file_get_contents("https://api.carbonintensity.org.uk/intensity/$start/fw24h"));
+        $result = json_decode(file_get_contents("https://emoncms.org/demandshaper/carbonintensity"));
         if ($result!=null && isset($result->data)) {
             for ($i=0; $i<count($result->data); $i++) {
             
@@ -83,8 +83,8 @@ function schedule($redis,$schedule)
     // ----------------------------------------------------------------------------- 
     if ($signal=="octopus") {
         $optimise = MIN;
-        $result = json_decode(file_get_contents("https://api.octopus.energy/v1/products/AGILE-18-02-21/electricity-tariffs/E-1R-AGILE-18-02-21-D/standard-unit-rates/"));
-
+        //$result = json_decode(file_get_contents("https://api.octopus.energy/v1/products/AGILE-18-02-21/electricity-tariffs/E-1R-AGILE-18-02-21-D/standard-unit-rates/"));
+        $result = json_decode(file_get_contents("https://emoncms.org/demandshaper/octopus"));
         $start = $timestamp;
         $hh = 0;
 
@@ -222,7 +222,8 @@ function schedule($redis,$schedule)
              }
         }
         
-        $start_hour = $forecast[$pos][2];
+        $start_hour = 0;
+        if (isset($forecast[$pos])) $start_hour = $forecast[$pos][2];
         $end_hour = $start_hour;
         
         for ($i=0; $i<$period*2; $i++) {
