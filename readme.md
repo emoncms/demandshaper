@@ -45,3 +45,8 @@ Or from cron with:
 The demand shaper process publishes the device state to an MQTT topic of the form:
 
     emon/devicename/state
+
+## Remote Cache
+
+    ln -s /home/remoteusername/demandshaper/emoncms-remote /var/www/emoncms/Modules/demandshaper
+
