@@ -89,9 +89,13 @@ Add the cron entry:
 
 ![emoncms_allow.png](images/emoncms_allow.png)
 
+*What happened here?: The smart plug discovers the emonbase/emonpi automatically by listening out for the periodic UDP packet published by the emonbase/emonpi, enabled by the UDP broadcast script.*
+
 3. After clicking allow the smart plug will then appear in the inputs list with a small icon identifying it as a schedulable device: 
 
 ![schedulericon.png](images/schedulericon.png)
+
+*What happened here?: The smart plug received the MQTT authentication details from the emonbase/emonpi automatically as part of a pairing process enabled by clicking on Allow. After connecting to MQTT the smartplug sent a descriptor message that automatically created and configured an emoncms device based on the smartplug device template in the emoncms device module.*
 
 4. Click on the clock icon to load the demandshaper module, where the smart plug can be scheduled:
 
