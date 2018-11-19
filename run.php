@@ -147,8 +147,10 @@ while(true)
                         // SmartPlug and WIFI Relay
 
                         if ($device=="openevse") {
-                            $charge_current = 0; if ($status) $charge_current = 13;
+                            // $charge_current = 0; if ($status) $charge_current = 13;
                             // $mqtt_client->publish("openevse/rapi/in/\$SC",$charge_current,0); 
+                            
+                            // $mqtt_client->publish("openevse/rapi/in/\$ST","4 0 5 30",0); 
                         } else {
                             $mqtt_client->publish("emon/$device/status",$status,0);
                         }
