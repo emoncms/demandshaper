@@ -28,6 +28,7 @@ fclose($fh);
 chdir("/var/www/emoncms");
 require "process_settings.php";
 require "Lib/EmonLogger.php";
+require "core.php";
 
 // -------------------------------------------------------------------------
 // MQTT Connect
@@ -66,15 +67,44 @@ $demandshaper = new DemandShaper($mysqli,$redis);
 // -------------------------------------------------------------------------
 // Control Loop
 // -------------------------------------------------------------------------
-$lasttime = 0;
+$lasttime = time()-50;
+$last_30min = 0;
 $last_retry = 0;
 $openevse_time = "";
 
 while(true) 
 {
     $now = time();
+    
+    // ---------------------------------------------------------------------
+    // Load demand shaper and cache locally every hour
+    // ---------------------------------------------------------------------
+    if (($now-$last_30min)>=3600) {
+        $last_30min = $now;
 
-    if (($now-$lasttime)>=10) {
+        // Energy Local Bethesda demand shaper
+        if ($result = http_request("GET","https://cydynni.org.uk/bethesda/demandshaper",array())) {
+            $redis->set("demandshaper:bethesda",$result);
+            print "load: demandshaper:bethesda (".strlen($result).")\n";
+        }
+        
+        // Uk Grid carbon intensity
+        if ($result = http_request("GET","https://emoncms.org/demandshaper/carbonintensity",array())) {
+            $redis->set("demandshaper:carbonintensity",$result);
+            print "load: demandshaper:carbonintensity (".strlen($result).")\n";
+        }
+        
+        // Octopus agile
+        if ($result = http_request("GET","https://emoncms.org/demandshaper/octopus",array())) {
+            $redis->set("demandshaper:octopus",$result);
+            print "load: demandshaper:octopus (".strlen($result).")\n";
+        }
+    }
+
+    // ---------------------------------------------------------------------
+    // Control Loop
+    // ---------------------------------------------------------------------
+    if (($now-$lasttime)>=60) {
         $lasttime = $now;
 
         // Get time of start of day
@@ -153,8 +183,13 @@ while(true)
                             $openevse_time = "$sh $sm $eh $em";
                             
                             if ($openevse_time!=$last_openevse_time) {
-                                print "  emon/openevse/rapi/in/\$ST"." $openevse_time\n";
-                                $mqtt_client->publish("emon/openevse/rapi/in/\$ST",$openevse_time,0); 
+                                print "  emon/$device/rapi/in/\$ST"." $openevse_time\n";
+                                $mqtt_client->publish("emon/$device/rapi/in/\$ST",$openevse_time,0);
+                                
+                                // Log temporarily
+                                $fh = fopen("/home/pi/openevse.log","a");
+                                fwrite($fh,date("Y-m-d H:i:s",time())." emon/$device/rapi/in/\$ST $openevse_time\n");
+                                fclose($fh);
                             }
                         } else {
                             $mqtt_client->publish("emon/$device/status",$status,0);

@@ -66,7 +66,7 @@ function schedule($redis,$schedule)
         $optimise = MIN;
         $start = $date->format('Y-m-d\TH:i\Z');
         //$result = json_decode(file_get_contents("https://api.carbonintensity.org.uk/intensity/$start/fw24h"));
-        $result = json_decode(file_get_contents("https://emoncms.org/demandshaper/carbonintensity"));
+        $result = json_decode($redis->get("demandshaper:carbonintensity"));
         if ($result!=null && isset($result->data)) {
             for ($i=0; $i<count($result->data); $i++) {
             
@@ -93,7 +93,7 @@ function schedule($redis,$schedule)
     if ($signal=="octopus") {
         $optimise = MIN;
         //$result = json_decode(file_get_contents("https://api.octopus.energy/v1/products/AGILE-18-02-21/electricity-tariffs/E-1R-AGILE-18-02-21-D/standard-unit-rates/"));
-        $result = json_decode(file_get_contents("https://emoncms.org/demandshaper/octopus"));
+        $result = json_decode($redis->get("demandshaper:octopus"));
         $start = $timestamp;
         $hh = 0;
 
@@ -125,7 +125,7 @@ function schedule($redis,$schedule)
     // -----------------------------------------------------------------------------  
     else if ($signal=="cydynni") {
         $optimise = MAX;
-        $result = json_decode($redis->get("demandshaper"));
+        $result = json_decode($redis->get("demandshaper:bethesda"));
         
         // Validate demand shaper
         if  ($result!=null && isset($result->DATA)) {
