@@ -65,6 +65,8 @@ function demandshaper_controller()
                     $schedules->$device = $schedule;
                     $demandshaper->set($session["userid"],$schedules);
                     
+                    $redis->set("demandshaper:trigger",1);
+                    
                     $result = array("schedule"=>$schedule);
                 } else {
                     $result = "Schedule object not present";

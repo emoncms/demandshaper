@@ -76,6 +76,12 @@ while(true)
 {
     $now = time();
     
+    // demandshaper trigger
+    if ($trigger = $redis->get("demandshaper:trigger")) {
+        print "trigger\n";
+    }
+    
+    
     // ---------------------------------------------------------------------
     // Load demand shaper and cache locally every hour
     // ---------------------------------------------------------------------
@@ -104,8 +110,9 @@ while(true)
     // ---------------------------------------------------------------------
     // Control Loop
     // ---------------------------------------------------------------------
-    if (($now-$lasttime)>=60) {
+    if (($now-$lasttime)>=60 || $trigger) {
         $lasttime = $now;
+        $redis->set("demandshaper:trigger",0);
 
         // Get time of start of day
         $date = new DateTime();

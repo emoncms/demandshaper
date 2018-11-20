@@ -35,10 +35,16 @@ The demand shaper background process is called run.php. It can be ran manually w
 
     php run.php
 
-Or from cron with:
+From cron with:
 
     crontab -e
     * * * * * php /home/pi/demandshaper/run.php 2>&1
+    
+Or via service (recommended):
+
+    sudo ln -s /home/pi/demandshaper/demandshaper.service /lib/systemd/system
+    sudo systemctl enable demandshaper.service
+    sudo systemctl start demandshaper
     
 The demand shaper process publishes the device state to an MQTT topic of the form:
 
