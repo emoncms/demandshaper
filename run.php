@@ -96,12 +96,10 @@ while(true)
                     $device = $schedule->device;
                     print date("Y-m-d H:i:s")." Schedule:$device\n";
                     print "  timeleft: ".number_format($schedule->timeleft,3)."\n";
-                    
+                    print "  end timestamp: ".$schedule->end_timestamp."\n";                   
                     // -----------------------------------------------------------------------
                     // 1) Recalculate schedule
                     // -----------------------------------------------------------------------
-                    print "  end timestamp: ".$schedule->end_timestamp."\n";
-                    
                     if ($now>=$schedule->end_timestamp) {
                         print "  SET timeleft to schedule period\n";
                         $schedule->timeleft = $schedule->period;
@@ -111,7 +109,6 @@ while(true)
                     $schedule->periods = $r["periods"];
                     $schedule->probability = $r["probability"];
                     $schedule = json_decode(json_encode($schedule));
-                    
                     print "  reschedule ".json_encode($schedule->periods)."\n";
 
                     // -----------------------------------------------------------------------
@@ -121,7 +118,6 @@ while(true)
                     foreach ($schedule->periods as $pid=>$period) {
                         $start = $period->start[0];
                         $end = $period->end[0];
-                        
                         if ($now>=$start && $now<$end) $status = 1;
                     }
                     
