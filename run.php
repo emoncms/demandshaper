@@ -68,6 +68,7 @@ $demandshaper = new DemandShaper($mysqli,$redis);
 // -------------------------------------------------------------------------
 $lasttime = 0;
 $last_retry = 0;
+$openevse_time = "";
 
 while(true) 
 {
@@ -139,25 +140,26 @@ while(true)
                         print "  status: OFF\n";
                     }
                     
+                    // $connected = true; $device = "openevse";
+                    
                     // Publish to MQTT
                     if ($connected) {
                         // SmartPlug and WIFI Relay
 
                         if ($device=="openevse") {
-                            // $charge_current = 0; if ($status) $charge_current = 13;
-                            // $mqtt_client->publish("openevse/rapi/in/\$SC",$charge_current,0);
                             
-                            //$last_sh = $sh;
-                            //$last_sm = $sm;
-                            //$last_eh = $eh;
-                            //$last_em = $em;
+                            $s1 = $schedule->periods[0]->start[1];
+                            $e1 = $schedule->periods[0]->end[1];
+                            $sh = floor($s1); $sm = round(($s1-$sh)*60);
+                            $eh = floor($e1); $em = round(($e1-$eh)*60);
                             
-                            //$sh = floor($schedule->periods[0]->start);
-                            //$sm = round(($period->start-$sh)*60);
-                            //$eh = floor($period->end);
-                            //$em = round(($period->end-$eh)*60);
-                                                        
-                            //$mqtt_client->publish("emon/openevse/rapi/in/\$ST","$sh $sm $eh $em",0); 
+                            $last_openevse_time = $openevse_time;
+                            $openevse_time = "$sh $sm $eh $em";
+                            
+                            if ($openevse_time!=$last_openevse_time) {
+                                print "  emon/openevse/rapi/in/\$ST"." $openevse_time\n";
+                                $mqtt_client->publish("emon/openevse/rapi/in/\$ST",$openevse_time,0); 
+                            }
                         } else {
                             $mqtt_client->publish("emon/$device/status",$status,0);
                         }
