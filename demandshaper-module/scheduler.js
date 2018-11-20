@@ -163,7 +163,7 @@ function draw_schedule_output(schedule)
     if (schedule.periods.length) {
         var now = new Date();
         var now_hours = (now.getHours() + (now.getMinutes()/60));
-        var period_start = (schedule.periods[0].start);
+        var period_start = (schedule.periods[0].start[1]);
         
         var startsin = 0;
         if (now_hours>period_start) {
@@ -185,7 +185,7 @@ function draw_schedule_output(schedule)
     var periods = [];
     for (var z in schedule.periods) {
 
-        var start = 1*schedule.periods[z].start;
+        var start = 1*schedule.periods[z].start[1];
         if (start==0) start = "Midnight";
         else if (start==12) start = "Noon";
         else if (start>12) {
@@ -194,7 +194,7 @@ function draw_schedule_output(schedule)
             start = start+"am";
         }
         
-        var end = 1*schedule.periods[z].end;
+        var end = 1*schedule.periods[z].end[1];
         if (end==0) end = "Midnight";
         if (end==12) end = "Noon";
         else if (end>12) {

@@ -52,16 +52,20 @@ function demandshaper_controller()
                     
                     if ($schedule->runonce) $schedule->runonce = time();
                     
+                    $schedule->timeleft = $schedule->period;
                     $result = schedule($redis,$schedule);
                     
                     $schedule->periods = $result["periods"];
                     $schedule->probability = $result["probability"];
+                    
                     
                     $device = $schedule->device;
                     
                     $schedules = $demandshaper->get($session["userid"]);
                     $schedules->$device = $schedule;
                     $demandshaper->set($session["userid"],$schedules);
+                    
+                    $redis->set("demandshaper:trigger",1);
                     
                     $result = array("schedule"=>$schedule);
                 } else {

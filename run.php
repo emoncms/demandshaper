@@ -28,6 +28,7 @@ fclose($fh);
 chdir("/var/www/emoncms");
 require "process_settings.php";
 require "Lib/EmonLogger.php";
+require "core.php";
 
 // -------------------------------------------------------------------------
 // MQTT Connect
@@ -66,16 +67,52 @@ $demandshaper = new DemandShaper($mysqli,$redis);
 // -------------------------------------------------------------------------
 // Control Loop
 // -------------------------------------------------------------------------
-$laststatus = array();
-$lasttime = 0;
+$lasttime = time()-50;
+$last_30min = 0;
 $last_retry = 0;
+$openevse_time = "";
 
 while(true) 
 {
     $now = time();
+    
+    // demandshaper trigger
+    if ($trigger = $redis->get("demandshaper:trigger")) {
+        print "trigger\n";
+    }
+    
+    
+    // ---------------------------------------------------------------------
+    // Load demand shaper and cache locally every hour
+    // ---------------------------------------------------------------------
+    if (($now-$last_30min)>=3600) {
+        $last_30min = $now;
 
-    if (($now-$lasttime)>=10) {
+        // Energy Local Bethesda demand shaper
+        if ($result = http_request("GET","https://cydynni.org.uk/bethesda/demandshaper",array())) {
+            $redis->set("demandshaper:bethesda",$result);
+            print "load: demandshaper:bethesda (".strlen($result).")\n";
+        }
+        
+        // Uk Grid carbon intensity
+        if ($result = http_request("GET","https://emoncms.org/demandshaper/carbonintensity",array())) {
+            $redis->set("demandshaper:carbonintensity",$result);
+            print "load: demandshaper:carbonintensity (".strlen($result).")\n";
+        }
+        
+        // Octopus agile
+        if ($result = http_request("GET","https://emoncms.org/demandshaper/octopus",array())) {
+            $redis->set("demandshaper:octopus",$result);
+            print "load: demandshaper:octopus (".strlen($result).")\n";
+        }
+    }
+
+    // ---------------------------------------------------------------------
+    // Control Loop
+    // ---------------------------------------------------------------------
+    if (($now-$lasttime)>=60 || $trigger) {
         $lasttime = $now;
+        $redis->set("demandshaper:trigger",0);
 
         // Get time of start of day
         $date = new DateTime();
@@ -89,28 +126,36 @@ while(true)
         $schedules = $demandshaper->get($userid);
         if ($schedules!=null) 
         {
-            foreach ($schedules as $schedule)
+            foreach ($schedules as $sid=>$schedule)
             {
                 if ($schedule->active)
                 {
                     $device = $schedule->device;
-                    print date("Y-m-d H:i:s")." Schedule:$device";
+                    print date("Y-m-d H:i:s")." Schedule:$device\n";
+                    print "  timeleft: ".number_format($schedule->timeleft,3)."\n";
+                    print "  end timestamp: ".$schedule->end_timestamp."\n";                   
+                    // -----------------------------------------------------------------------
+                    // 1) Recalculate schedule
+                    // -----------------------------------------------------------------------
+                    if ($now>=$schedule->end_timestamp) {
+                        print "  SET timeleft to schedule period\n";
+                        $schedule->timeleft = $schedule->period;
+                    }
+                    
+                    $r = schedule($redis,$schedule);
+                    $schedule->periods = $r["periods"];
+                    $schedule->probability = $r["probability"];
+                    $schedule = json_decode(json_encode($schedule));
+                    print "  reschedule ".json_encode($schedule->periods)."\n";
+
+                    // -----------------------------------------------------------------------
+                    // 2) Work out if schedule is running
+                    // -----------------------------------------------------------------------  
                     $status = 0;
-                    
-                    $active_pid = -1;
-                    
                     foreach ($schedule->periods as $pid=>$period) {
-                        $start = ($period->start * 3600);
-                        $end = ($period->end * 3600);
-                        
-                        if ($start<=$end) {
-                            if ($second_in_day>=$start && $second_in_day<$end) $status = 1;
-                        } else {
-                            if ($second_in_day>=$start && $second_in_day<24*3600) $status = 1;
-                            if ($second_in_day>=0 && $second_in_day<$end) $status = 1;
-                        }
-                        
-                        if ($status) $active_pid = $pid; 
+                        $start = $period->start[0];
+                        $end = $period->end[0];
+                        if ($now>=$start && $now<$end) $status = 1;
                     }
                     
                     // If runonce is true, check if within 24h period
@@ -121,46 +166,48 @@ while(true)
                         if (!$schedule->repeat[$date->format("N")-1]) $status = 0;
                     }
 
-                    if ($status) print " ON\t"; else print " OFF\t";
-                    
-                    if (isset($laststatus[$device])) {
-                        print " $active_pid:$laststatus[$device]";
-                        print " ".json_encode($schedule->periods);
-                        
-                        if ($laststatus[$device]!=-1 && $active_pid==-1) {
-                            print "\n remove $laststatus[$device]";
-
-                            $r = schedule($redis,$schedule);
-                            $schedule->periods = $r["periods"];
-                            $schedule->probability = $r["probability"];
-                            print "\n new schedule: $device ".json_encode($schedule->periods);
-                            
-                            $schedules->$device = $schedule;
-                            $demandshaper->set($userid,$schedules);
-                        }
+                    if ($status) {
+                        print "  status: ON\n";
+                        $schedule->timeleft -= 10.0/3600.0;
+                    } else {
+                        print "  status: OFF\n";
                     }
                     
-                    print "\n";
+                    // $connected = true; $device = "openevse";
                     
                     // Publish to MQTT
                     if ($connected) {
                         // SmartPlug and WIFI Relay
 
                         if ($device=="openevse") {
-                            // $charge_current = 0; if ($status) $charge_current = 13;
-                            // $mqtt_client->publish("openevse/rapi/in/\$SC",$charge_current,0); 
                             
-                            // $mqtt_client->publish("openevse/rapi/in/\$ST","4 0 5 30",0); 
+                            $s1 = $schedule->periods[0]->start[1];
+                            $e1 = $schedule->periods[0]->end[1];
+                            $sh = floor($s1); $sm = round(($s1-$sh)*60);
+                            $eh = floor($e1); $em = round(($e1-$eh)*60);
+                            
+                            $last_openevse_time = $openevse_time;
+                            $openevse_time = "$sh $sm $eh $em";
+                            
+                            if ($openevse_time!=$last_openevse_time) {
+                                print "  emon/$device/rapi/in/\$ST"." $openevse_time\n";
+                                $mqtt_client->publish("emon/$device/rapi/in/\$ST",$openevse_time,0);
+                                
+                                // Log temporarily
+                                $fh = fopen("/home/pi/openevse.log","a");
+                                fwrite($fh,date("Y-m-d H:i:s",time())." emon/$device/rapi/in/\$ST $openevse_time\n");
+                                fclose($fh);
+                            }
                         } else {
                             $mqtt_client->publish("emon/$device/status",$status,0);
                         }
                     }
-                    
-                    $laststatus[$device] = $active_pid;
-                }
-            }
-        }
-    }
+                } // if active
+                $schedules->$sid = $schedule;
+            } // foreach schedules 
+            $demandshaper->set($userid,$schedules);
+        } // valid schedules
+    } // 10s update
     
     // MQTT Connect or Reconnect
     if (!$connected && (time()-$last_retry)>5.0) {

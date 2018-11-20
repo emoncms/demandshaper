@@ -1,0 +1,67 @@
+# Systemd unit file for mqtt input script
+
+# ***** NOTE: RUNS AS USER "pi" BY DEFAULT *****
+#  If running on a non-Raspbian environment, change "User=pi" in the [Service] section
+#  to the user of your choice (user must exist and should be the "emoncms" admin account)
+
+# INSTALL:
+
+# sudo ln -s /home/pi/demandshaper/demandshaper.service /lib/systemd/system
+
+# RUN AT STARTUP
+# sudo systemctl daemon-reload
+# sudo systemctl enable demandshaper.service
+
+# START / STOP With:
+# sudo systemctl start demandshaper
+# sudo systemctl stop demandshaper    
+
+# VIEW STATUS / LOG
+# If Using Syslog:
+# sudo systemctl status demandshaper -n50
+# where -nX is the number of log lines to view 
+# sudo journalctl -f -u demandshaper
+# Otherwise:
+# Specify
+#StandardOutput=file:/var/log/demandshaper.log
+# tail -f /var/log/demandshaper.log
+
+###
+#
+#  All Emoncms code is released under the GNU Affero General Public License.
+#  See COPYRIGHT.txt and LICENSE.txt.
+#
+#  ---------------------------------------------------------------------
+#  Emoncms - open source energy visualisation
+#  Part of the OpenEnergyMonitor project:
+#  http://openenergymonitor.org
+###
+
+[Unit]
+Description=Emoncms MQTT Input Script
+Wants=mosquitto.service mysql.service redis.service
+After=mosquitto.service mysql.service redis.service
+Documentation=https://github.com/emoncms/demandshaper.git
+
+# Uncomment this line to use a dedicated log file for StdOut and StdErr.
+# NOTE: only works in systemd v236+
+#       Debain "stretch" includes v232, "buster" includes v239
+#StandardOutput=file:/var/log/demandshaper.log
+
+[Service]
+Type=idle
+ExecStart=/usr/bin/php /home/pi/demandshaper/run.php
+User=pi
+
+# Restart script if stopped
+Restart=always
+# Wait 60s before restart
+RestartSec=60
+
+# Tag things in the log
+# If you want to use the journal instead of the file above, uncomment SyslogIdentifier below
+# View with: sudo journalctl -f -u demandshaper -o cat
+SyslogIdentifier=demandshaper
+
+[Install]
+WantedBy=multi-user.target
