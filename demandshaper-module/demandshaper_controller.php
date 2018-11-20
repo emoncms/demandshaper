@@ -52,10 +52,12 @@ function demandshaper_controller()
                     
                     if ($schedule->runonce) $schedule->runonce = time();
                     
+                    $schedule->timeleft = $schedule->period;
                     $result = schedule($redis,$schedule);
                     
                     $schedule->periods = $result["periods"];
                     $schedule->probability = $result["probability"];
+                    
                     
                     $device = $schedule->device;
                     

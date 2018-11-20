@@ -12,12 +12,15 @@ http://openenergymonitor.org
 
 */
 
+define("MAX",1);
+define("MIN",0);
+
 function schedule($redis,$schedule)
 {   
     $debug = 0;
     
     $end_time = $schedule->end;
-    $period = $schedule->period;
+    $period = $schedule->timeleft;
     $interruptible = $schedule->interruptible;
     
     // Default demand shaper: carbon intensity
@@ -27,8 +30,8 @@ function schedule($redis,$schedule)
     // Basic mode
     if (isset($schedule->basic) && $schedule->basic) {
         $periods = array();
-        $start = $schedule->end - $schedule->period;
-        $end = $schedule->end;
+        $start = $end_time - $period;
+        $end = $end_time;
         $periods[] = array("start"=>$start, "end"=>$end);
         return $periods;
     }
@@ -47,8 +50,7 @@ function schedule($redis,$schedule)
     // -----------------------------------------------------------------------------   
     $forecast = array();
     $available = 1;
-    define("MAX",1);
-    define("MIN",0);
+
     
     // -----------------------------------------------------------------------------
     // Grid carbon intensity

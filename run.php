@@ -66,7 +66,6 @@ $demandshaper = new DemandShaper($mysqli,$redis);
 // -------------------------------------------------------------------------
 // Control Loop
 // -------------------------------------------------------------------------
-$laststatus = array();
 $lasttime = 0;
 $last_retry = 0;
 
@@ -74,7 +73,7 @@ while(true)
 {
     $now = time();
 
-    if (($now-$lasttime)>=10) {
+    if (($now-$lasttime)>=60) {
         $lasttime = $now;
 
         // Get time of start of day
@@ -89,14 +88,28 @@ while(true)
         $schedules = $demandshaper->get($userid);
         if ($schedules!=null) 
         {
-            foreach ($schedules as $schedule)
+            foreach ($schedules as $sid=>$schedule)
             {
                 if ($schedule->active)
                 {
                     $device = $schedule->device;
-                    print date("Y-m-d H:i:s")." Schedule:$device";
-                    $status = 0;
+                    print date("Y-m-d H:i:s")." Schedule:$device\n";
+                    print "  timeleft: ".$schedule->timeleft."\n";
                     
+                    // -----------------------------------------------------------------------
+                    // 1) Recalculate schedule
+                    // -----------------------------------------------------------------------
+                    $r = schedule($redis,$schedule);
+                    $schedule->periods = $r["periods"];
+                    $schedule->probability = $r["probability"];
+                    $schedule = json_decode(json_encode($schedule));
+                    
+                    print "  reschedule ".json_encode($schedule->periods)."\n";
+
+                    // -----------------------------------------------------------------------
+                    // 2) Work out if schedule is running
+                    // -----------------------------------------------------------------------  
+                    $status = 0;
                     $active_pid = -1;
                     
                     foreach ($schedule->periods as $pid=>$period) {
@@ -110,7 +123,7 @@ while(true)
                             if ($second_in_day>=0 && $second_in_day<$end) $status = 1;
                         }
                         
-                        if ($status) $active_pid = $pid; 
+                        if ($status) $active_pid = $pid;
                     }
                     
                     // If runonce is true, check if within 24h period
@@ -121,26 +134,17 @@ while(true)
                         if (!$schedule->repeat[$date->format("N")-1]) $status = 0;
                     }
 
-                    if ($status) print " ON\t"; else print " OFF\t";
-                    
-                    if (isset($laststatus[$device])) {
-                        print " $active_pid:$laststatus[$device]";
-                        print " ".json_encode($schedule->periods);
+                    if ($status) {
+                        print "  status: ON\n";
+                        $schedule->timeleft -= 10.0/3600.0;
                         
-                        if ($laststatus[$device]!=-1 && $active_pid==-1) {
-                            print "\n remove $laststatus[$device]";
-
-                            $r = schedule($redis,$schedule);
-                            $schedule->periods = $r["periods"];
-                            $schedule->probability = $r["probability"];
-                            print "\n new schedule: $device ".json_encode($schedule->periods);
-                            
-                            $schedules->$device = $schedule;
-                            $demandshaper->set($userid,$schedules);
-                        }
-                    }
+                        
+                    } else {
+                        print "  status: OFF\n";
+                    }  
                     
-                    print "\n";
+                    // restart schedule
+                    if ($schedule->timeleft<=0) $schedule->timeleft = $schedule->period;
                     
                     // Publish to MQTT
                     if ($connected) {
@@ -148,19 +152,29 @@ while(true)
 
                         if ($device=="openevse") {
                             // $charge_current = 0; if ($status) $charge_current = 13;
-                            // $mqtt_client->publish("openevse/rapi/in/\$SC",$charge_current,0); 
+                            // $mqtt_client->publish("openevse/rapi/in/\$SC",$charge_current,0);
                             
-                            // $mqtt_client->publish("openevse/rapi/in/\$ST","4 0 5 30",0); 
+                            //$last_sh = $sh;
+                            //$last_sm = $sm;
+                            //$last_eh = $eh;
+                            //$last_em = $em;
+                            
+                            //$sh = floor($schedule->periods[0]->start);
+                            //$sm = round(($period->start-$sh)*60);
+                            //$eh = floor($period->end);
+                            //$em = round(($period->end-$eh)*60);
+                                                        
+                            //$mqtt_client->publish("emon/openevse/rapi/in/\$ST","$sh $sm $eh $em",0); 
                         } else {
                             $mqtt_client->publish("emon/$device/status",$status,0);
                         }
                     }
-                    
-                    $laststatus[$device] = $active_pid;
-                }
-            }
-        }
-    }
+                } // if active
+                $schedules->$sid = $schedule;
+            } // foreach schedules 
+            $demandshaper->set($userid,$schedules);
+        } // valid schedules
+    } // 10s update
     
     // MQTT Connect or Reconnect
     if (!$connected && (time()-$last_retry)>5.0) {
