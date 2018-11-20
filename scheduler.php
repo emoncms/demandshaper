@@ -28,15 +28,15 @@ function schedule($redis,$schedule)
     if (isset($schedule->signal)) $signal = $schedule->signal;
     
     // Basic mode
-    if (isset($schedule->basic) && $schedule->basic) {
-        $periods = array();
-        $start = $end_time - $period;
-        $end = $end_time;
-        $periods[] = array("start"=>$start, "end"=>$end);
-        return $periods;
-    }
-
-    $timestamp = floor(time()/1800)*1800;
+    // if (isset($schedule->basic) && $schedule->basic) {
+    //    $periods = array();
+    //    $start = $end_time - $period;
+    //    $end = $end_time;
+    //    $periods[] = array("start"=>$start, "end"=>$end);
+    //    return $periods;
+    // }
+    $now = time();
+    $timestamp = floor($now/1800)*1800;
     $date = new DateTime();
     $date->setTimezone(new DateTimeZone("Europe/London"));
 
@@ -45,7 +45,14 @@ function schedule($redis,$schedule)
     $m = 1*$date->format('i')/60;
     $start_hour = $h + $m;
     
-    $end_time = floor($end_time / 0.5)*0.5;
+    // -----------------------------------------------------------------------------
+    // Convert end time to timestamp
+    $end_time = floor($end_time / 0.5) * 0.5;
+    
+    $date->modify("midnight");
+    $end_timestamp = $date->getTimestamp() + $end_time*3600;
+    if ($end_timestamp<$now) $end_timestamp+=3600*24;
+    $schedule->end_timestamp = $end_timestamp;
     
     // -----------------------------------------------------------------------------   
     $forecast = array();
@@ -225,19 +232,25 @@ function schedule($redis,$schedule)
         }
         
         $start_hour = 0;
-        if (isset($forecast[$pos])) $start_hour = $forecast[$pos][2];
+        $tstart = 0;
+        if (isset($forecast[$pos])) {
+            $start_hour = $forecast[$pos][2];
+            $tstart = $forecast[$pos][0]*0.001;
+        }
         $end_hour = $start_hour;
+        $tend = $tstart;
         
         for ($i=0; $i<$period*2; $i++) {
             $forecast[$pos+$i][4] = 1;
             $end_hour+=0.5;
+            $tend+=1800;
             if ($end_hour>=24) $end_hour -= 24;
             // dont allow to run past end time
             if ($end_hour==$end_time) break;
         }
         
         $periods = array();
-        $periods[] = array("start"=>$start_hour, "end"=>$end_hour);
+        $periods[] = array("start"=>array($tstart,$start_hour), "end"=>array($tend,$end_hour));
         
         return array("periods"=>$periods,"probability"=>$forecast);
 
@@ -273,25 +286,33 @@ function schedule($redis,$schedule)
         $periods = array();
         
         $start = null;
+        $tstart = null;
+        $tend = null;
         
         $i = 0;
         $last = 0;
         for ($hh=0; $hh<48; $hh++) {
             $hour = $forecast[$hh][2];
+            $timestamp = $forecast[$hh][0]*0.001;
             $val = $forecast[$hh][4];
         
             if ($i==0) {
-                if ($val) $start = $hour;
+                if ($val) {
+                    $start = $hour;
+                    $tstart = $timestamp;
+                }
                 $last = $val;
             }
             
             if ($last==0 && $val==1) {
                 $start = $hour;
+                $tstart = $timestamp;
             }
             
             if ($last==1 && $val==0) {
                 $end = $hour*1;
-                $periods[] = array("start"=>$start, "end"=>$end);
+                $tend = $timestamp;
+                $periods[] = array("start"=>array($tstart,$start), "end"=>array($tend,$end));
             }
             
             $last = $val;
@@ -300,7 +321,8 @@ function schedule($redis,$schedule)
         
         if ($last==1) {
             $end = $hour+0.5;
-            $periods[] = array("start"=>$start, "end"=>$end);
+            $tend = $timestamp + 1800;
+            $periods[] = array("start"=>array($tstart,$start), "end"=>array($tend,$end));
         }
         
         return array("periods"=>$periods,"probability"=>$forecast);

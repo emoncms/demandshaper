@@ -73,7 +73,7 @@ while(true)
 {
     $now = time();
 
-    if (($now-$lasttime)>=60) {
+    if (($now-$lasttime)>=10) {
         $lasttime = $now;
 
         // Get time of start of day
@@ -94,11 +94,18 @@ while(true)
                 {
                     $device = $schedule->device;
                     print date("Y-m-d H:i:s")." Schedule:$device\n";
-                    print "  timeleft: ".$schedule->timeleft."\n";
+                    print "  timeleft: ".number_format($schedule->timeleft,3)."\n";
                     
                     // -----------------------------------------------------------------------
                     // 1) Recalculate schedule
                     // -----------------------------------------------------------------------
+                    print "  end timestamp: ".$schedule->end_timestamp."\n";
+                    
+                    if ($now>=$schedule->end_timestamp) {
+                        print "  SET timeleft to schedule period\n";
+                        $schedule->timeleft = $schedule->period;
+                    }
+                    
                     $r = schedule($redis,$schedule);
                     $schedule->periods = $r["periods"];
                     $schedule->probability = $r["probability"];
@@ -110,20 +117,11 @@ while(true)
                     // 2) Work out if schedule is running
                     // -----------------------------------------------------------------------  
                     $status = 0;
-                    $active_pid = -1;
-                    
                     foreach ($schedule->periods as $pid=>$period) {
-                        $start = ($period->start * 3600);
-                        $end = ($period->end * 3600);
+                        $start = $period->start[0];
+                        $end = $period->end[0];
                         
-                        if ($start<=$end) {
-                            if ($second_in_day>=$start && $second_in_day<$end) $status = 1;
-                        } else {
-                            if ($second_in_day>=$start && $second_in_day<24*3600) $status = 1;
-                            if ($second_in_day>=0 && $second_in_day<$end) $status = 1;
-                        }
-                        
-                        if ($status) $active_pid = $pid;
+                        if ($now>=$start && $now<$end) $status = 1;
                     }
                     
                     // If runonce is true, check if within 24h period
@@ -137,14 +135,9 @@ while(true)
                     if ($status) {
                         print "  status: ON\n";
                         $schedule->timeleft -= 10.0/3600.0;
-                        
-                        
                     } else {
                         print "  status: OFF\n";
-                    }  
-                    
-                    // restart schedule
-                    if ($schedule->timeleft<=0) $schedule->timeleft = $schedule->period;
+                    }
                     
                     // Publish to MQTT
                     if ($connected) {
