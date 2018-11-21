@@ -72,6 +72,8 @@ $last_30min = 0;
 $last_retry = 0;
 $openevse_time = "";
 
+$update_interval = 60;
+
 while(true) 
 {
     $now = time();
@@ -110,7 +112,7 @@ while(true)
     // ---------------------------------------------------------------------
     // Control Loop
     // ---------------------------------------------------------------------
-    if (($now-$lasttime)>=60 || $trigger) {
+    if (($now-$lasttime)>=$update_interval || $trigger) {
         $lasttime = $now;
         $redis->set("demandshaper:trigger",0);
 
@@ -124,7 +126,7 @@ while(true)
 
         // Schedule definition
         $schedules = $demandshaper->get($userid);
-        if ($schedules!=null) 
+        if ($schedules!=null)
         {
             foreach ($schedules as $sid=>$schedule)
             {
@@ -133,7 +135,7 @@ while(true)
                     $device = $schedule->device;
                     print date("Y-m-d H:i:s")." Schedule:$device\n";
                     print "  timeleft: ".number_format($schedule->timeleft,3)."\n";
-                    print "  end timestamp: ".$schedule->end_timestamp."\n";                   
+                    print "  end timestamp: ".$schedule->end_timestamp."\n";
                     // -----------------------------------------------------------------------
                     // 1) Recalculate schedule
                     // -----------------------------------------------------------------------
@@ -168,7 +170,7 @@ while(true)
 
                     if ($status) {
                         print "  status: ON\n";
-                        $schedule->timeleft -= 10.0/3600.0;
+                        $schedule->timeleft -= $update_interval/3600.0;
                     } else {
                         print "  status: OFF\n";
                     }
@@ -189,7 +191,7 @@ while(true)
                             $last_openevse_time = $openevse_time;
                             $openevse_time = "$sh $sm $eh $em";
                             
-                            if ($openevse_time!=$last_openevse_time) {
+                            if ($openevse_time!=$last_openevse_time && ("$sh $sm"!="$eh $em")) {
                                 print "  emon/$device/rapi/in/\$ST"." $openevse_time\n";
                                 $mqtt_client->publish("emon/$device/rapi/in/\$ST",$openevse_time,0);
                                 
