@@ -186,23 +186,33 @@ function draw_schedule_output(schedule)
     for (var z in schedule.periods) {
 
         var start = 1*schedule.periods[z].start[1];
-        if (start==0) start = "Midnight";
-        else if (start==12) start = "Noon";
-        else if (start>12) {
-            start = (start - 12)+"pm";
-        } else if (start<12) {
-            start = start+"am";
+        var sh = Math.floor(start);
+        var sm = (start - sh) * 60;
+        if (sm<10) sm = "0"+sm;
+        var start_str = sh+":"+sm;
+        if (start==0) start_str = "Midnight";
+        else if (start==12) start_str = "Noon";
+        else if (sh>12) {
+            sh = sh - 12;
+            start_str = sh+":"+sm+" pm";
+        } else if (sh<12) {
+            start_str += "am";
         }
         
         var end = 1*schedule.periods[z].end[1];
-        if (end==0) end = "Midnight";
-        if (end==12) end = "Noon";
-        else if (end>12) {
-            end = (end - 12)+"pm";
-        } else if (end<12) {
-            end = end+"am";
+        var eh = Math.floor(end);
+        var em = (end - eh) * 60;
+        if (em<10) em = "0"+em;
+        var end_str = eh+":"+em;
+        if (end==0) end_str = "Midnight";
+        else if (end==12) end_str = "Noon";
+        else if (eh>12) {
+            eh = eh - 12;
+            end_str = eh+":"+em+" pm";
+        } else if (eh<12) {
+            end_str += "am";
         }
-        periods.push(start+" to "+end+" ");
+        periods.push(start_str+" to "+end_str);
     }
 
     out += "<b>"+periods.join(", ")+"</b>";

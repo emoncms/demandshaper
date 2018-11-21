@@ -37,6 +37,7 @@ function schedule($redis,$schedule)
     // }
     $now = time();
     $timestamp = floor($now/1800)*1800;
+    $start_timestamp = $timestamp;
     $date = new DateTime();
     $date->setTimezone(new DateTimeZone("Europe/London"));
 
@@ -82,7 +83,7 @@ function schedule($redis,$schedule)
                 
                 if ($hour==$end_time && $start_hour!=$end_time) $available = 0;
                 
-                $forecast[] = array($timestamp*1000,$co2intensity,$hour,$available,0);
+                if ($timestamp>=$start_timestamp) $forecast[] = array($timestamp*1000,$co2intensity,$hour,$available,0);
             }
         }
     }
@@ -113,7 +114,7 @@ function schedule($redis,$schedule)
                     
                     if ($hour==$end_time && $start_hour!=$end_time) $available = 0;
                     
-                    $forecast[] = array($timestamp*1000,$co2intensity,$hour,$available,0);
+                    if ($timestamp>=$start_timestamp) $forecast[] = array($timestamp*1000,$co2intensity,$hour,$available,0);
                     $hh++;
                 }
             }
