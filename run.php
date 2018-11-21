@@ -136,22 +136,9 @@ while(true)
                     print date("Y-m-d H:i:s")." Schedule:$device\n";
                     print "  timeleft: ".number_format($schedule->timeleft,3)."\n";
                     print "  end timestamp: ".$schedule->end_timestamp."\n";
-                    // -----------------------------------------------------------------------
-                    // 1) Recalculate schedule
-                    // -----------------------------------------------------------------------
-                    if ($now>=$schedule->end_timestamp) {
-                        print "  SET timeleft to schedule period\n";
-                        $schedule->timeleft = $schedule->period;
-                    }
-                    
-                    $r = schedule($redis,$schedule);
-                    $schedule->periods = $r["periods"];
-                    $schedule->probability = $r["probability"];
-                    $schedule = json_decode(json_encode($schedule));
-                    print "  reschedule ".json_encode($schedule->periods)."\n";
 
                     // -----------------------------------------------------------------------
-                    // 2) Work out if schedule is running
+                    // Work out if schedule is running
                     // -----------------------------------------------------------------------  
                     $status = 0;
                     foreach ($schedule->periods as $pid=>$period) {
@@ -204,6 +191,23 @@ while(true)
                             $mqtt_client->publish("emon/$device/status",$status,0);
                         }
                     }
+                    
+                    // -----------------------------------------------------------------------
+                    // Recalculate schedule
+                    // -----------------------------------------------------------------------
+                    if (!$status || $schedule->interruptible) {
+                        if ($now>=$schedule->end_timestamp) {
+                            print "  SET timeleft to schedule period\n";
+                            $schedule->timeleft = $schedule->period;
+                        }
+                        
+                        $r = schedule($redis,$schedule);
+                        $schedule->periods = $r["periods"];
+                        $schedule->probability = $r["probability"];
+                        $schedule = json_decode(json_encode($schedule));
+                        print "  reschedule ".json_encode($schedule->periods)."\n";
+                    }
+                    
                 } // if active
                 $schedules->$sid = $schedule;
             } // foreach schedules 
