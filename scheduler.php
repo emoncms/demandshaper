@@ -81,8 +81,7 @@ function schedule($redis,$schedule)
                 $m = 1*$date->format('i')/60;
                 $hour = $h + $m;
                 
-                if ($hour==$end_time && $start_hour!=$end_time) $available = 0;
-                
+                if ($timestamp>=$end_timestamp) $available = 0;
                 if ($timestamp>=$start_timestamp) $forecast[] = array($timestamp*1000,$co2intensity,$hour,$available,0);
             }
         }
@@ -112,8 +111,7 @@ function schedule($redis,$schedule)
                     $m = 1*$date->format('i')/60;
                     $hour = $h + $m;
                     
-                    if ($hour==$end_time && $start_hour!=$end_time) $available = 0;
-                    
+                    if ($timestamp>=$end_timestamp) $available = 0;
                     if ($timestamp>=$start_timestamp) $forecast[] = array($timestamp*1000,$co2intensity,$hour,$available,0);
                     $hh++;
                 }
@@ -151,15 +149,14 @@ function schedule($redis,$schedule)
             
             //------------------------
             
-            for ($i=0; $i<48; $i++) {
+            for ($i=0; $i<count($EL_signal); $i++) {
 
                 $date->setTimestamp($timestamp);
                 $h = 1*$date->format('H');
                 $m = 1*$date->format('i')/60;
                 $hour = $h + $m;
                 
-                if ($hour==$end_time && $start_hour!=$end_time) $available = 0;
-                
+                if ($timestamp>=$end_timestamp) $available = 0;
                 $forecast[] = array($timestamp*1000,$EL_signal[$hour],$hour,$available,0);
                 $timestamp += 1800; 
             }
@@ -178,8 +175,7 @@ function schedule($redis,$schedule)
             
             if ($hour>=0.0 && $hour<7.0) $economy7 = 0.07; else $economy7 = 0.15;
             
-            if ($hour==$end_time && $start_hour!=$end_time) $available = 0;
-            
+            if ($timestamp>=$end_timestamp) $available = 0;
             $forecast[] = array($timestamp*1000,$economy7,$hour,$available,0);
             $timestamp += 1800; 
         }
@@ -208,7 +204,7 @@ function schedule($redis,$schedule)
         // ---------------------------------------------------------------------------------
         
         // For each half hour in profile
-        for ($hh=0; $hh<48; $hh++) {
+        for ($hh=0; $hh<count($forecast); $hh++) {
 
              // Calculate sum of probability function values for block of demand covering hours in period
              $sum = 0;
@@ -266,7 +262,7 @@ function schedule($redis,$schedule)
             if ($optimise==MIN) $threshold = $forecast_max; else $threshold = $forecast_min;
             $pos = -1;
             // for each hour in probability profile
-            for ($hh=0; $hh<48; $hh++) {
+            for ($hh=0; $hh<count($forecast); $hh++) {
                 // Find the hour with the maximum amount of available power
                 // that has not yet been alloated to this load
                 // if available && !allocated && $val>$max
@@ -292,7 +288,7 @@ function schedule($redis,$schedule)
         
         $i = 0;
         $last = 0;
-        for ($hh=0; $hh<48; $hh++) {
+        for ($hh=0; $hh<count($forecast); $hh++) {
             $hour = $forecast[$hh][2];
             $timestamp = $forecast[$hh][0]*0.001;
             $val = $forecast[$hh][4];
