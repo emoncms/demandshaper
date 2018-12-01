@@ -51,8 +51,25 @@ function demandshaper_controller()
                     if (!isset($schedule->runonce)) return array("content"=>"Missing runonce parameter in schedule object");
                     
                     if ($schedule->runonce) $schedule->runonce = time();
+
+                    // -------------------------------------------------
+                    // Calculate time left
+                    // -------------------------------------------------
+                    $now = time();
+                    $date = new DateTime();
+                    $date->setTimezone(new DateTimeZone("Europe/London"));
+                    $date->setTimestamp($now);
+                    $date->modify("midnight");
                     
+                    $end_time = floor($schedule->end / 0.5) * 0.5;
+                    $end_timestamp = $date->getTimestamp() + $end_time*3600;
+                    if ($end_timestamp<$now) $end_timestamp+=3600*24;
+                    
+                    $timeleft = ($end_timestamp - $now) / 3600;
                     $schedule->timeleft = $schedule->period;
+                    if ($schedule->timeleft>$timeleft) $schedule->timeleft = $timeleft;
+                    // -------------------------------------------------
+                    
                     $result = schedule($redis,$schedule);
                     
                     $schedule->periods = $result["periods"];
