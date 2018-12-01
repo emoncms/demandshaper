@@ -65,8 +65,8 @@ function demandshaper_controller()
                     $end_timestamp = $date->getTimestamp() + $end_time*3600;
                     if ($end_timestamp<$now) $end_timestamp+=3600*24;
                     
-                    $timeleft = ($end_timestamp - $now) / 3600;
-                    $schedule->timeleft = $schedule->period;
+                    $timeleft = $end_timestamp - $now;
+                    $schedule->timeleft = $schedule->period * 3600;
                     if ($schedule->timeleft>$timeleft) $schedule->timeleft = $timeleft;
                     // -------------------------------------------------
                     

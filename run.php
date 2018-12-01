@@ -112,7 +112,7 @@ while(true)
     // ---------------------------------------------------------------------
     // Control Loop
     // ---------------------------------------------------------------------
-    if (($now-$lasttime)>=$update_interval || $trigger) {
+    if ($now%$update_interval==0 || $trigger) {
         $lasttime = $now;
         $redis->set("demandshaper:trigger",0);
 
@@ -134,7 +134,7 @@ while(true)
                 {
                     $device = $schedule->device;
                     print date("Y-m-d H:i:s")." Schedule:$device\n";
-                    print "  timeleft: ".number_format($schedule->timeleft,3)."\n";
+                    print "  timeleft: ".$schedule->timeleft."s\n";
                     print "  end timestamp: ".$schedule->end_timestamp."\n";
 
                     // -----------------------------------------------------------------------
@@ -157,7 +157,7 @@ while(true)
 
                     if ($status) {
                         print "  status: ON\n";
-                        $schedule->timeleft -= $update_interval/3600.0;
+                        $schedule->timeleft -= $update_interval;
                     } else {
                         print "  status: OFF\n";
                     }
@@ -198,7 +198,7 @@ while(true)
                     if (!$status || $schedule->interruptible) {
                         if ($now>=$schedule->end_timestamp) {
                             print "  SET timeleft to schedule period\n";
-                            $schedule->timeleft = $schedule->period;
+                            $schedule->timeleft = $schedule->period * 3600;
                         }
                         
                         $r = schedule($redis,$schedule);

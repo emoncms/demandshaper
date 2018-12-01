@@ -20,7 +20,8 @@ function schedule($redis,$schedule)
     $debug = 0;
     
     $end_time = $schedule->end;
-    $period = $schedule->timeleft;
+    $period = $schedule->timeleft / 3600;
+    if ($period<0) $period = 0;
     $interruptible = $schedule->interruptible;
     
     // Default demand shaper: carbon intensity
