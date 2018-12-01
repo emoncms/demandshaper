@@ -141,10 +141,12 @@ while(true)
                     // Work out if schedule is running
                     // -----------------------------------------------------------------------  
                     $status = 0;
-                    foreach ($schedule->periods as $pid=>$period) {
-                        $start = $period->start[0];
-                        $end = $period->end[0];
-                        if ($now>=$start && $now<$end) $status = 1;
+                    if ($schedule->timeleft>0) {
+                        foreach ($schedule->periods as $pid=>$period) {
+                            $start = $period->start[0];
+                            $end = $period->end[0];
+                            if ($now>=$start && $now<$end) $status = 1;
+                        }
                     }
                     
                     // If runonce is true, check if within 24h period
@@ -158,6 +160,7 @@ while(true)
                     if ($status) {
                         print "  status: ON\n";
                         $schedule->timeleft -= $update_interval;
+                        if ($schedule->timeleft<0) $schedule->timeleft = 0;
                     } else {
                         print "  status: OFF\n";
                     }
