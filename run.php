@@ -67,12 +67,13 @@ $demandshaper = new DemandShaper($mysqli,$redis);
 // -------------------------------------------------------------------------
 // Control Loop
 // -------------------------------------------------------------------------
-$lasttime = time()-50;
 $last_30min = 0;
 $last_retry = 0;
 $openevse_time = "";
 
 $update_interval = 60;
+
+$lasttime = array();
 
 while(true) 
 {
@@ -113,7 +114,7 @@ while(true)
     // Control Loop
     // ---------------------------------------------------------------------
     if ($now%$update_interval==0 || $trigger) {
-        $lasttime = $now;
+
         $redis->set("demandshaper:trigger",0);
 
         // Get time of start of day
@@ -199,7 +200,7 @@ while(true)
                     // Recalculate schedule
                     // -----------------------------------------------------------------------
                     if (!$status || $schedule->interruptible) {
-                        if ($now>=$schedule->end_timestamp) {
+                        if ($now>$schedule->end_timestamp) {
                             print "  SET timeleft to schedule period\n";
                             $schedule->timeleft = $schedule->period * 3600;
                         }

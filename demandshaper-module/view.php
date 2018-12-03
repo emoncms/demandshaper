@@ -12,7 +12,9 @@ http://openenergymonitor.org
 */
 
 global $path;
-$device = $_GET['node'];
+
+$device = "";
+if (isset($_GET['node'])) $device = $_GET['node'];
 
 ?>
 
@@ -146,85 +148,97 @@ $device = $_GET['node'];
 }
 
 </style>
+<link rel="stylesheet" href="<?php echo $path; ?>Lib/misc/sidebar.css">
 
-<div style="height:20px"></div>
+<div id="wrapper">
+  <div class="sidenav">
+    <div class="sidenav-inner">
+      <ul class="sidenav-menu"></ul>
+    </div>
+  </div>
+  
+  <div style="height:20px"></div>
 
-<div id="table">
-  <div class="node-scheduler-title"><?php echo $device; ?></div>
-  <div class="node-scheduler" node="<?php echo $device; ?>">
+  <div id="table">
+    <div class="node-scheduler-title"></div>
+    <div class="node-scheduler" node="">
 
-    <div class="scheduler-inner">
-      <div class="scheduler-startsin"><span class='startsin'></span></div>
-      <div class="scheduler-title">Schedule</div>
+      <div class="scheduler-inner">
+        <div class="scheduler-startsin"><span class='startsin'></span></div>
+        <div class="scheduler-title">Schedule</div>
 
-      <div class="scheduler-inner2">
-        <div class="scheduler-controls">
-        
-          <!---------------------------------------------------------------------------------------------------------------------------->
-          <!-- CONTROLS -->
-          <!---------------------------------------------------------------------------------------------------------------------------->
-          <div name="active" state=0 class="input scheduler-checkbox"></div>
-            <div class="scheduler-checkbox-label">Active</div>
-            <div style='clear:both'></div>
-          <br>
+        <div class="scheduler-inner2">
+          <div class="scheduler-controls">
           
-          <div style="display:inline-block; width:120px;">Run period:</div>
-            <input class="input timepicker-hour" type="text" name="period-hour" style="width:45px" /> hrs
-            <input class="input timepicker-minute" type="text" name="period-minute" style="width:45px" /> mins
-          <br>
+            <!---------------------------------------------------------------------------------------------------------------------------->
+            <!-- CONTROLS -->
+            <!---------------------------------------------------------------------------------------------------------------------------->
+            <div name="active" state=0 class="input scheduler-checkbox"></div>
+              <div class="scheduler-checkbox-label">Active</div>
+              <div style='clear:both'></div>
+            <br>
+            
+            <div style="display:inline-block; width:120px;">Run period:</div>
+              <input class="input timepicker-hour" type="text" name="period-hour" style="width:45px" /> hrs
+              <input class="input timepicker-minute" type="text" name="period-minute" style="width:45px" /> mins
+            <br>
 
-          <div style="display:inline-block; width:120px;">Complete by:</div>
-            <input class="input timepicker-hour" type="text" name="end-hour" style="width:45px" /> : 
-            <input class="input timepicker-minute" type="text" name="end-minute" style="width:45px" />
-          <br>
-          <br>
-          <div name="interruptible" state=0 class="input scheduler-checkbox"></div>
-            <div class="scheduler-checkbox-label">Ok to interrupt schedule</div>
-            <div style='clear:both'></div>
-          <br>
-          
-          <p>Repeat:</p>
-          <div class="weekly-scheduler-days">
-            <div name="repeat" day=0 val=0 class="input weekly-scheduler weekly-scheduler-day"><div style="padding-top:15px">Mon</div></div>
-            <div name="repeat" day=1 val=0 class="input weekly-scheduler weekly-scheduler-day"><div style="padding-top:15px">Tue</div></div>
-            <div name="repeat" day=2 val=0 class="input weekly-scheduler weekly-scheduler-day"><div style="padding-top:15px">Wed</div></div>
-            <div name="repeat" day=3 val=0 class="input weekly-scheduler weekly-scheduler-day"><div style="padding-top:15px">Thu</div></div>
-            <div name="repeat" day=4 val=0 class="input weekly-scheduler weekly-scheduler-day"><div style="padding-top:15px">Fri</div></div>
-            <div name="repeat" day=5 val=0 class="input weekly-scheduler weekly-scheduler-day"><div style="padding-top:15px">Sat</div></div>
-            <div name="repeat" day=6 val=0 class="input weekly-scheduler weekly-scheduler-day"><div style="padding-top:15px">Sun</div></div>
-          </div>
-          <br>
-          <!---------------------------------------------------------------------------------------------------------------------------->
-        </div>
-
-        <button class="scheduler-save btn">Save</button><button class="scheduler-clear btn" style="margin-left:10px">Clear</button>
-        <br><br>
-        <div class="schedule-output-heading"><div class="triangle-dropdown hide"></div><div class="triangle-pushup"></div>Schedule Output</div>
-
-        <div class="schedule-output-box">
-          <div id="schedule-output"></div>
-          <div id="placeholder_bound" style="width:100%; height:300px">
-            <div id="placeholder" style="height:300px"></div>
+            <div style="display:inline-block; width:120px;">Complete by:</div>
+              <input class="input timepicker-hour" type="text" name="end-hour" style="width:45px" /> : 
+              <input class="input timepicker-minute" type="text" name="end-minute" style="width:45px" />
+            <br>
+            <br>
+            <div name="interruptible" state=0 class="input scheduler-checkbox"></div>
+              <div class="scheduler-checkbox-label">Ok to interrupt schedule</div>
+              <div style='clear:both'></div>
+            <br>
+            
+            <p>Repeat:</p>
+            <div class="weekly-scheduler-days">
+              <div name="repeat" day=0 val=0 class="input weekly-scheduler weekly-scheduler-day"><div style="padding-top:15px">Mon</div></div>
+              <div name="repeat" day=1 val=0 class="input weekly-scheduler weekly-scheduler-day"><div style="padding-top:15px">Tue</div></div>
+              <div name="repeat" day=2 val=0 class="input weekly-scheduler weekly-scheduler-day"><div style="padding-top:15px">Wed</div></div>
+              <div name="repeat" day=3 val=0 class="input weekly-scheduler weekly-scheduler-day"><div style="padding-top:15px">Thu</div></div>
+              <div name="repeat" day=4 val=0 class="input weekly-scheduler weekly-scheduler-day"><div style="padding-top:15px">Fri</div></div>
+              <div name="repeat" day=5 val=0 class="input weekly-scheduler weekly-scheduler-day"><div style="padding-top:15px">Sat</div></div>
+              <div name="repeat" day=6 val=0 class="input weekly-scheduler weekly-scheduler-day"><div style="padding-top:15px">Sun</div></div>
+            </div>
+            <br>
+            <!---------------------------------------------------------------------------------------------------------------------------->
           </div>
 
-          Higher bar height equalls more power available
-        </div> <!-- schedule-output-box -->
-        <br>
-        <span class="">Demand shaper signal: </span>
-        <select name="signal" class="input scheduler-select" style="margin-top:10px">
-            <option value="carbonintensity">UK Grid Carbon Intensity</option>
-            <option value="octopus">Octopus Agile (D)</option>
-            <option value="cydynni">Energy Local: Bethesda</option>
-            <option value="economy7">Economy 7</option>
-        </select>
-      </div> <!-- schedule-inner2 -->
-    </div> <!-- schedule-inner -->
-  </div> <!-- node-scheduler -->
-</div> <!-- table -->
+          <button class="scheduler-save btn">Save</button><button class="scheduler-clear btn" style="margin-left:10px">Clear</button>
+          <br><br>
+          <div class="schedule-output-heading"><div class="triangle-dropdown hide"></div><div class="triangle-pushup"></div>Schedule Output</div>
+
+          <div class="schedule-output-box">
+            <div id="schedule-output"></div>
+            <div id="placeholder_bound" style="width:100%; height:300px">
+              <div id="placeholder" style="height:300px"></div>
+            </div>
+
+            Higher bar height equalls more power available
+          </div> <!-- schedule-output-box -->
+          <br>
+          <span class="">Demand shaper signal: </span>
+          <select name="signal" class="input scheduler-select" style="margin-top:10px">
+              <option value="carbonintensity">UK Grid Carbon Intensity</option>
+              <option value="octopus">Octopus Agile (D)</option>
+              <option value="cydynni">Energy Local: Bethesda</option>
+              <option value="economy7">Economy 7</option>
+          </select>
+        </div> <!-- schedule-inner2 -->
+      </div> <!-- schedule-inner -->
+    </div> <!-- node-scheduler -->
+  </div> <!-- table -->
+</div>
 
 <script language="javascript" type="text/javascript" src="<?php echo $path; ?>Modules/demandshaper/scheduler.js"></script>
+<script type="text/javascript" src="<?php echo $path; ?>Lib/misc/sidebar.js"></script>
 
 <script>
+init_sidebar({menu_element:"#demandshaper_menu"});
+
 var emoncmspath = "<?php echo $path; ?>";
 var device = "<?php echo $device; ?>";
 var devices = {};
@@ -232,7 +246,18 @@ var devices = {};
 $.ajax({ url: emoncmspath+"device/list.json", dataType: 'json', async: false, success: function(result) { 
     // Associative array of devices by nodeid
     devices = {};
-    for (var z in result) devices[result[z].nodeid] = result[z];
+    var out = "";
+    for (var z in result) {
+        if (result[z].type=="openevse" || result[z].type=="smartplug") {
+            devices[result[z].nodeid] = result[z];
+            // sidebar list
+            out += "<li><a href='"+emoncmspath+"demandshaper?node="+result[z].nodeid+"'>"+result[z].nodeid+"</a></li>";
+            // select first device if device is not defined
+            if (device=="") device = result[z].nodeid;
+        }
+    }
+    
+    $(".sidenav-menu").html(out);
 }});
 
 draw_scheduler(device);

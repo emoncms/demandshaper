@@ -12,6 +12,8 @@ function draw_scheduler(devicein)
 {   
     device = devicein;
     $("#devicename").html(jsUcfirst(device));
+    $(".node-scheduler-title").html(device);
+    $(".node-scheduler").attr("node",device);
     
     // 1. Load device template to get the control definition
     $.ajax({ url: emoncmspath+"device/template/get.json?type="+devices[device].type, dataType: 'json', async: true, success: function(template) { 
