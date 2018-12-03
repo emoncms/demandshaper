@@ -7,7 +7,7 @@ var options = {};
 var schedule = {};
 //var scheduler_html = $(".scheduler-template").html();
 //$(".scheduler-template").html("");
-            
+
 function draw_scheduler(devicein) 
 {   
     device = devicein;
@@ -45,10 +45,10 @@ function draw_scheduler(devicein)
 
 // -------------------------------------------------------------------------
 
-$("#table").on("click",".scheduler-save",function(e) {
-
-    //console.log("save");
-
+$("#table").on("click",".scheduler-save",function(event) {
+    
+    // console.log("save");
+    
     var tosave = {};
     for (var property in controls) {
         tosave[property] = controls[property].default;
@@ -73,31 +73,31 @@ $("#table").on("click",".scheduler-save",function(e) {
         }
     }
     
-    scheduler_save(tosave);
+    scheduler_save(tosave,event);
 });
 
-$("#table").on("click",".scheduler-clear",function(e) {
-
+$("#table").on("click",".scheduler-clear",function(event) {
+    
     var tosave = {};
     for (var property in controls) {
         tosave[property] = controls[property].default;
     }
     
-    scheduler_save(tosave);
+    scheduler_save(tosave,event);
     scheduler_update_ui();
 });
 
 $("#table").on("click",".schedule-output-heading",function(e) {
-
-   var visible = $(".schedule-output-box").is(":visible");
-
-   if (visible) {
-       $(".schedule-output-box").hide(); 
-   } else {
-       $(".schedule-output-box").show(); 
-       draw_schedule_output(schedule);
-   }
-   
+    
+    var visible = $(".schedule-output-box").is(":visible");
+    
+    if (visible) {
+        $(".schedule-output-box").hide(); 
+    } else {
+        $(".schedule-output-box").show(); 
+        draw_schedule_output(schedule);
+    }
+    
     $(this).find(".triangle-dropdown").toggle();
     $(this).find(".triangle-pushup").toggle();
 });
@@ -143,10 +143,11 @@ function scheduler_update_ui() {
 }
 
 
-function scheduler_save(data) {    
+function scheduler_save(data,event) {    
     // ----------------------------------------------------------------------------------------------------
     // Scheduler
     // ----------------------------------------------------------------------------------------------------
+    var event = typeof event != 'undefined' ? event : false;
     var schedule = data;
     schedule.device = device;
     schedule.basic = 0;
@@ -162,7 +163,7 @@ function draw_schedule_output(schedule)
 {
     var out = jsUcfirst(device)+" scheduled to run: ";
     
-    if (schedule.periods.length) {
+    if (schedule.periods && schedule.periods.length) {
         var now = new Date();
         var now_hours = (now.getHours() + (now.getMinutes()/60));
         var period_start = (schedule.periods[0].start[1]);
@@ -288,6 +289,26 @@ $("#table").on("click",".weekly-scheduler-day",function(){
         $(this).attr('val',1);
     } else {
         $(this).attr('val',0);
+    }
+    
+    var runonce = true;
+    for (var i=0; i<7; i++) {
+        var dayval = $(".weekly-scheduler[name='repeat'][day="+i+"]").attr("val")*1;
+        if (dayval) runonce = false;
+    }
+    if (runonce) {
+        $(".scheduler-checkbox[name='runonce']").attr("state",1);
+    } else {
+        $(".scheduler-checkbox[name='runonce']").attr("state",0);
+    }
+});
+
+$("#table").on("click",".scheduler-checkbox[name='runonce']",function(){
+    var state = $(this).attr('state')*1;
+    if (state) {
+        $(".weekly-scheduler[name='repeat']").attr("val",1);
+    } else {
+        $(".weekly-scheduler[name='repeat']").attr("val",0);
     }
 });
 
