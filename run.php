@@ -160,6 +160,7 @@ while(true)
 
                     if ($status) {
                         print "  status: ON\n";
+                        $schedule->started = true;
                         $schedule->timeleft -= $update_interval;
                         if ($schedule->timeleft<0) $schedule->timeleft = 0;
                     } else {
@@ -199,12 +200,13 @@ while(true)
                     // -----------------------------------------------------------------------
                     // Recalculate schedule
                     // -----------------------------------------------------------------------
-                    if (!$status || $schedule->interruptible) {
-                        if ($now>$schedule->end_timestamp) {
-                            print "  SET timeleft to schedule period\n";
-                            $schedule->timeleft = $schedule->period * 3600;
-                        }
-                        
+                    if ($now>$schedule->end_timestamp) {
+                        print "  SET timeleft to schedule period\n";
+                        $schedule->timeleft = $schedule->period * 3600;
+                        unset($schedule->started);
+                    }
+                    
+                    if (!isset($schedule->started) || $schedule->interruptible) {
                         $r = schedule($redis,$schedule);
                         $schedule->periods = $r["periods"];
                         $schedule->probability = $r["probability"];
@@ -217,6 +219,7 @@ while(true)
             } // foreach schedules 
             $demandshaper->set($userid,$schedules);
         } // valid schedules
+        sleep(1.0);
     } // 10s update
     
     // MQTT Connect or Reconnect
@@ -230,7 +233,7 @@ while(true)
     try { $mqtt_client->loop(); } catch (Exception $e) { }
     
     // Dont loop to fast
-    sleep(1);
+    sleep(0.1);
 }
 
 function connect($r, $message) {
