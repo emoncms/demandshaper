@@ -17,6 +17,10 @@ define("MIN",0);
 
 function schedule($redis,$schedule)
 {   
+    $resolution = 1800;
+    $resolution_h = $resolution/3600;
+    $divisions = round(24*3600/$resolution);
+    
     $debug = 0;
     
     $end_time = $schedule->end;
@@ -37,7 +41,7 @@ function schedule($redis,$schedule)
     //    return $periods;
     // }
     $now = time();
-    $timestamp = floor($now/1800)*1800;
+    $timestamp = floor($now/$resolution)*$resolution;
     $start_timestamp = $timestamp;
     $date = new DateTime();
     $date->setTimezone(new DateTimeZone("Europe/London"));
@@ -49,7 +53,7 @@ function schedule($redis,$schedule)
     
     // -----------------------------------------------------------------------------
     // Convert end time to timestamp
-    $end_time = floor($end_time / 0.5) * 0.5;
+    $end_time = floor($end_time / $resolution_h) * $resolution_h;
     
     $date->modify("midnight");
     $end_timestamp = $date->getTimestamp() + $end_time*3600;
@@ -66,24 +70,34 @@ function schedule($redis,$schedule)
     // ----------------------------------------------------------------------------- 
     if ($signal=="carbonintensity") {
         $optimise = MIN;
-        $start = $date->format('Y-m-d\TH:i\Z');
-        //$result = json_decode(file_get_contents("https://api.carbonintensity.org.uk/intensity/$start/fw24h"));
+        // $start = $date->format('Y-m-d\TH:i\Z');
+        // $result = json_decode(file_get_contents("https://api.carbonintensity.org.uk/intensity/$start/fw24h"));
         $result = json_decode($redis->get("demandshaper:carbonintensity"));
+        
         if ($result!=null && isset($result->data)) {
-            for ($i=0; $i<count($result->data); $i++) {
+        
+            $datetimestr = $result->data[0]->from;
+            $date = new DateTime($datetimestr);
+            $start = $date->getTimestamp();
             
-                $datetimestr = $result->data[$i]->from;
-                $co2intensity = $result->data[$i]->intensity->forecast;
-                
-                $date = new DateTime($datetimestr);
-                $timestamp = $date->getTimestamp();
-                
-                $h = 1*$date->format('H');
-                $m = 1*$date->format('i')/60;
-                $hour = $h + $m;
-                
-                if ($timestamp>=$end_timestamp) $available = 0;
-                if ($timestamp>=$start_timestamp) $forecast[] = array($timestamp*1000,$co2intensity,$hour,$available,0);
+            $datetimestr = $result->data[count($result->data)-1]->from;
+            $date = new DateTime($datetimestr);
+            $end = $date->getTimestamp();
+        
+            for ($timestamp=$start; $timestamp<$end; $timestamp+=$resolution) {
+            
+                $i = floor(($timestamp - $start)/1800);
+                if (isset($result->data[$i])) {
+                    $co2intensity = $result->data[$i]->intensity->forecast;
+                    
+                    $date->setTimestamp($timestamp);
+                    $h = 1*$date->format('H');
+                    $m = 1*$date->format('i')/60;
+                    $hour = $h + $m;
+                    
+                    if ($timestamp>=$end_timestamp) $available = 0;
+                    if ($timestamp>=$start_timestamp) $forecast[] = array($timestamp*1000,$co2intensity,$hour,$available,0);
+                }
             }
         }
     }
@@ -96,7 +110,7 @@ function schedule($redis,$schedule)
         //$result = json_decode(file_get_contents("https://api.octopus.energy/v1/products/AGILE-18-02-21/electricity-tariffs/E-1R-AGILE-18-02-21-D/standard-unit-rates/"));
         $result = json_decode($redis->get("demandshaper:octopus"));
         $start = $timestamp;
-        $hh = 0;
+        $td = 0;
 
         if ($result!=null && isset($result->results)) {
             for ($i=count($result->results)-1; $i>0; $i--) {
@@ -106,7 +120,7 @@ function schedule($redis,$schedule)
                 
                 $date = new DateTime($datetimestr);
                 $timestamp = $date->getTimestamp();
-                if ($timestamp>=$start && $hh<48) {
+                if ($timestamp>=$start && $td<48) {
                     
                     $h = 1*$date->format('H');
                     $m = 1*$date->format('i')/60;
@@ -114,7 +128,7 @@ function schedule($redis,$schedule)
                     
                     if ($timestamp>=$end_timestamp) $available = 0;
                     if ($timestamp>=$start_timestamp) $forecast[] = array($timestamp*1000,$co2intensity,$hour,$available,0);
-                    $hh++;
+                    $td++;
                 }
             }
         }
@@ -167,7 +181,7 @@ function schedule($redis,$schedule)
     // ----------------------------------------------------------------------------- 
     } else if ($signal=="economy7") {
         $optimise = MIN;
-        for ($i=0; $i<48; $i++) {
+        for ($i=0; $i<$divisions; $i++) {
 
             $date->setTimestamp($timestamp);
             $h = 1*$date->format('H');
@@ -178,7 +192,7 @@ function schedule($redis,$schedule)
             
             if ($timestamp>=$end_timestamp) $available = 0;
             $forecast[] = array($timestamp*1000,$economy7,$hour,$available,0);
-            $timestamp += 1800; 
+            $timestamp += $resolution; 
         }
     }
     
@@ -204,27 +218,27 @@ function schedule($redis,$schedule)
         // Method 1: move fixed period of demand over probability function to find best time
         // ---------------------------------------------------------------------------------
         
-        // For each half hour in profile
-        for ($hh=0; $hh<count($forecast); $hh++) {
+        // For each time division in profile
+        for ($td=0; $td<count($forecast); $td++) {
 
              // Calculate sum of probability function values for block of demand covering hours in period
              $sum = 0;
              $valid_block = 1;
-             for ($i=0; $i<$period*2; $i++) {
+             for ($i=0; $i<$period*($divisions/24); $i++) {
                  
-                 if (isset($forecast[$hh+$i])) {
-                     if (!$forecast[$hh+$i][3]) $valid_block = 0;
-                     $sum += $forecast[$hh+$i][1];
+                 if (isset($forecast[$td+$i])) {
+                     if (!$forecast[$td+$i][3]) $valid_block = 0;
+                     $sum += $forecast[$td+$i][1];
                  }
              }
              
-             if ($hh==0) $threshold = $sum;
+             if ($td==0) $threshold = $sum;
              
              // Determine the start_time which gives the maximum sum of available power
              if ($valid_block) {
                  if (($optimise==MIN && $sum<$threshold) || ($optimise==MAX && $sum>$threshold)) {
                      $threshold = $sum;
-                     $pos = $hh;
+                     $pos = $td;
                  }
              }
         }
@@ -238,10 +252,10 @@ function schedule($redis,$schedule)
         $end_hour = $start_hour;
         $tend = $tstart;
         
-        for ($i=0; $i<$period*2; $i++) {
+        for ($i=0; $i<$period*($divisions/24); $i++) {
             $forecast[$pos+$i][4] = 1;
-            $end_hour+=0.5;
-            $tend+=1800;
+            $end_hour+=$resolution/3600;
+            $tend+=$resolution;
             if ($end_hour>=24) $end_hour -= 24;
             // dont allow to run past end time
             if ($end_hour==$end_time) break;
@@ -258,21 +272,21 @@ function schedule($redis,$schedule)
         // ---------------------------------------------------------------------------------
 
         // For each hour of demand
-        for ($p=0; $p<$period*2; $p++) {
+        for ($p=0; $p<$period*($divisions/24); $p++) {
 
             if ($optimise==MIN) $threshold = $forecast_max; else $threshold = $forecast_min;
             $pos = -1;
             // for each hour in probability profile
-            for ($hh=0; $hh<count($forecast); $hh++) {
+            for ($td=0; $td<count($forecast); $td++) {
                 // Find the hour with the maximum amount of available power
                 // that has not yet been alloated to this load
                 // if available && !allocated && $val>$max
-                $val = $forecast[$hh][1];
+                $val = $forecast[$td][1];
                 
-                if ($forecast[$hh][3] && !$forecast[$hh][4]) {
+                if ($forecast[$td][3] && !$forecast[$td][4]) {
                     if (($optimise==MIN && $val<=$threshold) || ($optimise==MAX && $val>=$threshold)) {
                         $threshold = $val;
-                        $pos = $hh;
+                        $pos = $td;
                     }
                 }
             }
@@ -289,10 +303,10 @@ function schedule($redis,$schedule)
         
         $i = 0;
         $last = 0;
-        for ($hh=0; $hh<count($forecast); $hh++) {
-            $hour = $forecast[$hh][2];
-            $timestamp = $forecast[$hh][0]*0.001;
-            $val = $forecast[$hh][4];
+        for ($td=0; $td<count($forecast); $td++) {
+            $hour = $forecast[$td][2];
+            $timestamp = $forecast[$td][0]*0.001;
+            $val = $forecast[$td][4];
         
             if ($i==0) {
                 if ($val) {
@@ -318,8 +332,8 @@ function schedule($redis,$schedule)
         }
         
         if ($last==1) {
-            $end = $hour+0.5;
-            $tend = $timestamp + 1800;
+            $end = $hour+$resolution/3600;
+            $tend = $timestamp + $resolution;
             $periods[] = array("start"=>array($tstart,$start), "end"=>array($tend,$end));
         }
         

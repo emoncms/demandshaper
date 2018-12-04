@@ -224,6 +224,11 @@ function draw_schedule_output(schedule)
 
     if (schedule.probability!=undefined) {
         var probability = schedule.probability;
+        
+        var interval = 1800;
+        interval = (probability[1][0]-probability[0][0])*0.001;
+        var bars = true;
+        //if (interval<1800) bars = false;
 
         var hh = 0;
         for (var z in probability) {
@@ -236,25 +241,36 @@ function draw_schedule_output(schedule)
 
 
         options = {
-            bars: { show: true, barWidth:1800*1000*0.75 },// align: 'center'
             xaxis: { mode: "time", timezone: "browser" },
             yaxis: { min: 0 },
             grid: {hoverable: true, clickable: true, markings: markings},
             selection: { mode: "x" },
             touch: { pan: "x", scale: "x" }
         }
+        
+        if (bars) {
+            options.bars = { show: true, barWidth:interval*1000*0.8, lineWidth:0 };
+        } else {
+            options.lines = {fill:true};
+        }
 
         available = [];
         unavailable = [];
         for (var z in probability) {
-            if (probability[z][4]) available.push([probability[z][0],probability[z][1]]);
-            if (!probability[z][4]) unavailable.push([probability[z][0],probability[z][1]]);
+            var time = probability[z][0];
+            var value = probability[z][1];
+            var active = probability[z][4];
+            if (active) { 
+                available.push([time,value]); 
+                if (bars) value=null;
+            } 
+            unavailable.push([time,value]);
         }
 
         var width = $("#placeholder_bound").width();
         if (width>0) {
             $("#placeholder").width(width);
-            $.plot($('#placeholder'), [{data:available,color:"#ff0000"},{data:unavailable,color:"#888"}], options);
+            $.plot($('#placeholder'), [{data:unavailable,color:"#888"},{data:available,color:"#ff0000"}], options);
         }
     }
 }
