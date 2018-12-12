@@ -22,6 +22,7 @@ function schedule($redis,$schedule)
     $divisions = round(24*3600/$resolution);
     
     $debug = 0;
+    if (!isset($schedule->timeleft)) $schedule->timeleft = 0;
     
     $end_time = $schedule->end;
     $period = $schedule->timeleft / 3600;
