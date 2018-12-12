@@ -151,12 +151,50 @@ function scheduler_save(data,event) {
     var schedule = data;
     schedule.device = device;
     schedule.basic = 0;
+    //before ajax
+    let notification = document.getElementById('scheduler-notification');   
+    if (notification){
+        notification.classList.remove('fadeOut');//allow notification to be shown again.
+        notification.innerText = '';
+    }else{
+        notification = document.createElement('span');
+    }
+    //effect the clicked button
+    let button = event ? event.target: false;
+    if(button) button.classList.add('is-faded');
 
-    $.ajax({ url: emoncmspath+"demandshaper/submit?schedule="+JSON.stringify(schedule), dataType: 'json', async: true, success: function(result) {
-        schedule = result.schedule;
-        if (result==null || result.schedule==null) schedule = {};
-        draw_schedule_output(schedule);
-    }});
+    $.ajax({ url: emoncmspath+"demandshaper/submit?schedule="+JSON.stringify(schedule),
+        dataType: 'json',
+        async: true,
+        success: function(result) {
+            schedule = (result==null || result.schedule==null) ? {} : result.schedule;
+            success = !(result.hasOwnProperty('success') && result.success === false);
+            if (success){
+                draw_schedule_output(schedule);
+                if(result.schedule.end==0 && result.schedule.period==0){
+                    message = t('Cleared');
+                }else{
+                    message = t('Saved');
+                }
+                notification.classList.remove('hide');//remove the default hide class
+                notification.innerText = message;
+                notification.classList.add('fadeOut','notification');//show notification and wait 3 seconds before fading out (using css class fadeOut
+            }
+        }
+    })
+    .always(function(result){
+        //notify user of session timeout
+        success = !(result.hasOwnProperty('success') && result.success === false);
+        if(!success && result.message === 'Username or password empty'){
+            notification.classList.remove('hide');//remove the default hide class
+            notification.innerHTML = t('Session Timed out.') +
+                '<a href="/cydynni" class="btn">' +
+                t('Please login') + 
+                '</a>';
+            notification.classList.add('notification');//show notification and wait 3 seconds before fading out (using css class fadeOut
+        }
+        button.classList.remove('is-faded');//remove the faded effect from the clicked button once the ajax finishes
+    });
 }
 
 function draw_schedule_output(schedule)
