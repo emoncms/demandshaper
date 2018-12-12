@@ -8,6 +8,8 @@ var schedule = {};
 var scheduler_html = $(".scheduler-template").html();
 $(".scheduler-template").html("");
 
+if (window.t==undefined) function t(){};
+
 function draw_scheduler(devicein) 
 {   
     var apikeystr = "";
