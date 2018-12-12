@@ -10,17 +10,22 @@ $(".scheduler-template").html("");
 
 function draw_scheduler(devicein) 
 {   
+    var apikeystr = "";
+    if (window.session!=undefined) {
+        apikeystr = "&apikey="+session["apikey_write"];
+    }
+
     device = devicein;
     $("#devicename").html(jsUcfirst(device));
     $(".node-scheduler-title").html(device);
     $(".node-scheduler").attr("node",device);
     
     // 1. Load device template to get the control definition
-    $.ajax({ url: emoncmspath+"device/template/get.json?type="+devices[device].type, dataType: 'json', async: true, success: function(template) { 
+    $.ajax({ url: emoncmspath+"device/template/get.json?type="+devices[device].type+apikeystr, dataType: 'json', async: true, success: function(template) { 
         controls = template.control;
         
         // 2. Fetch device settings stored in the demandshaper module
-        $.ajax({ url: emoncmspath+"demandshaper/get?device="+device, dataType: 'json', async: true, success: function(result) {
+        $.ajax({ url: emoncmspath+"demandshaper/get?device="+device+apikeystr, dataType: 'json', async: true, success: function(result) {
             // Itterate through controls definition from template and copy over the settings that exist
             for (var property in controls) {
                 if (result!=null && result.schedule!=null && result.schedule[property]!=undefined) {
@@ -143,7 +148,12 @@ function scheduler_update_ui() {
 }
 
 
-function scheduler_save(data,event) {    
+function scheduler_save(data,event) { 
+
+    var apikeystr = "";
+    if (window.session!=undefined) {
+        apikeystr = "&apikey="+session["apikey_write"];
+    }   
     // ----------------------------------------------------------------------------------------------------
     // Scheduler
     // ----------------------------------------------------------------------------------------------------
@@ -163,7 +173,7 @@ function scheduler_save(data,event) {
     let button = event ? event.target: false;
     if(button) button.classList.add('is-faded');
 
-    $.ajax({ url: emoncmspath+"demandshaper/submit?schedule="+JSON.stringify(schedule),
+    $.ajax({ url: emoncmspath+"demandshaper/submit?schedule="+JSON.stringify(schedule)+apikeystr,
         dataType: 'json',
         async: true,
         success: function(result) {
