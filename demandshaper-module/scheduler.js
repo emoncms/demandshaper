@@ -5,8 +5,8 @@ var available = [];
 var unavailable = [];
 var options = {};
 var schedule = {};
-//var scheduler_html = $(".scheduler-template").html();
-//$(".scheduler-template").html("");
+var scheduler_html = $(".scheduler-template").html();
+$(".scheduler-template").html("");
 
 function draw_scheduler(devicein) 
 {   
@@ -33,8 +33,8 @@ function draw_scheduler(devicein)
             schedule = result.schedule;
             if (result==null || result.schedule==null) schedule = {};           
             
-            //$(".node-scheduler[node='"+device+"']").html(scheduler_html);
-            //$(".node-scheduler[node='"+device+"']").show();
+            $(".node-scheduler[node='"+device+"']").html(scheduler_html);
+            $(".node-scheduler[node='"+device+"']").show();
             
             scheduler_update_ui();
             draw_schedule_output(schedule);
