@@ -34,13 +34,8 @@ Link the 'demandshaper-module' into the emoncms Modules folder:
 The demand shaper background process is called run.php. It can be ran manually with:
 
     php run.php
-
-From cron with:
-
-    crontab -e
-    * * * * * php /home/pi/demandshaper/run.php 2>&1
     
-Or via service (recommended):
+Or via service:
 
     sudo ln -s /home/pi/demandshaper/demandshaper.service /lib/systemd/system
     sudo systemctl enable demandshaper.service
