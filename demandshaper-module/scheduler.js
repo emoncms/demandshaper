@@ -180,6 +180,7 @@ function scheduler_save(data,event) {
     var event = typeof event != 'undefined' ? event : false;
     var schedule = data;
     schedule.device = device;
+    schedule.device_type = devices[device].type;
     schedule.basic = 0;
     //before ajax
     let notification = document.getElementById('scheduler-notification');   
@@ -192,7 +193,7 @@ function scheduler_save(data,event) {
     //effect the clicked button
     let button = event ? event.target: false;
     if(button) button.classList.add('is-faded');
-
+    
     $.ajax({ url: emoncmspath+"demandshaper/submit?schedule="+JSON.stringify(schedule)+apikeystr,
         dataType: 'json',
         async: true,
