@@ -16,6 +16,8 @@ global $path;
 $device = "";
 if (isset($_GET['node'])) $device = $_GET['node'];
 
+$v=5;
+
 ?>
 
 <!--[if IE]><script language="javascript" type="text/javascript" src="<?php echo $path;?>Lib/flot/excanvas.min.js"></script><![endif]-->
@@ -28,9 +30,9 @@ if (isset($_GET['node'])) $device = $_GET['node'];
 
 <style>
 
-#table {
+#scheduler-outer {
     margin: 0 auto;
-    width:960px;
+    max-width:960px;
     font-size:16px;
 }
 
@@ -70,6 +72,7 @@ if (isset($_GET['node'])) $device = $_GET['node'];
     font-weight:bold;
     text-align:center;
     cursor:pointer;
+    font-size:16px;
 }
 
 .weekly-scheduler-day[val="1"] {
@@ -147,8 +150,95 @@ if (isset($_GET['node'])) $device = $_GET['node'];
     border-bottom: 10px solid #fff;
 }
 
+body {padding:0}
+
+.container-fluid { padding:0 }
+
+#footer {
+    margin-left: 0px;
+    margin-right: 0px;
+}
+
+.navbar-fixed-top {
+    margin-left: 0px;
+    margin-right: 0px;
+}
+
+.weekly-scheduler-text {
+    margin-top:15px;
+}
+
+.icon-smartplug {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  background-image: url('<?php echo $path; ?>Modules/demandshaper/smartplug.png');
+  background-position: 0 0;
+  background-size:18px;
+  background-repeat: no-repeat;
+  margin-right:10px;
+}
+
+.icon-openevse {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  background-image: url('<?php echo $path; ?>Modules/demandshaper/openevse.png');
+  background-position: 0 0;
+  background-size:20px;
+  background-repeat: no-repeat;
+  margin-right:10px;
+}
+  
+@media (max-width: 767px) {
+  
+  #scheduler-outer {
+    margin-left:5px;
+    margin-right:5px;
+  }
+  
+  #scheduler-top {
+    height:5px;
+  }
+  
+  .scheduler-inner {
+    padding:10px;
+    background-color:#f0f0f0;
+  }
+  
+  .scheduler-inner2 {
+    padding:0px;
+    background-color:none;
+  }
+  
+  .weekly-scheduler-day {
+    margin-right:0px;
+    width:42px; 
+    height:42px; 
+    background-size:42px;
+    font-size:12px;
+  }
+  
+  .weekly-scheduler-text {
+      margin-top:12px;
+  }
+}
+
+@media (min-width: 767px) {
+  
+  #scheduler-outer {
+    margin-left:10px;
+    margin-right:10px;
+  }
+  
+  #scheduler-top {
+    height:10px;
+  }
+}
+
+
 </style>
-<link rel="stylesheet" href="<?php echo $path; ?>Lib/misc/sidebar.css">
+<link rel="stylesheet" href="<?php echo $path; ?>Lib/misc/sidebar.css?v=<?php echo $v; ?>">
 
 <div id="wrapper">
   <div class="sidenav">
@@ -157,9 +247,9 @@ if (isset($_GET['node'])) $device = $_GET['node'];
     </div>
   </div>
   
-  <div style="height:20px"></div>
+  <div id="scheduler-top"></div>
 
-  <div id="table">
+  <div id="scheduler-outer">
     <div class="node-scheduler-title"></div>
     <div class="node-scheduler" node="">
 
@@ -195,13 +285,13 @@ if (isset($_GET['node'])) $device = $_GET['node'];
             
             <p>Repeat:</p>
             <div class="weekly-scheduler-days">
-              <div name="repeat" day=0 val=0 class="input weekly-scheduler weekly-scheduler-day"><div style="padding-top:15px">Mon</div></div>
-              <div name="repeat" day=1 val=0 class="input weekly-scheduler weekly-scheduler-day"><div style="padding-top:15px">Tue</div></div>
-              <div name="repeat" day=2 val=0 class="input weekly-scheduler weekly-scheduler-day"><div style="padding-top:15px">Wed</div></div>
-              <div name="repeat" day=3 val=0 class="input weekly-scheduler weekly-scheduler-day"><div style="padding-top:15px">Thu</div></div>
-              <div name="repeat" day=4 val=0 class="input weekly-scheduler weekly-scheduler-day"><div style="padding-top:15px">Fri</div></div>
-              <div name="repeat" day=5 val=0 class="input weekly-scheduler weekly-scheduler-day"><div style="padding-top:15px">Sat</div></div>
-              <div name="repeat" day=6 val=0 class="input weekly-scheduler weekly-scheduler-day"><div style="padding-top:15px">Sun</div></div>
+              <div name="repeat" day=0 val=0 class="input weekly-scheduler weekly-scheduler-day"><div class="weekly-scheduler-text">Mon</div></div>
+              <div name="repeat" day=1 val=0 class="input weekly-scheduler weekly-scheduler-day"><div class="weekly-scheduler-text">Tue</div></div>
+              <div name="repeat" day=2 val=0 class="input weekly-scheduler weekly-scheduler-day"><div class="weekly-scheduler-text">Wed</div></div>
+              <div name="repeat" day=3 val=0 class="input weekly-scheduler weekly-scheduler-day"><div class="weekly-scheduler-text">Thu</div></div>
+              <div name="repeat" day=4 val=0 class="input weekly-scheduler weekly-scheduler-day"><div class="weekly-scheduler-text">Fri</div></div>
+              <div name="repeat" day=5 val=0 class="input weekly-scheduler weekly-scheduler-day"><div class="weekly-scheduler-text">Sat</div></div>
+              <div name="repeat" day=6 val=0 class="input weekly-scheduler weekly-scheduler-day"><div class="weekly-scheduler-text">Sun</div></div>
             </div>
             <br>
             <!---------------------------------------------------------------------------------------------------------------------------->
@@ -233,8 +323,8 @@ if (isset($_GET['node'])) $device = $_GET['node'];
   </div> <!-- table -->
 </div>
 
-<script language="javascript" type="text/javascript" src="<?php echo $path; ?>Modules/demandshaper/scheduler.js"></script>
-<script type="text/javascript" src="<?php echo $path; ?>Lib/misc/sidebar.js"></script>
+<script language="javascript" type="text/javascript" src="<?php echo $path; ?>Modules/demandshaper/scheduler.js?v=<?php echo $v; ?>"></script>
+<script type="text/javascript" src="<?php echo $path; ?>Lib/misc/sidebar.js?v=<?php echo $v; ?>"></script>
 
 <script>
 init_sidebar({menu_element:"#demandshaper_menu"});
@@ -251,7 +341,7 @@ $.ajax({ url: emoncmspath+"device/list.json", dataType: 'json', async: false, su
         if (result[z].type=="openevse" || result[z].type=="smartplug") {
             devices[result[z].nodeid] = result[z];
             // sidebar list
-            out += "<li><a href='"+emoncmspath+"demandshaper?node="+result[z].nodeid+"'>"+result[z].nodeid+"</a></li>";
+            out += "<li><a href='"+emoncmspath+"demandshaper?node="+result[z].nodeid+"'><span class='icon-"+result[z].type+"'></span>"+ucfirst(result[z].nodeid)+"</a></li>";
             // select first device if device is not defined
             if (device=="") device = result[z].nodeid;
         }
@@ -262,6 +352,9 @@ $.ajax({ url: emoncmspath+"device/list.json", dataType: 'json', async: false, su
 
 draw_scheduler(device);
 
+function ucfirst(string) {
+    return string.charAt(0).toUpperCase() + string.slice(1);
+}
 </script>
 
 

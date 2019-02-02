@@ -19,7 +19,7 @@ function draw_scheduler(devicein)
 
     device = devicein;
     $("#devicename").html(jsUcfirst(device));
-    $(".node-scheduler-title").html(device);
+    $(".node-scheduler-title").html("<span class='icon-"+devices[device].type+"'></span>"+device);
     $(".node-scheduler").attr("node",device);
     
     // 1. Load device template to get the control definition
@@ -52,7 +52,7 @@ function draw_scheduler(devicein)
 
 // -------------------------------------------------------------------------
 
-$("#table").on("click",".scheduler-save",function(event) {
+$("#scheduler-outer").on("click",".scheduler-save",function(event) {
     
     // console.log("save");
     
@@ -83,8 +83,26 @@ $("#table").on("click",".scheduler-save",function(event) {
     scheduler_save(tosave,event);
 });
 
-$("#table").on("click",".scheduler-clear",function(event) {
-    
+$("#scheduler-outer").on("click",".scheduler-clear",function(event) {
+
+    for (var property in controls) {
+        if (controls[property].type=="text") 
+            $("input[name='"+property+"']").val(0);
+        if (controls[property].type=="checkbox") 
+            $(".scheduler-checkbox[name='"+property+"']").attr("state",0);
+        if (controls[property].type=="time")
+            $("input[name='"+property+"-hour']").val(0);
+            $("input[name='"+property+"-minute']").val(0);
+        if (controls[property].type=="select") 
+            $("select[name='"+property+"']").val("");
+        if (controls[property].type=="weekly-scheduler") {
+            for (var i=0; i<7; i++) {
+                $(".weekly-scheduler[name='"+property+"'][day="+i+"]").attr("val",1);
+            }
+            $(".scheduler-checkbox[name='runonce']").attr("state",0);
+        }
+    }
+
     var tosave = {};
     for (var property in controls) {
         tosave[property] = controls[property].default;
@@ -94,7 +112,7 @@ $("#table").on("click",".scheduler-clear",function(event) {
     scheduler_update_ui();
 });
 
-$("#table").on("click",".schedule-output-heading",function(e) {
+$("#scheduler-outer").on("click",".schedule-output-heading",function(e) {
     
     var visible = $(".schedule-output-box").is(":visible");
     
@@ -288,12 +306,13 @@ function draw_schedule_output(schedule)
         var markings = [];
         // { color: "#000", lineWidth: 2, xaxis: { from: probability[hh][0], to: probability[hh][0] } },
         if (hh>0) markings.push({ color: "rgba(0,0,0,0.1)", xaxis: { from: probability[hh][0] } });
-
-
+        
+        var flot_font_size = 12;
+        
         options = {
-            xaxis: { mode: "time", timezone: "browser" },
-            yaxis: { min: 0 },
-            grid: {hoverable: true, clickable: true, markings: markings},
+            xaxis: { mode: "time", timezone: "browser", font: {size:flot_font_size, color:"#666"},reserveSpace:false},
+            yaxis: { min: 0, font: {size:flot_font_size, color:"#666"},reserveSpace:false },
+            grid: {hoverable: true, clickable: true, markings: markings, borderWidth:0, color:"#aaa"},
             selection: { mode: "x" },
             touch: { pan: "x", scale: "x" }
         }
@@ -317,21 +336,23 @@ function draw_schedule_output(schedule)
             unavailable.push([time,value]);
         }
 
-        var width = $("#placeholder_bound").width();
-        if (width>0) {
-            $("#placeholder").width(width);
-            $.plot($('#placeholder'), [{data:unavailable,color:"#888"},{data:available,color:"#ff0000"}], options);
-        }
+        resize();
     }
 }
 
 function resize() {
     var width = $("#placeholder_bound").width();
-    $("#placeholder").width(width);
-    $.plot($('#placeholder'), [{data:available,color:"#ff0000"},{data:unavailable,color:"#888"}], options);
+    if (width>0) {
+        var height = width*0.6;
+        if (height>300) height = 300;
+        $("#placeholder").width(width);
+        $("#placeholder_bound").css("height",height);
+        $("#placeholder").height(height);
+        $.plot($('#placeholder'), [{data:available,color:"#ff0000"},{data:unavailable,color:"#888"}], options);
+    }
 }
 
-$("#table").on("change",".timepicker-minute",function(){
+$("#scheduler-outer").on("change",".timepicker-minute",function(){
     var val = $(this).val();
     val = Math.floor(val/30)*30;
     if (val<0) val = 0;
@@ -340,7 +361,7 @@ $("#table").on("change",".timepicker-minute",function(){
     $(this).val(val);
 });
 
-$("#table").on("change",".timepicker-hour",function(){
+$("#scheduler-outer").on("change",".timepicker-hour",function(){
     var val = $(this).val();
     val = Math.round(val);
     if (val<0) val = 0;
@@ -349,7 +370,7 @@ $("#table").on("change",".timepicker-hour",function(){
     $(this).val(val);
 });
 
-$("#table").on("click",".weekly-scheduler-day",function(){
+$("#scheduler-outer").on("click",".weekly-scheduler-day",function(){
     var val = $(this).attr('val');
     if (val==0) {
         $(this).attr('val',1);
@@ -369,7 +390,7 @@ $("#table").on("click",".weekly-scheduler-day",function(){
     }
 });
 
-$("#table").on("click",".scheduler-checkbox[name='runonce']",function(){
+$("#scheduler-outer").on("click",".scheduler-checkbox[name='runonce']",function(){
     var state = $(this).attr('state')*1;
     if (state) {
         $(".weekly-scheduler[name='repeat']").attr("val",1);
@@ -378,7 +399,7 @@ $("#table").on("click",".scheduler-checkbox[name='runonce']",function(){
     }
 });
 
-$("#table").on("click",".scheduler-checkbox",function(){
+$("#scheduler-outer").on("click",".scheduler-checkbox",function(){
     var name = $(this).attr('name');
     var val = $(this).attr('state');
     if (val==0) {
@@ -390,7 +411,7 @@ $("#table").on("click",".scheduler-checkbox",function(){
     }
 });
 
-$("#table").on("click",".weekly-scheduler-repeat",function(){
+$("#scheduler-outer").on("click",".weekly-scheduler-repeat",function(){
     if ($(this)[0].checked) {
 
     } else {
