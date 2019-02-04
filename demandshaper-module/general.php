@@ -11,7 +11,7 @@
           <!---------------------------------------------------------------------------------------------------------------------------->                
           <div id="mode" class="btn-group">
             <button mode="on">On</button><button mode="off">Off</button><button mode="smart" class="active">Smart</button><button mode="timer">Timer</button>
-          </div><br><br><br>
+          </div><br><br>
           
           <div id="openevse" class="hide">
             <p>Charge Current <span id="charge_current">0</span>A<br><span style="font-weight:normal; font-size:12px">Temperature <span id="openevse_temperature">10</span>C</span></p>
@@ -88,9 +88,9 @@
                 </div>
               </div>
             </div>
+            <br>
           </div>
           <!---------------------------------------------------------------------------------------------------------------------------->
-          <br>
           
           <p>Repeat:</p>
           <div class="weekly-scheduler-days">

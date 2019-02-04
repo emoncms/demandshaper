@@ -289,18 +289,19 @@ function draw_schedule_output(schedule)
         // Generate series for active and inactive slots
         var co2_sum = 0;
         var co2_sum_n = 0;
+        var co2_peak = 0;
         available = [];
         unavailable = [];
         for (var z in probability) {
             var time = probability[z][0];
             var value = probability[z][1];
             var active = probability[z][4];
-            
+            if (value>co2_peak) co2_peak = value;
+                
             if (active) { 
                 available.push([time,value]); 
                 co2_sum += value; co2_sum_n++;
                 if (bars) value=null;
-
             } 
             unavailable.push([time,value]);
         }
@@ -311,7 +312,13 @@ function draw_schedule_output(schedule)
             var co2 = co2_sum/co2_sum_n;
             var co2_km = (co2 / 4.0) / 1.6;
             var prc = 100-(100*(co2_km / 130));
-            out = "Charge CO2 intensity: "+Math.round(co2)+" gCO2/kWh, "+Math.round(co2_km)+" gCO2/km, "+Math.round(prc)+"% <span title='Compared to 50 MPG Petrol car'>reduction</span>.";
+            if (devices[device].type=="openevse") out = "Charge ";
+            out += "CO2 intensity: "+Math.round(co2)+" gCO2/kWh"
+            if (devices[device].type=="openevse") {
+                out += ", "+Math.round(co2_km)+" gCO2/km, "+Math.round(prc)+"% <span title='Compared to 50 MPG Petrol car'>reduction</span>.";
+            } else {
+                out += ", "+Math.round(100.0*(1.0-(co2/co2_peak)))+"% reduction vs peak";
+            }
         }
         $("#schedule-co2").html(out);
         
