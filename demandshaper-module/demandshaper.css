@@ -183,7 +183,7 @@ body {padding:0}
 }
 
 .btn-group button:hover{
-  background-color:#888;
+  /*background-color:#888;*/
 }
 
 .btn-group .active{
@@ -197,6 +197,9 @@ body {padding:0}
 .btn-group button:last-child {
   border-radius: 0px 20px 20px 0px;
 }
+
+.btn-group .green {background-color:#76de32;}
+.btn-group .red {background-color:#ff5d32;}
   
 @media (max-width: 767px) {
   

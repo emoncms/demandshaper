@@ -344,7 +344,10 @@ function schedule($redis,$schedule)
         $stop1 = $schedule->timer_stop1;
         $start2 = $schedule->timer_start2;
         $stop2 = $schedule->timer_stop2;
-              
+        
+        $tstart1 = 0; $tstop1 = 0;
+        $tstart2 = 0; $tstop2 = 0;
+                      
         // For each time division in profile
         for ($td=0; $td<count($forecast); $td++) {
 

@@ -152,11 +152,15 @@ while(true)
                     // Work out if schedule is running
                     // -----------------------------------------------------------------------  
                     $status = 0;
-                    if ($schedule->timeleft>0) {
+                    $active_period = 0;
+                    if ($schedule->timeleft>0 || $ctrlmode=="timer") {
                         foreach ($schedule->periods as $pid=>$period) {
                             $start = $period->start[0];
                             $end = $period->end[0];
-                            if ($now>=$start && $now<$end) $status = 1;
+                            if ($now>=$start && $now<$end) {
+                                $status = 1;
+                                $active_period = $pid;
+                            }
                         }
                     }
                     
@@ -189,8 +193,8 @@ while(true)
                         if ($device_type=="openevse" || $device_type=="smartplug") {
                             
                             if (count($schedule->periods)) {
-                                $s1 = $schedule->periods[0]->start[1];
-                                $e1 = $schedule->periods[0]->end[1];
+                                $s1 = $schedule->periods[$active_period]->start[1];
+                                $e1 = $schedule->periods[$active_period]->end[1];
                                 $sh = floor($s1); $sm = round(($s1-$sh)*60);
                                 $eh = floor($e1); $em = round(($e1-$eh)*60);
                                 

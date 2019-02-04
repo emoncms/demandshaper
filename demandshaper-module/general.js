@@ -98,21 +98,25 @@ $("#mode button").click(function() {
     
     switch (schedule.ctrlmode) {
       case "on":
-        //if (schedule.period==0) schedule.period = last_period;
-        //var now = new Date();
-        //var now_hours = (now.getHours() + (now.getMinutes()/60));
-        //schedule.end = Math.round((now_hours+schedule.period)/0.5)*0.5;
+        // if (schedule.period==0) schedule.period = last_period;
+        // var now = new Date();
+        // var now_hours = (now.getHours() + (now.getMinutes()/60));
+        // schedule.end = Math.round((now_hours+schedule.period)/0.5)*0.5;
+        $(this).addClass("green").siblings().removeClass('red').removeClass('green');
         break;
       case "off":
         last_period = schedule.period;
         schedule.period = 0;
         schedule.end = 0;
+        $(this).addClass("red").siblings().removeClass('red').removeClass('green');
         break;
       case "timer":
-        if (schedule.period==0) schedule.period = last_period;
-        if (schedule.end==0) schedule.end = 8.0;
+        // if (schedule.period==0) schedule.period = last_period;
+        // if (schedule.end==0) schedule.end = 8.0;
+        $(this).siblings().removeClass('red').removeClass('green');
         break;
       case "smart":
+        $(this).siblings().removeClass('red').removeClass('green');
         break;
     }
     calc_schedule();
