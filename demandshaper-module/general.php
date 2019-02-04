@@ -20,11 +20,24 @@
             </div>
           </div>
 
+          <div class="heatpumpmonitor" class="hide">
+            <div class="row" style="max-width:700px; margin: 0 auto;">
+              <div class="span4 offset2" style="margin-bottom:20px"><br>
+                <p>Flow Temperature <span id="heatpump_flowT"></span>C<br><span style="font-weight:normal; font-size:12px">Heat Output <span id="heatpump_heat"></span>W</span></p>
+              </div>
+              <div class="span4" style="margin-bottom:20px">
+                <p>Target Temperature</p>
+                <div id="flowT" class="btn-group input-temperature">
+                  <button>-</button><input type="text" val="0" style="width:60px"><button>+</button>
+                </div>
+              </div>
+            </div>
+          </div>
           <!---------------------------------------------------------------------------------------------------------------------------->
           <div class="smart">
           
             <div class="row" style="max-width:700px; margin: 0 auto;">
-              <div class="span4">
+              <div class="span4" style="margin-bottom:20px">
                 <div id="run_period">
                   <p>Run period:</p>
                   <div id="period" class="btn-group input-time">
@@ -32,19 +45,19 @@
                   </div>
                 </div>
               </div>
-              <div class="span4">
+              <div class="span4" style="margin-bottom:20px">
                 <p>Complete by:</p>
                 <div id="end" class="btn-group input-time">
                   <button>-</button><input type="time" val="00:00"><button>+</button>
                 </div>
               </div>
-              <div class="span4">
+              <div class="span4" style="margin-bottom:20px">
                 <p>Ok to interrupt:</p>
                 <div name="interruptible" state=0 class="input scheduler-checkbox" style="margin:0 auto"></div>
               </div>
             </div>
             
-            <br><br>
+            <br>
           
           </div>
           <!---------------------------------------------------------------------------------------------------------------------------->
@@ -92,6 +105,7 @@
           </div>
           <!---------------------------------------------------------------------------------------------------------------------------->
           
+          <div class="repeat">
           <p>Repeat:</p>
           <div class="weekly-scheduler-days">
             <div name="repeat" day=0 val=0 class="input weekly-scheduler weekly-scheduler-day"><div class="weekly-scheduler-text">Mon</div></div>
@@ -101,6 +115,7 @@
             <div name="repeat" day=4 val=0 class="input weekly-scheduler weekly-scheduler-day"><div class="weekly-scheduler-text">Fri</div></div>
             <div name="repeat" day=5 val=0 class="input weekly-scheduler weekly-scheduler-day"><div class="weekly-scheduler-text">Sat</div></div>
             <div name="repeat" day=6 val=0 class="input weekly-scheduler weekly-scheduler-day"><div class="weekly-scheduler-text">Sun</div></div>
+          </div>
           </div>
           <!---------------------------------------------------------------------------------------------------------------------------->
         

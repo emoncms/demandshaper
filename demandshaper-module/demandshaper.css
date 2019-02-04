@@ -156,6 +156,17 @@ body {padding:0}
   background-repeat: no-repeat;
   margin-right:10px;
 }
+
+.icon-heatpumpmonitor {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  background-image: url('heatpumpmonitor.png');
+  background-position: 0 0;
+  background-size:20px;
+  background-repeat: no-repeat;
+  margin-right:10px;
+}
   
 .btn-group button{
   width:auto;

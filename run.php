@@ -76,6 +76,7 @@ $last_retry = 0;
 $timer = array();
 $last_timer = array();
 $last_ctrlmode = array();
+$last_flowtemp = array();
 $update_interval = 60;
 
 $lasttime = array();
@@ -233,7 +234,6 @@ while(true)
                         
 
                         if (!isset($last_ctrlmode[$device])) $last_ctrlmode[$device] = false;
-                            
                         if ($ctrlmode!=$last_ctrlmode[$device]) {
                         
                             $ctrlmode_status = "Off";
@@ -247,6 +247,17 @@ while(true)
                         }
                         $last_ctrlmode[$device] = $ctrlmode;
                         
+                        // Flow temperature target used with heatpump
+                        if (isset($schedule->flowT)) {
+                            if (!isset($last_flowT[$device])) $last_flowT[$device] = false;
+                            if ($schedule->flowT!=$last_flowT[$device]) {
+                                if ($device_type=="heatpumpmonitor") {
+                                    print "emon/$device/flowT ".$schedule->flowT."\n";
+                                    $mqtt_client->publish("emon/$device/flowT",$schedule->flowT,0);
+                                }
+                            }
+                            $last_flowT[$device] = $schedule->flowT;
+                        }
                     }
                     
                     // -----------------------------------------------------------------------

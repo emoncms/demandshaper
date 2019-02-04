@@ -9,9 +9,11 @@ if (devices[device].type=="openevse") {
     battery.events();
     
     $("#run_period").hide();
-    $("#run_period").parent().addClass('span2').removeClass('span4');
-    
-    $("#charge_current").html(12);
+    $("#run_period").parent().addClass('span2').removeClass('span4');    
+}
+
+if (devices[device].type=="heatpumpmonitor") {
+    $(".heatpumpmonitor").show();
 }
 
 // -------------------------------------------------------------------------
@@ -33,7 +35,9 @@ var default_schedule = {
     timer_stop2:0,
     // Repetition
     repeat:[1,1,1,1,1,1,1],
-    runonce:false
+    runonce:false,
+    // hpmon
+    flowT:30.0
 };
 
 var schedule = default_schedule;
@@ -70,7 +74,11 @@ $.ajax({ url: emoncmspath+"demandshaper/get?device="+device+apikeystr, dataType:
     if (result==null || result.schedule==null) {
         // invalid schedule, use default applied above        
     } else {
-        schedule = result.schedule;
+        schedule = default_schedule;
+        for (var z in default_schedule) {
+            if (result.schedule[z]!=undefined) schedule[z] = result.schedule[z];
+        }
+        
         schedule.device = device;
         schedule.device_type = devices[device].type;
     }
@@ -84,6 +92,14 @@ function update_status(){
         if (result!=null) {
             if (result.amp!=undefined) $("#charge_current").html((result.amp.value*0.001).toFixed(1));
             if (result.temp1!=undefined) $("#openevse_temperature").html((result.temp1.value*0.1).toFixed(1));
+            if (result.SNXflowT!=undefined) {
+                 $("#heatpump_flowT").html((result.SNXflowT.value).toFixed(1));
+                 if (schedule.flowT==undefined) {
+                     schedule.flowT = result.SNXflowT.value;
+                     $("#flowT input").val(result.SNXflowT.value.toFixed(1)+"C");
+                 }
+            }
+            if (result.SNXheat!=undefined) $("#heatpump_heat").html((result.SNXheat.value).toFixed(0));
         }
     }});
 }
@@ -151,6 +167,26 @@ $(".input-time input[type=time]").change(function() {
     calc_schedule(); 
 });
 
+$(".input-temperature button").click(function() {
+    var name = $(this).parent().attr("id");
+    var type = $(this).html();
+    
+    if (type=="+") {
+        schedule[name] += 1.0;
+    } else if (type=="-") {
+        schedule[name] -= 1.0;
+    }
+    calc_schedule();
+});
+
+$(".input-temperature input[type=text]").change(function() {
+    var name = $(this).parent().attr("id");
+    var tempstr = $(this).val();
+    tempstr = tempstr.replace("C","");
+    schedule[name] = parseFloat(tempstr);
+    calc_schedule(); 
+});
+
 $(".scheduler-checkbox").click(function(){
     var name = $(this).attr('name');
     var state = 1; if ($(this).attr('state')==true) state = 0;
@@ -182,9 +218,11 @@ $("#battery").on("bchange",function() {
 
 function calc_schedule() {
     $("#mode button[mode="+schedule.ctrlmode+"]").addClass('active').siblings().removeClass('active');
-    if (schedule.ctrlmode=="timer") { $(".smart").hide(); $(".timer").show(); }
-    if (schedule.ctrlmode=="smart") { $(".smart").show(); $(".timer").hide(); }
-        
+    if (schedule.ctrlmode=="timer") { $(".smart").hide(); $(".timer").show(); $(".repeat").show(); }
+    if (schedule.ctrlmode=="smart") { $(".smart").show(); $(".timer").hide(); $(".repeat").show(); }
+    if (schedule.ctrlmode=="on") { $(".smart").hide(); $(".timer").hide(); $(".repeat").hide(); }
+    if (schedule.ctrlmode=="off") { $(".smart").hide(); $(".timer").hide(); $(".repeat").hide(); }
+    
     $("#period input[type=time]").val(timestr(schedule.period,false));
     $("#end input[type=time]").val(timestr(schedule.end,false));
 
@@ -192,6 +230,10 @@ function calc_schedule() {
     $("#timer_stop1 input[type=time]").val(timestr(schedule.timer_stop1,false));
     $("#timer_start2 input[type=time]").val(timestr(schedule.timer_start2,false));
     $("#timer_stop2 input[type=time]").val(timestr(schedule.timer_stop2,false));
+
+    if (schedule.flowT!=undefined) {
+        $("#flowT input[type=text]").val(schedule.flowT.toFixed(1)+"C");
+    }
     
     for (var i=0; i<7; i++) {
         $(".weekly-scheduler[day="+i+"]").attr("val",schedule.repeat[i]);
@@ -320,6 +362,8 @@ function draw_schedule_output(schedule)
             out += "CO2 intensity: "+Math.round(co2)+" gCO2/kWh"
             if (devices[device].type=="openevse") {
                 out += ", "+Math.round(co2_km)+" gCO2/km, "+Math.round(prc)+"% <span title='Compared to 50 MPG Petrol car'>reduction</span>.";
+            } else if (devices[device].type=="heatpumpmonitor") {
+                out += ", "+Math.round(co2/3.8)+" gCO2/kWh Heat @ COP 3.8";
             } else {
                 out += ", "+Math.round(100.0*(1.0-(co2/co2_peak)))+"% reduction vs peak";
             }
