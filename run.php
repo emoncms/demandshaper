@@ -21,9 +21,9 @@ if (! flock($fp, LOCK_EX | LOCK_NB)) { echo "Already running\n"; die; }
 
 $pid = getmypid();
 
-$fh = fopen("/home/pi/data/demandshaper.pid","w");
-fwrite($fh,$pid);
-fclose($fh);
+//$fh = fopen("/home/pi/data/demandshaper.pid","w");
+//fwrite($fh,$pid);
+//fclose($fh);
 
 chdir("/var/www/emoncms");
 require "process_settings.php";
@@ -38,6 +38,10 @@ $mqtt_client = new Mosquitto\Client();
 $connected = false;
 $mqtt_client->onConnect('connect');
 $mqtt_client->onDisconnect('disconnect');
+
+$mqtt_client->onMessage( function($message) { 
+    print json_encode($message)."\n";
+});
 
 
 $mysqli = @new mysqli($server,$username,$password,$database,$port);
@@ -136,9 +140,9 @@ while(true)
                 $device_type = false;
                 if (isset($schedule->device_type)) $device_type = $schedule->device_type;
                 
-                if ($schedule->active && $device_type)
+                if ($device_type)
                 {
-                    print date("Y-m-d H:i:s")." Schedule:$device\n";
+                    print date("Y-m-d H:i:s")." Schedule:$device ".$schedule->ctrlmode."\n";
                     print "  timeleft: ".$schedule->timeleft."s\n";
                     print "  end timestamp: ".$schedule->end_timestamp."\n";
                     // -----------------------------------------------------------------------
@@ -160,6 +164,9 @@ while(true)
                         // Check if schedule should be ran on this day
                         if (!$schedule->repeat[$date->format("N")-1]) $status = 0;
                     }
+                    
+                    if ($schedule->ctrlmode=="on") $status = 1;
+                    if ($schedule->ctrlmode=="off") $status = 0;
 
                     if ($status) {
                         print "  status: ON\n";
@@ -255,7 +262,10 @@ while(true)
 }
 
 function connect($r, $message) {
-    global $connected; $connected = true;
+    global $connected, $mqtt_client; 
+    $connected = true;
+    $mqtt_client->subscribe("emon/smartplug1/#",2);
+    $mqtt_client->subscribe("emon/openevse/#",2);
 }
 
 function disconnect() {

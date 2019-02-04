@@ -42,6 +42,9 @@ function demandshaper_controller()
                 if (isset($_GET['schedule'])) {
                     include "$homedir/demandshaper/scheduler.php";
                     
+                    $save = 1;
+                    if (isset($_GET['save']) && $_GET['save']==0) $save = 0;
+                    
                     $schedule = json_decode($_GET['schedule']);
                     
                     if (!isset($schedule->device)) return array("content"=>"Missing device parameter in schedule object");
@@ -78,11 +81,12 @@ function demandshaper_controller()
                     
                     $device = $schedule->device;
                     
-                    $schedules = $demandshaper->get($session["userid"]);
-                    $schedules->$device = $schedule;
-                    $demandshaper->set($session["userid"],$schedules);
-                    
-                    $redis->set("demandshaper:trigger",1);
+                    if ($save) {
+                        $schedules = $demandshaper->get($session["userid"]);
+                        $schedules->$device = $schedule;
+                        $demandshaper->set($session["userid"],$schedules);
+                        $redis->set("demandshaper:trigger",1);
+                    }
                     
                     $result = array("schedule"=>$schedule);
                 } else {
