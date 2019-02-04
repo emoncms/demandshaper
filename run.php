@@ -75,6 +75,7 @@ $last_30min = 0;
 $last_retry = 0;
 $timer = array();
 $last_timer = array();
+$last_ctrlmode = array();
 $update_interval = 60;
 
 $lasttime = array();
@@ -139,8 +140,10 @@ while(true)
                 if (isset($schedule->device)) $device = $schedule->device;
                 $device_type = false;
                 if (isset($schedule->device_type)) $device_type = $schedule->device_type;
-                
-                if ($device_type)
+                $ctrlmode = false;
+                if (isset($schedule->ctrlmode)) $ctrlmode = $schedule->ctrlmode;
+                                
+                if ($device_type && $ctrlmode)
                 {
                     print date("Y-m-d H:i:s")." Schedule:$device ".$schedule->ctrlmode."\n";
                     print "  timeleft: ".$schedule->timeleft."s\n";
@@ -185,41 +188,61 @@ while(true)
 
                         if ($device_type=="openevse" || $device_type=="smartplug") {
                             
-                            $s1 = $schedule->periods[0]->start[1];
-                            $e1 = $schedule->periods[0]->end[1];
-                            $sh = floor($s1); $sm = round(($s1-$sh)*60);
-                            $eh = floor($e1); $em = round(($e1-$eh)*60);
-                            
-                            if ($sh<10) $sh = "0".$sh;
-                            if ($sm<10) $sm = "0".$sm;
-                            if ($eh<10) $eh = "0".$eh;
-                            if ($em<10) $em = "0".$em;
-                            
-                            if (!isset($timer[$device])) $timer[$device] = "";
-                            $last_timer[$device] = $timer[$device];
-                            
-                            // Slight difference in API format
-                            if ($device_type=="smartplug") {
-                                $api = "timer";
-                                $timer[$device] = $sh.$sm." ".$eh.$em;
-                            }
-                            if ($device_type=="openevse") {
-                                $api = "rapi/in/\$ST";
-                                $timer[$device] = "$sh $sm $eh $em";
-                            }
-                            
-                            if ($timer[$device]!=$last_timer[$device] && ("$sh $sm"!="$eh $em")) {
-                                print "  emon/$device/$api"." $timer[$device]\n";
-                                $mqtt_client->publish("emon/$device/$api",$timer[$device],0);
+                            if (count($schedule->periods)) {
+                                $s1 = $schedule->periods[0]->start[1];
+                                $e1 = $schedule->periods[0]->end[1];
+                                $sh = floor($s1); $sm = round(($s1-$sh)*60);
+                                $eh = floor($e1); $em = round(($e1-$eh)*60);
                                 
-                                // Log temporarily
-                                // $fh = fopen("/home/pi/$device.log","a");
-                                // fwrite($fh,date("Y-m-d H:i:s",time())." emon/$device/$api ".$timer[$device]."\n");
-                                // fclose($fh);
+                                if ($sh<10) $sh = "0".$sh;
+                                if ($sm<10) $sm = "0".$sm;
+                                if ($eh<10) $eh = "0".$eh;
+                                if ($em<10) $em = "0".$em;
+                                
+                                if (!isset($timer[$device])) $timer[$device] = "";
+                                $last_timer[$device] = $timer[$device];
+                                
+                                // Slight difference in API format
+                                if ($device_type=="smartplug") {
+                                    $api = "timer";
+                                    $timer[$device] = $sh.$sm." ".$eh.$em;
+                                }
+                                if ($device_type=="openevse") {
+                                    $api = "rapi/in/\$ST";
+                                    $timer[$device] = "$sh $sm $eh $em";
+                                }
+                                
+                                if ($timer[$device]!=$last_timer[$device] && ("$sh $sm"!="$eh $em")) {
+                                    print "  emon/$device/$api"." $timer[$device]\n";
+                                    $mqtt_client->publish("emon/$device/$api",$timer[$device],0);
+                                    
+                                    // Log temporarily
+                                    // $fh = fopen("/home/pi/$device.log","a");
+                                    // fwrite($fh,date("Y-m-d H:i:s",time())." emon/$device/$api ".$timer[$device]."\n");
+                                    // fclose($fh);
+                                }
                             }
                         } else {
                             $mqtt_client->publish("emon/$device/status",$status,0);
                         }
+                        
+                        
+
+                        if (!isset($last_ctrlmode[$device])) $last_ctrlmode[$device] = false;
+                            
+                        if ($ctrlmode!=$last_ctrlmode[$device]) {
+                        
+                            $ctrlmode_status = "Off";
+                            if ($ctrlmode=="on") $ctrlmode_status = "On";
+                            if ($ctrlmode=="smart") $ctrlmode_status = "Timer";
+                            if ($ctrlmode=="timer") $ctrlmode_status = "Timer";
+                            
+                            if ($device_type=="smartplug") {
+                                $mqtt_client->publish("emon/$device/status",$ctrlmode_status,0);
+                            }
+                        }
+                        $last_ctrlmode[$device] = $ctrlmode;
+                        
                     }
                     
                     // -----------------------------------------------------------------------

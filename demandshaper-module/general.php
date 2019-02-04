@@ -13,8 +13,11 @@
             <button mode="on">On</button><button mode="off">Off</button><button mode="smart" class="active">Smart</button><button mode="timer">Timer</button>
           </div><br><br><br>
           
-          <div id="battery_bound" style="width:100%" class="hide">
-              <canvas id="battery"></canvas>
+          <div id="openevse" class="hide">
+            <p>Charge Current <span id="charge_current">0</span>A<br><span style="font-weight:normal; font-size:12px">Temperature <span id="openevse_temperature">10</span>C</span></p>
+            <div id="battery_bound" style="width:100%">
+                <canvas id="battery"></canvas>
+            </div>
           </div>
 
           <!---------------------------------------------------------------------------------------------------------------------------->
@@ -124,4 +127,4 @@
   </div> <!-- node-scheduler -->
 </div> <!-- table -->
 
-<script type="text/javascript" src="<?php echo $path; ?>Modules/demandshaper/general.js?v=2"></script>
+<script type="text/javascript" src="<?php echo $path; ?>Modules/demandshaper/general.js?v=3"></script>

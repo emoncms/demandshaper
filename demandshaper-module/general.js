@@ -3,27 +3,29 @@ $(".node-scheduler-title").html("<span class='icon-"+devices[device].type+"'></s
 $(".node-scheduler").attr("node",device);
 
 if (devices[device].type=="openevse") {
-    $("#battery_bound").show();
+    $("#openevse").show();
     battery.init("battery");
     battery.draw(0.2,0.8);
     battery.events();
     
     $("#run_period").hide();
     $("#run_period").parent().addClass('span2').removeClass('span4');
+    
+    $("#charge_current").html(12);
 }
 
 // -------------------------------------------------------------------------
 // Defaults
 // -------------------------------------------------------------------------
 var default_schedule = {
-    "device":device,
-    "device_type":devices[device].type,
-    "ctrlmode":"smart", // on, off, smart, timer
-    "signal":"carbonintensity",
+    device:device,
+    device_type:devices[device].type,
+    ctrlmode:"smart", // on, off, smart, timer
+    signal:"carbonintensity",
     // Smart mode
-    "period":3,
-    "end":8,
-    "interruptible":0,
+    period:3,
+    end:8,
+    interruptible:0,
     // Timer mode
     timer_start1:0,
     timer_stop1:0,
@@ -75,6 +77,17 @@ $.ajax({ url: emoncmspath+"demandshaper/get?device="+device+apikeystr, dataType:
     calc_schedule();
 }});
 
+update_status();
+setInterval(update_status,5000);
+function update_status(){
+    $.ajax({ url: emoncmspath+"input/get/"+device+apikeystr, dataType: 'json', async: true, success: function(result) {
+        if (result!=null) {
+            if (result.amp!=undefined) $("#charge_current").html((result.amp.value*0.001).toFixed(1));
+            if (result.temp1!=undefined) $("#openevse_temperature").html((result.temp1.value*0.1).toFixed(1));
+        }
+    }});
+}
+
 // -------------------------------------------------------------------------
 // Events
 // -------------------------------------------------------------------------
@@ -98,10 +111,8 @@ $("#mode button").click(function() {
       case "timer":
         if (schedule.period==0) schedule.period = last_period;
         if (schedule.end==0) schedule.end = 8.0;
-        $(".smart").hide(); $(".timer").show();
         break;
       case "smart":
-        $(".timer").hide(); $(".smart").show();
         break;
     }
     calc_schedule();
@@ -166,6 +177,10 @@ $("#battery").on("bchange",function() {
 });
 
 function calc_schedule() {
+    $("#mode button[mode="+schedule.ctrlmode+"]").addClass('active').siblings().removeClass('active');
+    if (schedule.ctrlmode=="timer") { $(".smart").hide(); $(".timer").show(); }
+    if (schedule.ctrlmode=="smart") { $(".smart").show(); $(".timer").hide(); }
+        
     $("#period input[type=time]").val(timestr(schedule.period,false));
     $("#end input[type=time]").val(timestr(schedule.end,false));
 
