@@ -20,7 +20,7 @@
             </div>
           </div>
 
-          <div class="heatpumpmonitor" class="hide">
+          <div class="heatpumpmonitor hide">
             <div class="row" style="max-width:700px; margin: 0 auto;">
               <div class="span4 offset2" style="margin-bottom:20px"><br>
                 <p>Flow Temperature <span id="heatpump_flowT"></span>C<br><span style="font-weight:normal; font-size:12px">Heat Output <span id="heatpump_heat"></span>W</span></p>
@@ -142,4 +142,4 @@
   </div> <!-- node-scheduler -->
 </div> <!-- table -->
 
-<script type="text/javascript" src="<?php echo $path; ?>Modules/demandshaper/general.js?v=3"></script>
+<script type="text/javascript" src="<?php echo $path; ?>Modules/demandshaper/general.js?v=4"></script>

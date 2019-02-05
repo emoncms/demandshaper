@@ -12,7 +12,7 @@ if (devices[device].type=="openevse") {
     $("#run_period").parent().addClass('span2').removeClass('span4');    
 }
 
-if (devices[device].type=="heatpumpmonitor") {
+if (devices[device].type=="hpmon") {
     $(".heatpumpmonitor").show();
 }
 
