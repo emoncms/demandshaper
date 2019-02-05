@@ -251,9 +251,10 @@ while(true)
                         if (isset($schedule->flowT)) {
                             if (!isset($last_flowT[$device])) $last_flowT[$device] = false;
                             if ($schedule->flowT!=$last_flowT[$device]) {
-                                if ($device_type=="heatpumpmonitor") {
-                                    print "emon/$device/flowT ".$schedule->flowT."\n";
-                                    $mqtt_client->publish("emon/$device/flowT",$schedule->flowT,0);
+                                if ($device_type=="hpmon") {
+                                    $vout = round(($schedule->flowT-7.14)/0.0371);
+                                    print "emon/$device/vout ".$vout."\n";
+                                    $mqtt_client->publish("emon/$device/vout",$vout,0);
                                 }
                             }
                             $last_flowT[$device] = $schedule->flowT;
