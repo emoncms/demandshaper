@@ -362,7 +362,7 @@ function draw_schedule_output(schedule)
             out += "CO2 intensity: "+Math.round(co2)+" gCO2/kWh"
             if (devices[device].type=="openevse") {
                 out += ", "+Math.round(co2_km)+" gCO2/km, "+Math.round(prc)+"% <span title='Compared to 50 MPG Petrol car'>reduction</span>.";
-            } else if (devices[device].type=="heatpumpmonitor") {
+            } else if (devices[device].type=="hpmon") {
                 out += ", "+Math.round(co2/3.8)+" gCO2/kWh Heat @ COP 3.8";
             } else {
                 out += ", "+Math.round(100.0*(1.0-(co2/co2_peak)))+"% reduction vs peak";

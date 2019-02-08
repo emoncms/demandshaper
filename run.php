@@ -38,10 +38,7 @@ $mqtt_client = new Mosquitto\Client();
 $connected = false;
 $mqtt_client->onConnect('connect');
 $mqtt_client->onDisconnect('disconnect');
-
-$mqtt_client->onMessage( function($message) { 
-    print json_encode($message)."\n";
-});
+$mqtt_client->onMessage('message');
 
 
 $mysqli = @new mysqli($server,$username,$password,$database,$port);
@@ -78,6 +75,7 @@ $last_timer = array();
 $last_ctrlmode = array();
 $last_flowtemp = array();
 $update_interval = 60;
+$last_state_check = 0;
 
 $lasttime = array();
 
@@ -191,7 +189,7 @@ while(true)
                     if ($connected) {
                         // SmartPlug and WIFI Relay
 
-                        if ($device_type=="openevse" || $device_type=="smartplug") {
+                        if ($device_type=="openevse" || $device_type=="smartplug" || $device_type=="hpmon") {
                             
                             if (count($schedule->periods)) {
                                 $s1 = $schedule->periods[$active_period]->start[1];
@@ -208,8 +206,8 @@ while(true)
                                 $last_timer[$device] = $timer[$device];
                                 
                                 // Slight difference in API format
-                                if ($device_type=="smartplug") {
-                                    $api = "timer";
+                                if ($device_type=="smartplug" || $device_type=="hpmon") {
+                                    $api = "in/timer";
                                     $timer[$device] = $sh.$sm." ".$eh.$em;
                                 }
                                 if ($device_type=="openevse") {
@@ -241,8 +239,8 @@ while(true)
                             if ($ctrlmode=="smart") $ctrlmode_status = "Timer";
                             if ($ctrlmode=="timer") $ctrlmode_status = "Timer";
                             
-                            if ($device_type=="smartplug") {
-                                $mqtt_client->publish("emon/$device/status",$ctrlmode_status,0);
+                            if ($device_type=="smartplug" || $device_type=="hpmon") {
+                                $mqtt_client->publish("emon/$device/in/ctrlmode",$ctrlmode_status,0);
                             }
                         }
                         $last_ctrlmode[$device] = $ctrlmode;
@@ -251,10 +249,10 @@ while(true)
                         if (isset($schedule->flowT)) {
                             if (!isset($last_flowT[$device])) $last_flowT[$device] = false;
                             if ($schedule->flowT!=$last_flowT[$device]) {
-                                if ($device_type=="hpmon") {
+                                if ($device_type=="smartplug" || $device_type=="hpmon") {
                                     $vout = round(($schedule->flowT-7.14)/0.0371);
                                     print "emon/$device/vout ".$vout."\n";
-                                    $mqtt_client->publish("emon/$device/vout",$vout,0);
+                                    $mqtt_client->publish("emon/$device/in/vout",$vout,0);
                                 }
                             }
                             $last_flowT[$device] = $schedule->flowT;
@@ -286,6 +284,13 @@ while(true)
         sleep(1.0);
     } // 10s update
     
+    if ($connected && (time()-$last_state_check)>300) {
+        $last_state_check = time();
+        $mqtt_client->publish("emon/smartplug1/in/state","",0);
+        $mqtt_client->publish("emon/hpmon5/in/state","",0);
+    }
+    
+    
     // MQTT Connect or Reconnect
     if (!$connected && (time()-$last_retry)>5.0) {
         $last_retry = time();
@@ -303,10 +308,81 @@ while(true)
 function connect($r, $message) {
     global $connected, $mqtt_client; 
     $connected = true;
-    $mqtt_client->subscribe("emon/smartplug1/#",2);
-    $mqtt_client->subscribe("emon/openevse/#",2);
+    $mqtt_client->subscribe("emon/smartplug1/out/#",2);
+    $mqtt_client->subscribe("emon/openevse/out/#",2);
+    $mqtt_client->subscribe("emon/hpmon5/out/#",2);
 }
 
 function disconnect() {
     global $connected; $connected = false;
+}
+
+// -------------------------------------------------------------------------
+// Update demand shaper state with state from device
+// -------------------------------------------------------------------------
+function message($message) 
+{
+    global $demandshaper, $userid;
+    
+    $topic_parts = explode("/",$message->topic);
+    if (isset($topic_parts[1])) {
+        $device = $topic_parts[1];
+        
+        $schedules = $demandshaper->get($userid);
+        if (isset($schedules->$device)) {
+            $p = $message->payload;
+            print $p."\n";
+            
+            if ($message->topic=="emon/$device/out/state") {
+                $p = json_decode($p);
+                
+                if (isset($p->ip)) {
+                    $schedules->$device->ip = $p->ip;
+                }
+            
+                if (isset($p->ctrlmode)) {
+                    if ($p->ctrlmode=="On") $schedules->$device->ctrlmode = "on";
+                    if ($p->ctrlmode=="Off") $schedules->$device->ctrlmode = "off";
+                    if ($p->ctrlmode=="Timer") $schedules->$device->ctrlmode = "timer";
+                }
+  
+                if (isset($p->vout)) {
+                    $schedules->$device->flowT = ($p->vout*0.0371)+7.14;
+                }
+                
+                if (isset($p->timer)) {
+                    $timer = explode(" ",$p->timer);
+                    $schedules->$device->timer_start1 = time_conv($timer[0]);
+                    $schedules->$device->timer_stop1 = time_conv($timer[1]);
+                    $schedules->$device->timer_start2 = time_conv($timer[2]);
+                    $schedules->$device->timer_stop2 = time_conv($timer[3]);
+                }
+            }
+            
+            else if ($message->topic=="emon/$device/out/ctrlmode") {
+                if ($p=="On") $schedules->$device->ctrlmode = "on";
+                if ($p=="Off") $schedules->$device->ctrlmode = "off";
+                if ($p=="Timer") $schedules->$device->ctrlmode = "timer";
+            }
+            
+            else if ($message->topic=="emon/$device/out/vout") {
+                $schedules->$device->flowT = ($p*0.0371)+7.14;
+            }
+            
+            else if ($message->topic=="emon/$device/out/timer") {
+                $timer = explode(" ",$p);
+                $schedules->$device->timer_start1 = time_conv($timer[0]);
+                $schedules->$device->timer_stop1 = time_conv($timer[1]);
+                $schedules->$device->timer_start2 = time_conv($timer[2]);
+                $schedules->$device->timer_stop2 = time_conv($timer[3]);
+                $schedules->$device->flowT = ($timer[4]*0.0371)+7.14;
+            }
+            // print json_encode($schedules->$device);
+            $demandshaper->set($userid,$schedules);
+        }
+    }
+}
+
+function time_conv($t){
+    return floor($t*0.01) + ($t*0.01 - floor($t*0.01))/0.6;
 }
