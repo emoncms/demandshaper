@@ -23,7 +23,7 @@ var default_schedule = {
     device:device,
     device_type:devices[device].type,
     ctrlmode:"smart", // on, off, smart, timer
-    signal:"carbonintensity",
+    signal:"cydynni",
     timeleft:0,
     // Smart mode
     period:3,
@@ -217,6 +217,12 @@ $("#battery").on("bchange",function() {
     calc_schedule();
 });
 
+$(".scheduler-select").change(function(){
+    var name = $(this).attr('name');
+    schedule[name] = $(this).val();
+    calc_schedule();
+});
+
 function calc_schedule() {
     $("#mode button[mode="+schedule.ctrlmode+"]").addClass('active').siblings().removeClass('active');
     if (schedule.ctrlmode=="timer") { $(".smart").hide(); $(".timer").show(); $(".repeat").show(); }
@@ -241,6 +247,8 @@ function calc_schedule() {
     }
     
     $(".scheduler-checkbox[name='interruptible']").attr("state",schedule.interruptible);
+    
+    $(".scheduler-select[name='signal']").val(schedule.signal);
     
     submit_schedule(0);
     last_submit = (new Date()).getTime();
@@ -336,20 +344,20 @@ function draw_schedule_output(schedule)
         }
         
         // Generate series for active and inactive slots
-        var co2_sum = 0;
-        var co2_sum_n = 0;
-        var co2_peak = 0;
+        var sum = 0;
+        var sum_n = 0;
+        var peak = 0;
         available = [];
         unavailable = [];
         for (var z in probability) {
             var time = probability[z][0];
             var value = probability[z][1];
             var active = probability[z][4];
-            if (value>co2_peak) co2_peak = value;
+            if (value>peak) peak = value;
                 
             if (active) { 
                 available.push([time,value]); 
-                co2_sum += value; co2_sum_n++;
+                sum += value; sum_n++;
                 if (bars) value=null;
             } 
             unavailable.push([time,value]);
@@ -357,18 +365,35 @@ function draw_schedule_output(schedule)
         
         // Display CO2 in window
         var out = "";
-        if (co2_sum_n>0) {
-            var co2 = co2_sum/co2_sum_n;
-            var co2_km = (co2 / 4.0) / 1.6;
-            var prc = 100-(100*(co2_km / 130));
-            if (devices[device].type=="openevse") out = "Charge ";
-            out += "CO2 intensity: "+Math.round(co2)+" gCO2/kWh"
-            if (devices[device].type=="openevse") {
-                out += ", "+Math.round(co2_km)+" gCO2/km, "+Math.round(prc)+"% <span title='Compared to 50 MPG Petrol car'>reduction</span>.";
-            } else if (devices[device].type=="hpmon") {
-                out += ", "+Math.round(co2/3.8)+" gCO2/kWh Heat @ COP 3.8";
+        if (sum_n>0) {
+            var mean = sum/sum_n;
+            
+            if (schedule.signal=="carbonintensity") {
+                var co2_km = (mean / 4.0) / 1.6;
+                var prc = 100-(100*(co2_km / 130));
+                if (devices[device].type=="openevse") out = "Charge ";
+                out += "CO2 intensity: "+Math.round(mean)+" gCO2/kWh"
+                if (devices[device].type=="openevse") {
+                    out += ", "+Math.round(co2_km)+" gCO2/km, "+Math.round(prc)+"% <span title='Compared to 50 MPG Petrol car'>reduction</span>.";
+                } else if (devices[device].type=="hpmon") {
+                    out += ", "+Math.round(mean/3.8)+" gCO2/kWh Heat @ COP 3.8";
+                } else {
+                    out += ", "+Math.round(100.0*(1.0-(mean/peak)))+"% reduction vs peak";
+                }
+            } else if (schedule.signal=="octopus" || schedule.signal=="economy7") {
+
+                if (devices[device].type=="openevse") {
+                    var p_per_mile = (mean / 4.0);
+                    var prc = 100-(100*(p_per_mile / 10.0));
+                    out = "Cost: "+(p_per_mile).toFixed(1)+"p/mile"
+                    
+                } else if (devices[device].type=="hpmon") {
+                    out = ", "+Math.round(mean/3.8)+" p/kWh Heat @ COP 3.8";
+                } else {
+                    out = "Average cost: "+mean.toFixed(1)+"p/kWh, "+Math.round(100.0*(1.0-(mean/peak)))+"% reduction vs peak";
+                }  
             } else {
-                out += ", "+Math.round(100.0*(1.0-(co2/co2_peak)))+"% reduction vs peak";
+                out = Math.round(100.0*(1.0-(mean/peak)))+"% reduction vs peak";  
             }
         }
         $("#schedule-co2").html(out);
