@@ -223,6 +223,34 @@ $(".scheduler-select").change(function(){
     calc_schedule();
 });
 
+$(".delete-device").click(function(){
+    $("#DeleteDeviceModal").modal();
+    $(".device-name").html(schedule.device);
+});
+
+$("#delete-device-confirm").click(function(){
+    schedule.ctrlmode = "off";
+    calc_schedule();
+    // 1. Delete device
+    $.ajax({ url: path+"device/delete.json", data: "id="+devices[schedule.device].id, async: true, success: function(data) {
+        // 2. Delete device inputs
+        $.ajax({ url: path+"input/list.json", async: true, success: function(data) {
+            // get list of device inputs
+            var device_inputs = [];
+            for (var z in data) {
+               if (data[z].nodeid==schedule.device) {
+                  device_inputs.push(1*data[z].id);
+               }
+            }
+            console.log("Deleting inputs:");
+            console.log(device_inputs);
+            $.ajax({ url: path+"input/delete.json", data: "inputids="+JSON.stringify(device_inputs), async: true, success: function(data){
+                location.href = "/";
+            }});
+        }});
+    }});
+});
+
 function calc_schedule() {
     $("#mode button[mode="+schedule.ctrlmode+"]").addClass('active').siblings().removeClass('active');
     if (schedule.ctrlmode=="timer") { $(".smart").hide(); $(".timer").show(); $(".repeat").show(); }
