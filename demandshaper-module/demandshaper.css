@@ -273,3 +273,15 @@ body {padding:0}
     float:right;
     margin-top:-2px;
 }
+
+.delete-device {
+    padding-top:12px;
+    padding-right:15px;
+    padding-left:15px;
+    padding-bottom:8px;
+    cursor:pointer;
+    float:right;
+}
+.delete-device:hover {
+    background-color:rgba(255,255,255,0.1);
+}
