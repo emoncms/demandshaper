@@ -24,6 +24,7 @@ var default_schedule = {
     device_type:devices[device].type,
     ctrlmode:"smart", // on, off, smart, timer
     signal:"carbonintensity",
+    timeleft:0,
     // Smart mode
     period:3,
     end:8,
@@ -299,9 +300,11 @@ function draw_schedule_output(schedule)
     }
     var out = "<br>"; 
     if (periods.length) {
-        out = jsUcfirst(device)+" scheduled to run: <b>"+periods.join(", ")+"</b>";
+        out = jsUcfirst(device)+" scheduled to run: <b>"+periods.join(", ")+"</b><br>";
     }
     $("#schedule-output").html(out);
+        
+    $("#timeleft").html(Math.round(schedule.timeleft/60)+" mins left to run");
 
     // --------------------------------------------------------------------------------------------
     // Draw schedule graph

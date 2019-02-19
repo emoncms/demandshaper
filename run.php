@@ -77,7 +77,7 @@ $last_flowtemp = array();
 $update_interval = 60;
 $last_state_check = 0;
 
-$lasttime = array();
+$lasttime = time();
 
 while(true) 
 {
@@ -87,7 +87,6 @@ while(true)
     if ($trigger = $redis->get("demandshaper:trigger")) {
         print "trigger\n";
     }
-    
     
     // ---------------------------------------------------------------------
     // Load demand shaper and cache locally every hour
@@ -145,7 +144,6 @@ while(true)
                 if ($device_type && $ctrlmode)
                 {
                     print date("Y-m-d H:i:s")." Schedule:$device ".$schedule->ctrlmode."\n";
-                    print "  timeleft: ".$schedule->timeleft."s\n";
                     print "  end timestamp: ".$schedule->end_timestamp."\n";
                     // -----------------------------------------------------------------------
                     // Work out if schedule is running
@@ -177,7 +175,10 @@ while(true)
                     if ($status) {
                         print "  status: ON\n";
                         $schedule->started = true;
-                        $schedule->timeleft -= $update_interval;
+                        $time_elapsed = $now - $lasttime;
+                        print "  time elapsed: $time_elapsed\n";
+                        $schedule->timeleft -= $time_elapsed; // $update_interval;
+                        print "  timeleft: ".$schedule->timeleft."s\n";
                         if ($schedule->timeleft<0) $schedule->timeleft = 0;
                     } else {
                         print "  status: OFF\n";
@@ -228,8 +229,6 @@ while(true)
                         } else {
                             $mqtt_client->publish("emon/$device/status",$status,0);
                         }
-                        
-                        
 
                         if (!isset($last_ctrlmode[$device])) $last_ctrlmode[$device] = false;
                         if ($ctrlmode!=$last_ctrlmode[$device]) {
@@ -282,6 +281,8 @@ while(true)
             $demandshaper->set($userid,$schedules);
         } // valid schedules
         sleep(1.0);
+        
+        $lasttime = $now;
     } // 10s update
     
     if ($connected && (time()-$last_state_check)>300) {
@@ -343,7 +344,7 @@ function message($message)
                 if (isset($p->ctrlmode)) {
                     if ($p->ctrlmode=="On") $schedules->$device->ctrlmode = "on";
                     if ($p->ctrlmode=="Off") $schedules->$device->ctrlmode = "off";
-                    if ($p->ctrlmode=="Timer") $schedules->$device->ctrlmode = "timer";
+                    if ($p->ctrlmode=="Timer" && $schedules->$device->ctrlmode!="smart") $schedules->$device->ctrlmode = "timer";
                 }
   
                 if (isset($p->vout)) {
@@ -362,7 +363,7 @@ function message($message)
             else if ($message->topic=="emon/$device/out/ctrlmode") {
                 if ($p=="On") $schedules->$device->ctrlmode = "on";
                 if ($p=="Off") $schedules->$device->ctrlmode = "off";
-                if ($p=="Timer") $schedules->$device->ctrlmode = "timer";
+                if ($p=="Timer" && $schedules->$device->ctrlmode!="smart") $schedules->$device->ctrlmode = "timer";
             }
             
             else if ($message->topic=="emon/$device/out/vout") {

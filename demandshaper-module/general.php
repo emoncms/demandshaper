@@ -121,7 +121,8 @@
         
           <div style="height:50px"></div>
           
-          <div id="schedule-output"></div>
+          <div id="schedule-output" style="font-weight:normal"></div>
+          <div id="timeleft" style="font-weight:normal; font-size:14px"></div>
           <div id="placeholder_bound" style="width:100%; height:300px">
             <div id="placeholder" style="height:300px"></div>
           </div><br>

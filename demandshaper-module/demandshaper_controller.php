@@ -52,8 +52,11 @@ function demandshaper_controller()
                     if (!isset($schedule->period)) return array("content"=>"Missing period parameter in schedule object");
                     if (!isset($schedule->interruptible)) return array("content"=>"Missing interruptible parameter in schedule object");
                     if (!isset($schedule->runonce)) return array("content"=>"Missing runonce parameter in schedule object");
-                    
                     if ($schedule->runonce) $schedule->runonce = time();
+                    
+                    $device = $schedule->device;
+                    $schedules = $demandshaper->get($session["userid"]);
+                    $last_schedule = $schedules->$device;
 
                     // -------------------------------------------------
                     // Calculate time left
@@ -68,8 +71,13 @@ function demandshaper_controller()
                     $end_timestamp = $date->getTimestamp() + $end_time*3600;
                     if ($end_timestamp<$now) $end_timestamp+=3600*24;
                     
+                    if ($schedule->end!=$last_schedule->end || $schedule->period!=$last_schedule->period) {
+                        $schedule->timeleft = $schedule->period * 3600;
+                    } else {
+                        $schedule->timeleft = $last_schedule->timeleft;
+                    }
+                    
                     $timeleft = $end_timestamp - $now;
-                    $schedule->timeleft = $schedule->period * 3600;
                     if ($schedule->timeleft>$timeleft) $schedule->timeleft = $timeleft;
                     // -------------------------------------------------
                     
@@ -78,11 +86,7 @@ function demandshaper_controller()
                     $schedule->periods = $result["periods"];
                     $schedule->probability = $result["probability"];
                     
-                    
-                    $device = $schedule->device;
-                    
                     if ($save) {
-                        $schedules = $demandshaper->get($session["userid"]);
                         $schedules->$device = $schedule;
                         $demandshaper->set($session["userid"],$schedules);
                         $redis->set("demandshaper:trigger",1);
@@ -96,7 +100,7 @@ function demandshaper_controller()
             break;
             
         case "get":
-            if ($session["write"]) {
+            if ($session["read"]) {
                 $route->format = "json";
                 if (isset($_GET['device'])) {
                     $schedules = $demandshaper->get($session["userid"]);
