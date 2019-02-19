@@ -31,11 +31,11 @@ function demandshaper_controller()
         case "":
             if ($session["write"]) {
                 $route->format = "html";
-                $result =  view("Modules/demandshaper/view.php", array());
+                return view("Modules/demandshaper/view.php", array());
             }
             break;
         
-        case "submit":
+        /*case "submit":
             if ($session["write"]) {
                 $route->format = "json";
                 
@@ -131,8 +131,8 @@ function demandshaper_controller()
                 }
                 $route->format = "json";
             }
-            break;
+            break;*/
     }
     
-    return array("content"=>$result);   
+    return array('content'=>'#UNDEFINED#');
 }

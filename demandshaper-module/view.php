@@ -21,7 +21,8 @@ $v=6;
 ?>
 
 <script>
-var emoncmspath = "<?php echo $path; ?>";
+var path = "<?php echo $path; ?>";
+var emoncmspath = "<?php echo $path; ?>remoteaccess/";
 var device = "<?php echo $device; ?>";
 var devices = {};
 
@@ -62,7 +63,7 @@ if (window.session!=undefined) {
           if (result[z].type=="openevse" || result[z].type=="smartplug" || result[z].type=="hpmon") {
               devices[result[z].nodeid] = result[z];
               // sidebar list
-              out += "<li><a href='"+emoncmspath+"demandshaper?node="+result[z].nodeid+"'><span class='icon-"+result[z].type+"'></span>"+ucfirst(result[z].nodeid)+"</a></li>";
+              out += "<li><a href='"+path+"demandshaper?node="+result[z].nodeid+"'><span class='icon-"+result[z].type+"'></span>"+ucfirst(result[z].nodeid)+"</a></li>";
               // select first device if device is not defined
               if (device=="") device = result[z].nodeid;
           }
