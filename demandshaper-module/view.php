@@ -78,10 +78,40 @@ if (window.session!=undefined) {
   <!------------------------------------------------------------------------------------------------------>
   
   <div id="scheduler-top"></div>
+  
+  <div id="auth-check" class="hide">
+      <i class="icon-exclamation-sign icon-white"></i> Device on ip address: <span id="auth-check-ip"></span> would like to connect 
+      <button class="btn btn-small auth-check-btn auth-check-allow">Allow</button>
+  </div>
+  
   <?php
       include "Modules/demandshaper/general.php";
   ?>
 </div>
+<script>
+var path = "<?php echo $path; ?>";
+// -------------------------------------------------------------------------------------------------------
+// Device authentication transfer
+// -------------------------------------------------------------------------------------------------------
+auth_check();
+setInterval(auth_check,5000);
+function auth_check(){
+    $.ajax({ url: path+"device/auth/check.json", dataType: 'json', async: true, success: function(data) {
+        if (typeof data.ip !== "undefined") {
+            $("#auth-check-ip").html(data.ip);
+            $("#auth-check").show();
+            $("#table").css("margin-top","0");
+        } else {
+            $("#table").css("margin-top","3rem");
+            $("#auth-check").hide();
+        }
+    }});
+}
 
-
-
+$(".auth-check-allow").click(function(){
+    var ip = $("#auth-check-ip").html();
+    $.ajax({ url: path+"device/auth/allow.json?ip="+ip, dataType: 'json', async: true, success: function(data) {
+        $("#auth-check").hide();
+    }});
+});
+</script>
