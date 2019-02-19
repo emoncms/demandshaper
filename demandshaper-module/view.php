@@ -18,11 +18,14 @@ if (isset($_GET['node'])) $device = $_GET['node'];
 
 $v=7;
 
+$emoncmspath = $path;
+if ($remoteaccess) $emoncmspath .= "remoteaccess/";
+
 ?>
 
 <script>
 var path = "<?php echo $path; ?>";
-var emoncmspath = "<?php echo $path; ?>remoteaccess/";
+var emoncmspath = "<?php echo $emoncmspath; ?>";
 var device = "<?php echo $device; ?>";
 var devices = {};
 
