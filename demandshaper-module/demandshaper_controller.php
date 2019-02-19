@@ -19,10 +19,12 @@ function demandshaper_controller()
 {
     global $mysqli, $redis, $session, $route, $homedir;
     $result = false;
-    
+
     $route->format = "json";
     $result = false;
-    
+
+    $remoteaccess = true;
+
     include "Modules/demandshaper/demandshaper_model.php";
     $demandshaper = new DemandShaper($mysqli,$redis);
     
@@ -35,8 +37,8 @@ function demandshaper_controller()
             }
             break;
         
-        /*case "submit":
-            if ($session["write"]) {
+        case "submit":
+            if (!$remoteaccess && $session["write"]) {
                 $route->format = "json";
                 
                 if (isset($_GET['schedule'])) {
@@ -92,15 +94,15 @@ function demandshaper_controller()
                         $redis->set("demandshaper:trigger",1);
                     }
                     
-                    $result = array("schedule"=>$schedule);
+                    return array("schedule"=>$schedule);
                 } else {
-                    $result = "Schedule object not present";
+                    return "Schedule object not present";
                 }
             }
             break;
             
         case "get":
-            if ($session["read"]) {
+            if (!$remoteaccess && $session["read"]) {
                 $route->format = "json";
                 if (isset($_GET['device'])) {
                     $schedules = $demandshaper->get($session["userid"]);
@@ -116,26 +118,26 @@ function demandshaper_controller()
                         $schedule->runonce = 0;
                         $schedule = schedule($redis,$schedule);
                     }
-                    $result = array("schedule"=>$schedule);
+                    return array("schedule"=>$schedule);
                 }
             }
             break;
 
             
         case "delete":
-            if ($session["write"] && isset($_GET['device'])) {
+            if (!$remoteaccess && $session["write"] && isset($_GET['device'])) {
+                $route->format = "json";
                 $device = $_GET['device'];
                 $schedules = $demandshaper->get($session["userid"]);
                 if (isset($schedules->$device)) {
                     unset ($schedules->$device);
                     $demandshaper->set($session["userid"],$schedules);
-                    $result = array("success"=>true, "message"=>"device deleted");
+                    return array("success"=>true, "message"=>"device deleted");
                 } else {
-                    $result = array("success"=>false, "message"=>"device does not exist");
+                    return array("success"=>false, "message"=>"device does not exist");
                 }
-                $route->format = "json";
             }
-            break;*/
+            break;
     }
     
     return array('content'=>'#UNDEFINED#');

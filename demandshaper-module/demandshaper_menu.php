@@ -4,14 +4,15 @@
 
     $menu_left[] = array(
         'id'=>"demandshaper_menu",
-        'name'=>"My Devices", 
+        'name'=>"Devices", 
         'path'=>"demandshaper" , 
         'session'=>"write", 
-        'order' => 0,
-        'icon'=>'icon-home icon-white',
-        'hideinactive'=>1
+        'order' => 4,
+        'icon'=>'icon-calendar icon-white',
+        'hideinactive'=>0
     );
 
+    /*
     $menu_dropdown[] = array(
         'id'=>"demandshaper_menu_extras",
         'name'=>"My Devices", 
@@ -20,6 +21,7 @@
         'order' => 0,
         'icon'=>'icon-home'
     );
+    */
     
     
 
