@@ -128,7 +128,7 @@
           </div><br>
           <div id="schedule-co2" style="font-size:14px; color:#888;"></div>
 
-          <!--
+          
           <br>
           <span class="">Demand shaper signal: </span>
           <select name="signal" class="input scheduler-select" style="margin-top:10px">
@@ -137,7 +137,7 @@
               <option value="cydynni">Energy Local: Bethesda</option>
               <option value="economy7">Economy 7</option>
           </select>
-        -->
+          
       </div> <!-- schedule-inner2 -->
     </div> <!-- schedule-inner -->
   </div> <!-- node-scheduler -->
