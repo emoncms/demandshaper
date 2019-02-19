@@ -23,7 +23,7 @@ function demandshaper_controller()
     $route->format = "json";
     $result = false;
 
-    $remoteaccess = true;
+    $remoteaccess = false;
 
     include "Modules/demandshaper/demandshaper_model.php";
     $demandshaper = new DemandShaper($mysqli,$redis);
@@ -33,7 +33,7 @@ function demandshaper_controller()
         case "":
             if ($session["write"]) {
                 $route->format = "html";
-                return view("Modules/demandshaper/view.php", array());
+                return view("Modules/demandshaper/view.php", array("remoteaccess"=>$remoteaccess));
             }
             break;
         
