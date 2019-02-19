@@ -257,3 +257,31 @@ body {padding:0}
     height:10px;
   }
 }
+
+#auth-check {
+    padding:10px;
+    background-color:#dc9696;
+    margin:10px;
+    margin-top:0px;
+    font-weight:bold;
+    border: 1px solid #de6464;
+    color:#fff;
+    max-width:938px;
+}
+
+.auth-check-btn {
+    float:right;
+    margin-top:-2px;
+}
+
+.delete-device {
+    padding-top:12px;
+    padding-right:15px;
+    padding-left:15px;
+    padding-bottom:8px;
+    cursor:pointer;
+    float:right;
+}
+.delete-device:hover {
+    background-color:rgba(255,255,255,0.1);
+}
