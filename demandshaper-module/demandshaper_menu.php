@@ -1,7 +1,7 @@
 <?php
-
+    global $demandshaper_users,$session;
     $domain = "messages";
-
+    if (($session["write"]) && in_array($session["userid"],$demandshaper_users)) {
     $menu_left[] = array(
         'id'=>"demandshaper_menu",
         'name'=>"Devices", 
@@ -11,6 +11,7 @@
         'icon'=>'icon-calendar icon-white',
         'hideinactive'=>0
     );
+    }
 
     /*
     $menu_dropdown[] = array(

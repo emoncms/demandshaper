@@ -93,14 +93,14 @@ if (window.session!=undefined) {
   ?>
 </div>
 <script>
-var path = "<?php echo $path; ?>";
+var emoncmspath = "<?php echo $emoncmspath; ?>";
 // -------------------------------------------------------------------------------------------------------
 // Device authentication transfer
 // -------------------------------------------------------------------------------------------------------
 auth_check();
 setInterval(auth_check,10000);
 function auth_check(){
-    $.ajax({ url: path+"device/auth/check.json", dataType: 'json', async: true, success: function(data) {
+    $.ajax({ url: emoncmspath+"device/authcheck.json", dataType: 'json', async: true, success: function(data) {
         if (typeof data.ip !== "undefined") {
             $("#auth-check-ip").html(data.ip);
             $("#auth-check").show();
@@ -114,7 +114,7 @@ function auth_check(){
 
 $(".auth-check-allow").click(function(){
     var ip = $("#auth-check-ip").html();
-    $.ajax({ url: path+"device/auth/allow.json?ip="+ip, dataType: 'json', async: true, success: function(data) {
+    $.ajax({ url: emoncmspath+"device/authallow.json?ip="+ip, dataType: 'json', async: true, success: function(data) {
         $("#auth-check").hide();
     }});
 });

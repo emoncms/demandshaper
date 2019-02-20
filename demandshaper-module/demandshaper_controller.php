@@ -23,7 +23,7 @@ function demandshaper_controller()
     $route->format = "json";
     $result = false;
 
-    $remoteaccess = false;
+    $remoteaccess = true;
 
     include "Modules/demandshaper/demandshaper_model.php";
     $demandshaper = new DemandShaper($mysqli,$redis);
