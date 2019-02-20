@@ -1,0 +1,287 @@
+#scheduler-outer {
+    margin: 0 auto;
+    max-width:960px;
+    font-size:16px;
+}
+
+.node-scheduler {
+    padding: 5px 5px 5px 5px;
+    background-color: #ea510e;
+    text-align:left;
+}
+
+.node-scheduler-title {
+    padding: 10px;
+    background-color: #ea510e;
+    color:#fff;
+    font-weight:bold;
+}
+
+.scheduler-inner {
+    background-color:#f0f0f0;
+    padding:10px;
+    color:#666;
+    font-weight:bold;
+}
+
+.scheduler-inner2 {
+    background-color:#f0f0f0;
+    padding:20px;
+}
+
+.weekly-scheduler-day {
+    display:inline-block;
+    margin-right:5px;
+    width:50px; 
+    height:50px; 
+    background-image:url("day.png");
+    background-size:50px;
+    color:#fff;
+    font-weight:bold;
+    text-align:center;
+    cursor:pointer;
+    font-size:16px;
+}
+
+.weekly-scheduler-day[val="1"] {
+    background-image:url("day-enabled.png");
+}
+
+.scheduler-checkbox {
+    display:inline-block;
+    width:50px;
+    height:31px;
+    background-image:url("checkbox_inactive.png");
+    background-size:50px;
+    cursor:pointer;
+}
+
+.scheduler-checkbox-label {
+  padding-top:7px;
+  padding-left:10px;
+  float:left;
+}
+
+.scheduler-checkbox[state="1"] {
+    background-image:url("checkbox_active.png");
+}
+
+.saved { color:#888 }
+
+.scheduler-title {
+    padding-top:5px;
+    padding-bottom:10px;
+}
+
+.scheduler-startsin {
+    padding:3px;
+    padding-left:10px;
+    padding-right:10px;
+    background-color:#f29200;
+    float:right;
+    color:#fff;
+    border-radius: 10px;
+    font-size:14px;
+}
+
+.schedule-output-heading {
+    background-color:#f29200;
+    color:#fff;
+    padding:10px;
+    cursor:pointer;
+}
+
+.schedule-output-box {
+    background-color:#fff;
+    padding:10px;
+    font-weight:normal;
+}
+
+.triangle-dropdown {
+    margin-top:5px;
+    float:right;
+    width: 0;
+    height: 0;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-top: 10px solid #fff;
+}
+
+.triangle-pushup {
+    margin-top:5px;
+    float:right;
+    width: 0;
+    height: 0;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-bottom: 10px solid #fff;
+}
+
+body {padding:0}
+
+.container-fluid { padding:0 }
+
+#footer {
+    margin-left: 0px;
+    margin-right: 0px;
+}
+
+.navbar-fixed-top {
+    margin-left: 0px;
+    margin-right: 0px;
+}
+
+.weekly-scheduler-text {
+    margin-top:15px;
+}
+
+.icon-smartplug {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  background-image: url('smartplug.png');
+  background-position: 0 0;
+  background-size:18px;
+  background-repeat: no-repeat;
+  margin-right:10px;
+}
+
+.icon-openevse {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  background-image: url('openevse.png');
+  background-position: 0 0;
+  background-size:20px;
+  background-repeat: no-repeat;
+  margin-right:10px;
+}
+
+.icon-hpmon {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  background-image: url('heatpumpmonitor.png');
+  background-position: 0 0;
+  background-size:20px;
+  background-repeat: no-repeat;
+  margin-right:10px;
+}
+  
+.btn-group button{
+  width:auto;
+  height:40px;
+  padding:10px 20px 10px 20px;
+  border:none;
+  border-right:1px solid #888;
+  background-color:#666;
+  color:#fff;
+  cursor:pointer;
+}
+
+.btn-group input{
+  width:auto;
+  padding:10px 20px 10px 20px;
+  border:none;
+  border-right:1px solid #888;
+  background-color:#666;
+  color:#fff;
+  cursor:pointer;
+  margin-bottom:0px;
+  border-radius: 0px;
+  -webkit-border-radius: 0px;
+  -moz-border-radius: 0px;
+}
+
+.btn-group button:hover{
+  /*background-color:#888;*/
+}
+
+.btn-group .active{
+  background-color:#888;
+}
+
+.btn-group button:first-child {
+  border-radius: 20px 0px 0px 20px;
+}
+
+.btn-group button:last-child {
+  border-radius: 0px 20px 20px 0px;
+}
+
+.btn-group .green {background-color:#76de32;}
+.btn-group .red {background-color:#ff5d32;}
+  
+@media (max-width: 767px) {
+  
+  #scheduler-outer {
+    margin-left:5px;
+    margin-right:5px;
+  }
+  
+  #scheduler-top {
+    height:5px;
+  }
+  
+  .scheduler-inner {
+    padding:10px;
+    background-color:#f0f0f0;
+  }
+  
+  .scheduler-inner2 {
+    padding:0px;
+    background-color:none;
+  }
+  
+  .weekly-scheduler-day {
+    margin-right:0px;
+    width:42px; 
+    height:42px; 
+    background-size:42px;
+    font-size:12px;
+  }
+  
+  .weekly-scheduler-text {
+      margin-top:12px;
+  }
+}
+
+@media (min-width: 767px) {
+  
+  #scheduler-outer {
+    margin-left:10px;
+    margin-right:10px;
+  }
+  
+  #scheduler-top {
+    height:10px;
+  }
+}
+
+#auth-check {
+    padding:10px;
+    background-color:#dc9696;
+    margin:10px;
+    margin-top:0px;
+    font-weight:bold;
+    border: 1px solid #de6464;
+    color:#fff;
+    max-width:938px;
+}
+
+.auth-check-btn {
+    float:right;
+    margin-top:-2px;
+}
+
+.delete-device {
+    padding-top:12px;
+    padding-right:15px;
+    padding-left:15px;
+    padding-bottom:8px;
+    cursor:pointer;
+    float:right;
+}
+.delete-device:hover {
+    background-color:rgba(255,255,255,0.1);
+}

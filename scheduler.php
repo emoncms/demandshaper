@@ -24,6 +24,9 @@ function schedule($redis,$schedule)
     $debug = 0;
     if (!isset($schedule->timeleft)) $schedule->timeleft = 0;
     
+    $ctrlmode = "smart";
+    if (isset($schedule->ctrlmode)) $ctrlmode = $schedule->ctrlmode;
+    
     $end_time = $schedule->end;
     $period = $schedule->timeleft / 3600;
     if ($period<0) $period = 0;
@@ -33,14 +36,6 @@ function schedule($redis,$schedule)
     $signal = "carbonintensity";
     if (isset($schedule->signal)) $signal = $schedule->signal;
     
-    // Basic mode
-    // if (isset($schedule->basic) && $schedule->basic) {
-    //    $periods = array();
-    //    $start = $end_time - $period;
-    //    $end = $end_time;
-    //    $periods[] = array("start"=>$start, "end"=>$end);
-    //    return $periods;
-    // }
     $now = time();
     $timestamp = floor($now/$resolution)*$resolution;
     $start_timestamp = $timestamp;
@@ -205,139 +200,192 @@ function schedule($redis,$schedule)
         if ($val<$forecast_min) $forecast_min = $val;
     }
     
-    if (!$interruptible) 
+    if ($ctrlmode=="smart") 
     {
+        if (!$interruptible) 
+        {
 
-        // We are trying to find the start time that results in the maximum sum of the available power
-        // $max is used to find the point in the forecast that results in the maximum sum..
-        $threshold = 0;
+            // We are trying to find the start time that results in the maximum sum of the available power
+            // $max is used to find the point in the forecast that results in the maximum sum..
+            $threshold = 0;
 
-        // When $max available power is found, $start_time is set to this point
-        $pos = 0;
+            // When $max available power is found, $start_time is set to this point
+            $pos = 0;
 
-        // ---------------------------------------------------------------------------------
-        // Method 1: move fixed period of demand over probability function to find best time
-        // ---------------------------------------------------------------------------------
-        
-        // For each time division in profile
-        for ($td=0; $td<count($forecast); $td++) {
-
-             // Calculate sum of probability function values for block of demand covering hours in period
-             $sum = 0;
-             $valid_block = 1;
-             for ($i=0; $i<$period*($divisions/24); $i++) {
-                 
-                 if (isset($forecast[$td+$i])) {
-                     if (!$forecast[$td+$i][3]) $valid_block = 0;
-                     $sum += $forecast[$td+$i][1];
-                 }
-             }
-             
-             if ($td==0) $threshold = $sum;
-             
-             // Determine the start_time which gives the maximum sum of available power
-             if ($valid_block) {
-                 if (($optimise==MIN && $sum<$threshold) || ($optimise==MAX && $sum>$threshold)) {
-                     $threshold = $sum;
-                     $pos = $td;
-                 }
-             }
-        }
-        
-        $start_hour = 0;
-        $tstart = 0;
-        if (isset($forecast[$pos])) {
-            $start_hour = $forecast[$pos][2];
-            $tstart = $forecast[$pos][0]*0.001;
-        }
-        $end_hour = $start_hour;
-        $tend = $tstart;
-        
-        for ($i=0; $i<$period*($divisions/24); $i++) {
-            $forecast[$pos+$i][4] = 1;
-            $end_hour+=$resolution/3600;
-            $tend+=$resolution;
-            if ($end_hour>=24) $end_hour -= 24;
-            // dont allow to run past end time
-            if ($end_hour==$end_time) break;
-        }
-        
-        $periods = array();
-        $periods[] = array("start"=>array($tstart,$start_hour), "end"=>array($tend,$end_hour));
-        
-        return array("periods"=>$periods,"probability"=>$forecast);
-
-    } else {
-        // ---------------------------------------------------------------------------------
-        // Method 2: Fill into times of most available power first
-        // ---------------------------------------------------------------------------------
-
-        // For each hour of demand
-        for ($p=0; $p<$period*($divisions/24); $p++) {
-
-            if ($optimise==MIN) $threshold = $forecast_max; else $threshold = $forecast_min;
-            $pos = -1;
-            // for each hour in probability profile
+            // ---------------------------------------------------------------------------------
+            // Method 1: move fixed period of demand over probability function to find best time
+            // ---------------------------------------------------------------------------------
+            
+            // For each time division in profile
             for ($td=0; $td<count($forecast); $td++) {
-                // Find the hour with the maximum amount of available power
-                // that has not yet been alloated to this load
-                // if available && !allocated && $val>$max
-                $val = $forecast[$td][1];
-                
-                if ($forecast[$td][3] && !$forecast[$td][4]) {
-                    if (($optimise==MIN && $val<=$threshold) || ($optimise==MAX && $val>=$threshold)) {
-                        $threshold = $val;
-                        $pos = $td;
-                    }
-                }
+
+                 // Calculate sum of probability function values for block of demand covering hours in period
+                 $sum = 0;
+                 $valid_block = 1;
+                 for ($i=0; $i<$period*($divisions/24); $i++) {
+                     
+                     if (isset($forecast[$td+$i])) {
+                         if (!$forecast[$td+$i][3]) $valid_block = 0;
+                         $sum += $forecast[$td+$i][1];
+                     }
+                 }
+                 
+                 if ($td==0) $threshold = $sum;
+                 
+                 // Determine the start_time which gives the maximum sum of available power
+                 if ($valid_block) {
+                     if (($optimise==MIN && $sum<$threshold) || ($optimise==MAX && $sum>$threshold)) {
+                         $threshold = $sum;
+                         $pos = $td;
+                     }
+                 }
             }
             
-            // Allocate hour with maximum amount of available power
-            if ($pos!=-1) $forecast[$pos][4] = 1;
-        }
+            $start_hour = 0;
+            $tstart = 0;
+            if (isset($forecast[$pos])) {
+                $start_hour = $forecast[$pos][2];
+                $tstart = $forecast[$pos][0]*0.001;
+            }
+            $end_hour = $start_hour;
+            $tend = $tstart;
+            
+            for ($i=0; $i<$period*($divisions/24); $i++) {
+                $forecast[$pos+$i][4] = 1;
+                $end_hour+=$resolution/3600;
+                $tend+=$resolution;
+                if ($end_hour>=24) $end_hour -= 24;
+                // dont allow to run past end time
+                if ($end_hour==$end_time) break;
+            }
+            
+            $periods = array();
+            $periods[] = array("start"=>array($tstart,$start_hour), "end"=>array($tend,$end_hour));
+            
+            return array("periods"=>$periods,"probability"=>$forecast);
+
+        } else {
+            // ---------------------------------------------------------------------------------
+            // Method 2: Fill into times of most available power first
+            // ---------------------------------------------------------------------------------
+
+            // For each hour of demand
+            for ($p=0; $p<$period*($divisions/24); $p++) {
+
+                if ($optimise==MIN) $threshold = $forecast_max; else $threshold = $forecast_min;
+                $pos = -1;
+                // for each hour in probability profile
+                for ($td=0; $td<count($forecast); $td++) {
+                    // Find the hour with the maximum amount of available power
+                    // that has not yet been alloated to this load
+                    // if available && !allocated && $val>$max
+                    $val = $forecast[$td][1];
+                    
+                    if ($forecast[$td][3] && !$forecast[$td][4]) {
+                        if (($optimise==MIN && $val<=$threshold) || ($optimise==MAX && $val>=$threshold)) {
+                            $threshold = $val;
+                            $pos = $td;
+                        }
+                    }
+                }
                 
-        $periods = array();
-        
-        $start = null;
-        $tstart = null;
-        $tend = null;
-        
-        $i = 0;
-        $last = 0;
-        for ($td=0; $td<count($forecast); $td++) {
-            $hour = $forecast[$td][2];
-            $timestamp = $forecast[$td][0]*0.001;
-            $val = $forecast[$td][4];
-        
-            if ($i==0) {
-                if ($val) {
+                // Allocate hour with maximum amount of available power
+                if ($pos!=-1) $forecast[$pos][4] = 1;
+            }
+                    
+            $periods = array();
+            
+            $start = null;
+            $tstart = null;
+            $tend = null;
+            
+            $i = 0;
+            $last = 0;
+            for ($td=0; $td<count($forecast); $td++) {
+                $hour = $forecast[$td][2];
+                $timestamp = $forecast[$td][0]*0.001;
+                $val = $forecast[$td][4];
+            
+                if ($i==0) {
+                    if ($val) {
+                        $start = $hour;
+                        $tstart = $timestamp;
+                    }
+                    $last = $val;
+                }
+                
+                if ($last==0 && $val==1) {
                     $start = $hour;
                     $tstart = $timestamp;
                 }
+                
+                if ($last==1 && $val==0) {
+                    $end = $hour*1;
+                    $tend = $timestamp;
+                    $periods[] = array("start"=>array($tstart,$start), "end"=>array($tend,$end));
+                }
+                
                 $last = $val;
+                $i++;
             }
             
-            if ($last==0 && $val==1) {
-                $start = $hour;
-                $tstart = $timestamp;
-            }
-            
-            if ($last==1 && $val==0) {
-                $end = $hour*1;
-                $tend = $timestamp;
+            if ($last==1) {
+                $end = $hour+$resolution/3600;
+                $tend = $timestamp + $resolution;
                 $periods[] = array("start"=>array($tstart,$start), "end"=>array($tend,$end));
             }
             
-            $last = $val;
-            $i++;
+            return array("periods"=>$periods,"probability"=>$forecast);
         }
         
-        if ($last==1) {
-            $end = $hour+$resolution/3600;
-            $tend = $timestamp + $resolution;
-            $periods[] = array("start"=>array($tstart,$start), "end"=>array($tend,$end));
+    } else if ($ctrlmode=="timer") {
+    
+        $start1 = $schedule->timer_start1;
+        $stop1 = $schedule->timer_stop1;
+        $start2 = $schedule->timer_start2;
+        $stop2 = $schedule->timer_stop2;
+        
+        $tstart1 = 0; $tstop1 = 0;
+        $tstart2 = 0; $tstop2 = 0;
+                      
+        // For each time division in profile
+        for ($td=0; $td<count($forecast); $td++) {
+
+            if ($start1>$stop1 && ($forecast[$td][2]<$stop1 || $forecast[$td][2]>$start1)) {
+                $forecast[$td][4] = 1;
+            }
+            
+            if ($start1>$stop2 && ($forecast[$td][2]<$stop2 || $forecast[$td][2]>$start2)) {
+                $forecast[$td][4] = 1;
+            }
+                     
+            if ($start1<$stop1 && $forecast[$td][2]>=$start1 && $forecast[$td][2]<$stop1) {
+                $forecast[$td][4] = 1;
+            }
+
+            if ($start2<$stop2 && $forecast[$td][2]>=$start2 && $forecast[$td][2]<$stop2) {
+                $forecast[$td][4] = 1;
+            }         
+            
+            if ($forecast[$td][2]==$start1) $tstart1 = $forecast[$td][0]*0.001;
+            if ($forecast[$td][2]==$stop1) $tstop1 = $forecast[$td][0]*0.001;
+            if ($forecast[$td][2]==$start2) $tstart2 = $forecast[$td][0]*0.001;
+            if ($forecast[$td][2]==$stop2) $tstop2 = $forecast[$td][0]*0.001;
         }
         
+        if ($tstart1>$tstop1) $tstart1 -= 3600*24;
+        if ($tstart2>$tstop2) $tstart2 -= 3600*24;
+               
+        $periods = array();
+        $periods[] = array("start"=>array($tstart1,$start1), "end"=>array($tstop1,$stop1));
+        $periods[] = array("start"=>array($tstart2,$start2), "end"=>array($tstop2,$stop2));
         return array("periods"=>$periods,"probability"=>$forecast);
+    } else if ($ctrlmode=="on") {
+        for ($td=0; $td<count($forecast); $td++) {
+            $forecast[$td][4] = 1;
+        }
+        return array("periods"=>array(),"probability"=>$forecast);
+    } else {
+        return array("periods"=>array(),"probability"=>$forecast);
     }
 }

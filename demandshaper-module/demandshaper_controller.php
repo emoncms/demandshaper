@@ -19,10 +19,12 @@ function demandshaper_controller()
 {
     global $mysqli, $redis, $session, $route, $homedir;
     $result = false;
-    
+
     $route->format = "json";
     $result = false;
-    
+
+    $remoteaccess = false;
+
     include "Modules/demandshaper/demandshaper_model.php";
     $demandshaper = new DemandShaper($mysqli,$redis);
     
@@ -31,16 +33,19 @@ function demandshaper_controller()
         case "":
             if ($session["write"]) {
                 $route->format = "html";
-                $result =  view("Modules/demandshaper/view.php", array());
+                return view("Modules/demandshaper/view.php", array("remoteaccess"=>$remoteaccess));
             }
             break;
         
         case "submit":
-            if ($session["write"]) {
+            if (!$remoteaccess && $session["write"]) {
                 $route->format = "json";
                 
                 if (isset($_GET['schedule'])) {
                     include "$homedir/demandshaper/scheduler.php";
+                    
+                    $save = 1;
+                    if (isset($_GET['save']) && $_GET['save']==0) $save = 0;
                     
                     $schedule = json_decode($_GET['schedule']);
                     
@@ -49,8 +54,11 @@ function demandshaper_controller()
                     if (!isset($schedule->period)) return array("content"=>"Missing period parameter in schedule object");
                     if (!isset($schedule->interruptible)) return array("content"=>"Missing interruptible parameter in schedule object");
                     if (!isset($schedule->runonce)) return array("content"=>"Missing runonce parameter in schedule object");
-                    
                     if ($schedule->runonce) $schedule->runonce = time();
+                    
+                    $device = $schedule->device;
+                    $schedules = $demandshaper->get($session["userid"]);
+                    $last_schedule = $schedules->$device;
 
                     // -------------------------------------------------
                     // Calculate time left
@@ -65,8 +73,13 @@ function demandshaper_controller()
                     $end_timestamp = $date->getTimestamp() + $end_time*3600;
                     if ($end_timestamp<$now) $end_timestamp+=3600*24;
                     
+                    if ($schedule->end!=$last_schedule->end || $schedule->period!=$last_schedule->period) {
+                        $schedule->timeleft = $schedule->period * 3600;
+                    } else {
+                        $schedule->timeleft = $last_schedule->timeleft;
+                    }
+                    
                     $timeleft = $end_timestamp - $now;
-                    $schedule->timeleft = $schedule->period * 3600;
                     if ($schedule->timeleft>$timeleft) $schedule->timeleft = $timeleft;
                     // -------------------------------------------------
                     
@@ -75,24 +88,21 @@ function demandshaper_controller()
                     $schedule->periods = $result["periods"];
                     $schedule->probability = $result["probability"];
                     
+                    if ($save) {
+                        $schedules->$device = $schedule;
+                        $demandshaper->set($session["userid"],$schedules);
+                        $redis->set("demandshaper:trigger",1);
+                    }
                     
-                    $device = $schedule->device;
-                    
-                    $schedules = $demandshaper->get($session["userid"]);
-                    $schedules->$device = $schedule;
-                    $demandshaper->set($session["userid"],$schedules);
-                    
-                    $redis->set("demandshaper:trigger",1);
-                    
-                    $result = array("schedule"=>$schedule);
+                    return array("schedule"=>$schedule);
                 } else {
-                    $result = "Schedule object not present";
+                    return "Schedule object not present";
                 }
             }
             break;
             
         case "get":
-            if ($session["write"]) {
+            if (!$remoteaccess && $session["read"]) {
                 $route->format = "json";
                 if (isset($_GET['device'])) {
                     $schedules = $demandshaper->get($session["userid"]);
@@ -108,27 +118,27 @@ function demandshaper_controller()
                         $schedule->runonce = 0;
                         $schedule = schedule($redis,$schedule);
                     }
-                    $result = array("schedule"=>$schedule);
+                    return array("schedule"=>$schedule);
                 }
             }
             break;
 
             
         case "delete":
-            if ($session["write"] && isset($_GET['device'])) {
+            if (!$remoteaccess && $session["write"] && isset($_GET['device'])) {
+                $route->format = "json";
                 $device = $_GET['device'];
                 $schedules = $demandshaper->get($session["userid"]);
                 if (isset($schedules->$device)) {
                     unset ($schedules->$device);
                     $demandshaper->set($session["userid"],$schedules);
-                    $result = array("success"=>true, "message"=>"device deleted");
+                    return array("success"=>true, "message"=>"device deleted");
                 } else {
-                    $result = array("success"=>false, "message"=>"device does not exist");
+                    return array("success"=>false, "message"=>"device does not exist");
                 }
-                $route->format = "json";
             }
             break;
     }
     
-    return array("content"=>$result);   
+    return array('content'=>'#UNDEFINED#');
 }

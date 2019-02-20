@@ -54,8 +54,6 @@ function draw_scheduler(devicein)
 
 $("#scheduler-outer").on("click",".scheduler-save",function(event) {
     
-    // console.log("save");
-    
     var tosave = {};
     for (var property in controls) {
         tosave[property] = controls[property].default;
