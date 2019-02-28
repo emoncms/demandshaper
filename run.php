@@ -95,7 +95,7 @@ while(true)
         $last_30min = $now;
 
         // Energy Local Bethesda demand shaper
-        if ($result = http_request("GET","https://cydynni.org.uk/bethesda/demandshaper",array())) {
+        if ($result = http_request("GET","https://dashboard.energylocal.org.uk/cydynni/demandshaper",array())) {
             $redis->set("demandshaper:bethesda",$result);
             print "load: demandshaper:bethesda (".strlen($result).")\n";
         }

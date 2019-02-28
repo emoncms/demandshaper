@@ -5,8 +5,8 @@
         'name'=>"DemandShaper", 
         'path'=>"demandshaper" , 
         'session'=>"write", 
-        'order' => 0,
-        'icon'=>'icon-home icon-white',
+        'order' => 4,
+        'icon'=>'icon-calendar icon-white',
         'hideinactive'=>1
     );
     $menu_dropdown[] = array(
