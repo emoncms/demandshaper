@@ -45,6 +45,10 @@ The demand shaper process publishes the device state to an MQTT topic of the for
 
     emon/devicename/state
 
+Add enable_UDP_broadcast setting to emoncms/settings.php to enable automatic WIFI device setup:
+
+    $enable_UDP_broadcast = true;
+
 ## Remote Cache
 
 The remote cache currently run's on emoncms.org to reduce the potential API load on the Octopus and CarbonIntensity servers. The cache provides the following routes:
