@@ -143,6 +143,7 @@
     </div> <!-- schedule-inner -->
   </div> <!-- node-scheduler -->
 </div> <!-- table -->
+</div>
 
 <div id="DeleteDeviceModal" class="modal hide" tabindex="-1" role="dialog" aria-labelledby="DeleteDeviceModalLabel" aria-hidden="true" data-backdrop="static">
     <div class="modal-header">
@@ -158,4 +159,4 @@
     </div>
 </div>
 
-<script type="text/javascript" src="<?php echo $path; ?>Modules/demandshaper/general.js?v=4"></script>
+<script type="text/javascript" src="<?php echo $path; ?>Modules/demandshaper/general.js?v=5"></script>
