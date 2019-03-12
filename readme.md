@@ -68,25 +68,22 @@ Install the EmonESP (timer branch) firmware on a Sonoff S20 smartplug. There are
 <img src="images/emonesp2.png">
 </td></tr></table>
 
-2. Connect back to your home WIFI network. Login to emoncms and navigate to inputs. Refresh the page until a popup appears asking to connect:
+2. Connect back to your home WIFI network. Login to emoncms and navigate to the DeviceShaper module (in the extras menu). Wait until a popup appears asking to connect:
 
-![emoncms_allow.png](images/emoncms_allow.png)
 
-*What happened here?: The smart plug discovers the emonbase/emonpi automatically by listening out for the periodic UDP packet published by the emonbase/emonpi, enabled by the UDP broadcast script.*
+<table><tr><td>
+<img src="images/demandshaper1.png">
+</td><td>
+<img src="images/demandshaper2.png">
+</td></tr></table>
 
-3. After clicking allow the smart plug will then appear in the inputs list with a small icon identifying it as a schedulable device: 
+*What happened here?: The smart plug discovers the emonbase/emonpi automatically by listening out for the periodic UDP packet published by the emonbase/emonpi, enabled by the UDP broadcast script and triggered by keeping the demandshaper page open*
 
-![schedulericon.png](images/schedulericon.png)
+3. After clicking allow and waiting a minute or so, the smart plug will then appear:
+
+![demandshaper3.png](images/demandshaper3.png)
 
 *What happened here?: The smart plug received the MQTT authentication details from the emonbase/emonpi automatically as part of a pairing process enabled by clicking on Allow. After connecting to MQTT the smartplug sent a descriptor message that automatically created and configured an emoncms device based on the smartplug device template in the emoncms device module.*
-
-4. Click on the clock icon to load the demandshaper module, where the smart plug can be scheduled:
-
-![demandshaper.png](images/demandshaper.png)
-
-5. Wait for the plug to turn on! :)
-
-![smartplug_on.png](images/smartplug_on.png)
 
 ---
 
