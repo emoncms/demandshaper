@@ -7,7 +7,7 @@ The demand shaper module uses a day ahead power availability forecast and user s
 Developed as part of the CydYnni EnergyLocal project, see:
 [https://community.openenergymonitor.org/t/cydynni-energylocal-community-hydro-smart-grid-blog-post](https://community.openenergymonitor.org/t/cydynni-energylocal-community-hydro-smart-grid-blog-post)
 
-![demandshaper.png](images/demandshaper.png)
+![demandshaper.png](images/demandshaper.png?v=1)
 
 **9th November 2018:** The demand shaper module now supports the use of the UK grid carbon intensity and Octopus Agile forecasts.
 
