@@ -91,6 +91,8 @@ Install the EmonESP (timer branch) firmware on a Sonoff S20 smartplug. There are
 
 ### Option 2: Use the smart scheduler
 
+Enter the period and end time of the schedule you wish to set and the demand shaper module will do the rest, automatically optimising the schedule for the lowest cost or lowest carbon time.
+
 ![demandshaper3.png](images/demandshaper3.png)
 
 ### Option 3: Set a manual timer:
@@ -101,6 +103,9 @@ Install the EmonESP (timer branch) firmware on a Sonoff S20 smartplug. There are
 
 ![demandshaper.png](images/demandshaper.png)
 
+### Heatpump Control
+
+![heatpump.png](images/heatpump.png)
 
 ---
 
