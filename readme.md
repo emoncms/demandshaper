@@ -63,9 +63,9 @@ Install the EmonESP (timer branch) firmware on a Sonoff S20 smartplug. There are
 1. The Sonoff S20 smartplug creates a WIFI access point, connect to the access point and enter home WIFI network. That is all the configuration required.
 
 <table><tr><td>
-<img src="images/emonesp1.png">
+<img src="images/EmonESP1.png">
 </td><td>
-<img src="images/emonesp2.png">
+<img src="images/EmonESP2.png">
 </td></tr></table>
 
 2. Connect back to your home WIFI network. Login to emoncms and navigate to the DeviceShaper module (in the extras menu). Wait until a popup appears asking to connect:
