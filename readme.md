@@ -85,6 +85,14 @@ Install the EmonESP (timer branch) firmware on a Sonoff S20 smartplug. There are
 
 *What happened here?: The smart plug received the MQTT authentication details from the emonbase/emonpi automatically as part of a pairing process enabled by clicking on Allow. After connecting to MQTT the smartplug sent a descriptor message that automatically created and configured an emoncms device based on the smartplug device template in the emoncms device module.*
 
+<table><tr><td>
+<img src="images/demandshaper4.png">
+</td><td>
+<img src="images/demandshaper5.png">
+</td><td>
+<img src="images/demandshaper6.png">
+</td></tr></table>
+
 ---
 
 Submit schedule:
