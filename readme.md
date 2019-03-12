@@ -45,24 +45,20 @@ Add enable_UDP_broadcast setting to emoncms/settings.php to enable automatic WIF
 
     $enable_UDP_broadcast = true;
 
----
-
-## Using the Demand Shaper module with a SonOff S20 smart plug
-
-**Preperation**
-
-1. Install the EmonESP (control\_merge branch) firmware on a Sonoff S20 smartplug. See guide here:<br>[https://github.com/openenergymonitor/EmonESP/blob/control_merge/sonoffS20.md](https://github.com/openenergymonitor/EmonESP/blob/control_merge/sonoffS20.md)
-
-2. Enable the UDP broadcast script on the emonbase/emonpi:
+Optional: Enable the periodic UDP broadcast script on the emonbase/emonpi:
 
 <pre>
     crontab -e
     * * * * * php /home/pi/emonpi/UDPBroadcast/broadcast.php 2>&1
 </pre>
 
-3. Install the demand shaper module as above and make sure that you have the latest emoncms master branch and latest emoncms device module installed.
+---
 
-**User guide**
+## Using the Demand Shaper module with a SonOff S20 smart plug
+
+Install the EmonESP (control\_merge branch) firmware on a Sonoff S20 smartplug. See guide here:<br>[https://github.com/openenergymonitor/EmonESP/blob/control_merge/sonoffS20.md](https://github.com/openenergymonitor/EmonESP/blob/control_merge/sonoffS20.md)
+
+## User guide
 
 1. The Sonoff S20 smartplug creates a WIFI access point, connect to the access point and enter home WIFI network. That is all the configuration required.
 
