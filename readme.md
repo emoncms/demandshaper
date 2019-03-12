@@ -85,7 +85,11 @@ Install the EmonESP (timer branch) firmware on a Sonoff S20 smartplug. There are
 
 *What happened here?: The smart plug received the MQTT authentication details from the emonbase/emonpi automatically as part of a pairing process enabled by clicking on Allow. After connecting to MQTT the smartplug sent a descriptor message that automatically created and configured an emoncms device based on the smartplug device template in the emoncms device module.*
 
+---
+
 ### Option 1: Turn On/Off directly
+
+The most basic mode of operation, turn on/off device from the interface:
 
 ![demandshaper3.png](images/demandshaper4.png)
 
@@ -97,13 +101,19 @@ Enter the period and end time of the schedule you wish to set and the demand sha
 
 ### Option 3: Set a manual timer:
 
+Set a manual timer for specific run times:
+
 ![demandshaper4.png](images/demandshaper5.png)
 
 ### OpenEVSE / EmonEVSE electric car charger interface
 
+The module contains custom interfaces for applications such as EV charging where you can drag drop the battery level state of charge to the desired target, the module then calculates the required run time based on the battery size and charger charge rate (hard coded at present, but will be configurable from the interface):
+
 ![demandshaper.png](images/demandshaper.png)
 
 ### Heatpump Control
+
+Integrates the ability to control a Mitsubushi EcoDan heatpump with FTC2B controller connected to the OpenEnergyMonitor HeatpumpMonitor. Flow temperature and heating On/Off is settable from the interface.
 
 ![heatpump.png](images/heatpump.png)
 
