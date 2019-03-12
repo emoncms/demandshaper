@@ -30,7 +30,11 @@ Download or git clone the demandshaper repository to your home folder:
 Link the 'demandshaper-module' into the emoncms Modules folder:
 
     ln -s /home/pi/demandshaper/demandshaper-module /var/www/emoncms/Modules/demandshaper 
-    
+
+Update emoncms database
+
+    Setup > Administration > Update database > Update & Check
+
 Install demandshaper service:
 
     sudo ln -s /home/pi/demandshaper/demandshaper.service /lib/systemd/system
