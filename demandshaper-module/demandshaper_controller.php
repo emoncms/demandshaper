@@ -138,6 +138,40 @@ function demandshaper_controller()
                 }
             }
             break;
+        
+        // Fetch EV SOC from ovms API    
+        case "ovms":
+            if ($session["write"] && isset($_GET["vehicleid"]) && isset($_GET["carpass"])) {
+                $route->format = "json";
+                
+                $vehicleid = $_GET["vehicleid"];
+                $carpass = $_GET["carpass"];
+
+                $csv_str = http_request("GET","https://dexters-web.de/api/call?fn.name=ovms/export&fn.vehicleid=$vehicleid&fn.carpass=$carpass&fn.format=csv&fn.types=D,S&fn.last=1",array());
+                $csv_lines = explode("\n",$csv_str);
+
+                $headings1 = explode(",",$csv_lines[1]);
+                $data1 = explode(",",$csv_lines[2]);
+
+                $headings2 = explode(",",$csv_lines[4]);
+                $data2 = explode(",",$csv_lines[5]);
+
+                $data = array();
+
+                for ($i=0; $i<count($headings1); $i++) {
+                    if (is_numeric($data1[$i])) $data1[$i] *= 1;
+                    $data[$headings1[$i]] = $data1[$i];
+                }
+
+                for ($i=0; $i<count($headings2); $i++) {
+                    if (is_numeric($data2[$i])) $data2[$i] *= 1;
+                    $data[$headings2[$i]] = $data2[$i];
+                }
+
+                return $data;
+            }
+        
+            break;
     }
     
     return array('content'=>'#UNDEFINED#');
