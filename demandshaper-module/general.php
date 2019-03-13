@@ -14,7 +14,7 @@
             <button mode="on">On</button><button mode="off">Off</button><button mode="smart" class="active">Smart</button><button mode="timer">Timer</button>
           </div><br><br>
           
-          <div id="openevse" class="hide">
+          <div class="openevse" class="hide">
             <p>Charge Current <span id="charge_current">0</span>A<br><span style="font-weight:normal; font-size:12px">Temperature <span id="openevse_temperature">10</span>C</span></p>
             <div id="battery_bound" style="width:100%">
                 <canvas id="battery"></canvas>
@@ -139,7 +139,7 @@
               <option value="economy7">Economy 7</option>
           </select>
           
-          <div id="openevse" class="hide">
+          <div class="openevse" class="hide">
             <table>
               <tr>
                 <td><span class="">Useable Battery Capacity: </span></td><td><input class="input" name="batterycapacity" type="text"/></td>

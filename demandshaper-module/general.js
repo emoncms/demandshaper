@@ -19,7 +19,7 @@ function load_device()
                 current_soc = result.soc*0.01;
             }});
         
-            $("#openevse").show();
+            $(".openevse").show();
             battery.init("battery");
             battery.draw(current_soc,0.8);
             battery.events();
