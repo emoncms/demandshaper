@@ -140,10 +140,11 @@
           </select>
           
           <div class="openevse hide">
+            <br>
             <table style="width:100%; text-align:left">
               <tr>
                 <td><span class="">Useable Battery Capacity: </span></td><td><input class="input" name="batterycapacity" type="text" style="width:80px"/> kWh</td>
-                <td><span class="">EVSE Charge Rate: </span></td><td><input class="input" name="chargerate" type="text" style="width:80px"/> A</td>
+                <td><span class="">EVSE Charge Rate: </span></td><td><input class="input" name="chargerate" type="text" style="width:80px"/> kW</td>
               </tr>
               <tr>
                 <td><span class="">OVMS Vehicle ID: </span></td><td><input class="input" name="vehicleid" type="text" style="width:150px"/></td>

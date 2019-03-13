@@ -12,16 +12,10 @@ function load_device()
         $(".node-scheduler").attr("node",device);
 
         if (devices[device].type=="openevse") {
-            var vehicleid = "";
-            var carpass = "";
-            var current_soc = 0.2;
-            $.ajax({ url: emoncmspath+"demandshaper/ovms?vehicleid="+vehicleid+"&carpass="+carpass, dataType: 'json', async: false, success: function(result) {
-                current_soc = result.soc*0.01;
-            }});
         
             $(".openevse").show();
             battery.init("battery");
-            battery.draw(current_soc,0.8);
+            battery.draw();
             battery.events();
             
             $("#run_period").hide();
@@ -54,7 +48,13 @@ function load_device()
             repeat:[1,1,1,1,1,1,1],
             runonce:false,
             // hpmon
-            flowT:30.0
+            flowT:30.0,
+            
+            batterycapacity: 20.0,
+            chargerate: 3.8,
+            ovms_vehicleid: '',
+            ovms_carpass: '',
+            ev_soc: 0.2
         };
 
         var schedule = default_schedule;
@@ -98,6 +98,19 @@ function load_device()
                 
                 schedule.device = device;
                 schedule.device_type = devices[device].type;
+                
+                // Load SOC
+                if (schedule.device_type=="openevse") {
+                    battery.capacity = schedule.batterycapacity;
+                    battery.charge_rate = schedule.chargerate;
+                    if (schedule.ovms_vehicleid!='' && schedule.ovms_carpass!='') {
+                        $.ajax({ url: emoncmspath+"demandshaper/ovms?vehicleid="+schedule.ovms_vehicleid+"&carpass="+schedule.ovms_carpass, dataType: 'json', async: true, success: function(result) {
+                            schedule.ev_soc = result.soc*0.01;
+                            battery.soc = schedule.ev_soc;
+                            battery.draw();
+                        }});
+                    }
+                }
             }
             calc_schedule();
         }});
@@ -243,7 +256,37 @@ function load_device()
             $("#DeleteDeviceModal").modal();
             $(".device-name").html(schedule.device);
         });
+        
+        // ------------------------------------------------
+        // openevse settings
+        // ------------------------------------------------
+        $(".input[name=batterycapacity").change(function(){
+            var batterycapacity = $(this).val();
+            schedule.batterycapacity = batterycapacity*1.0;
+            battery.capacity = schedule.batterycapacity;
+            calc_schedule();
+        });
 
+        $(".input[name=chargerate").change(function(){
+            var chargerate = $(this).val();
+            schedule.chargerate = chargerate*1.0;
+            battery.charge_rate = schedule.chargerate;
+            calc_schedule();
+        });
+        
+        $(".input[name=vehicleid").change(function(){
+            var vehicleid = $(this).val();
+            schedule.ovms_vehicleid = vehicleid;
+            calc_schedule();
+        });
+
+        $(".input[name=carpass").change(function(){
+            var carpass = $(this).val();
+            schedule.ovms_carpass = carpass;
+            calc_schedule();
+        });
+        // ------------------------------------------------
+        
         $("#delete-device-confirm").click(function(){
             schedule.ctrlmode = "off";
             calc_schedule();
@@ -302,6 +345,14 @@ function load_device()
                    submit_schedule(1);
                 }
             },2000);
+            
+            if (schedule.device_type=="openevse") {   
+                $(".input[name=batterycapacity").val(schedule.batterycapacity);
+                $(".input[name=chargerate").val(schedule.chargerate);
+                $(".input[name=vehicleid").val(schedule.ovms_vehicleid);
+                $(".input[name=carpass").val(schedule.ovms_carpass);
+                battery.draw();
+            }
         }
 
         function submit_schedule(save) {

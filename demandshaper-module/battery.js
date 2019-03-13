@@ -19,37 +19,38 @@ var battery = {
     touchdown: false,
     pad: 10,
     soc: 0.2,
+    end_soc: 0.8,
+    capacity: 20.0,
+    charge_rate: 3.8,
 
     init: function(element) {
-        this.element = element;
+        battery.element = element;
         
         // Dimentions
-        this.width = $("#"+element+"_bound").width()-5;
-        if (this.width>400) this.width = 400;
-        this.height = this.width*0.4;
-        $("#"+element+"_bound").css("height",this.height);
-        $("#"+element).attr("width",this.width);
-        $("#"+element).attr("height",this.height);
+        battery.width = $("#"+element+"_bound").width()-5;
+        if (battery.width>400) battery.width = 400;
+        battery.height = battery.width*0.4;
+        $("#"+element+"_bound").css("height",battery.height);
+        $("#"+element).attr("width",battery.width);
+        $("#"+element).attr("height",battery.height);
 
     },
     
-    draw: function(soc,end_soc) {
+    draw: function() {
       
-        var width = this.width;
-        var height = this.height;
-        var pad = this.pad;
+        var width = battery.width;
+        var height = battery.height;
+        var pad = battery.pad;
     
         // Limits
-        if (soc<0.0) soc = 0.0;
-        if (soc>1.0) soc = 1.0;
-        if (end_soc<0.0) end_soc = 0.0;
-        if (end_soc>1.0) end_soc = 1.0;
-        if (end_soc<soc) end_soc = soc;
-
-        this.soc = soc;
+        if (battery.soc<0.0) battery.soc = 0.0;
+        if (battery.soc>1.0) battery.soc = 1.0;
+        if (battery.end_soc<0.0) battery.end_soc = 0.0;
+        if (battery.end_soc>1.0) battery.end_soc = 1.0;
+        if (battery.end_soc<battery.soc) battery.end_soc = battery.soc;
                 
         // ctx
-        var c = document.getElementById(this.element);  
+        var c = document.getElementById(battery.element);  
         var ctx = c.getContext("2d");
         ctx.clearRect(0,0,width,height);
          
@@ -64,9 +65,9 @@ var battery = {
         //ctx.fillRect(pad*0.5,pad*0.5,batteryWidth+pad,75+pad);   
         ctx.roundRect(pad*0.5,pad*0.5,batteryWidth+pad,75+pad, 5).fill(); //or .fill() for a filled rect 
         ctx.fillStyle = "rgba(0,255,0,0.1)";
-        ctx.fillRect(pad,pad,batteryWidth*end_soc,75);
+        ctx.fillRect(pad,pad,batteryWidth*battery.end_soc,75);
         ctx.fillStyle = "rgba(0,255,0,0.4)";
-        ctx.fillRect(pad,pad,batteryWidth*soc,75);
+        ctx.fillRect(pad,pad,batteryWidth*battery.soc,75);
         
         ctx.strokeStyle = "#fff";
         ctx.setLineDash([5,5]);
@@ -81,18 +82,16 @@ var battery = {
         ctx.strokeRect(pad,pad,batteryWidth,75);
         
         ctx.fillStyle = "#666";
-        ctx.fillText(Math.round(soc*100)+'%',pad+(batteryWidth*soc),pad + 100);
+        ctx.fillText(Math.round(battery.soc*100)+'%',pad+(batteryWidth*battery.soc),pad + 100);
      
-        if (end_soc>0.95) ctx.textAlign = "right";
-        if (end_soc>soc+0.05) {
+        if (battery.end_soc>0.95) ctx.textAlign = "right";
+        if (battery.end_soc>battery.soc+0.05) {
             ctx.fillStyle = "#666";
-            ctx.fillText(Math.round(end_soc*100)+'%',pad+(batteryWidth*end_soc),pad + 100);
+            ctx.fillText(Math.round(battery.end_soc*100)+'%',pad+(batteryWidth*battery.end_soc),pad + 100);
         }
         
-        var capacity = 20;
-        var charge_rate = 3.8;
-        var kwh = (end_soc - soc) * capacity;
-        var time_left = kwh / charge_rate;
+        var kwh = (battery.end_soc - battery.soc) * battery.capacity;
+        var time_left = kwh / battery.charge_rate;
         battery.period = time_left;
         
         var h = Math.floor(time_left);
@@ -107,7 +106,7 @@ var battery = {
     
     events: function() {
     
-        element = "#"+this.element;
+        element = "#"+battery.element;
     
         $(element).mousedown(function( event ) {
            battery.mousedown = true;
@@ -146,14 +145,17 @@ var battery = {
     
     adjust_charge: function(mx) {
         
-        var batteryWidth = this.width-this.pad*2;
+        var batteryWidth = battery.width-battery.pad*2;
         var batteryDiv = batteryWidth / 10;
-        mx -= this.pad;
+        mx -= battery.pad;
 
-        if ((this.mousedown || this.touchdown) && mx!=undefined && mx>0) {
-            var lx = this.x;
-            this.x = Math.round(mx/batteryDiv)*batteryDiv;
-            if (this.x!=lx) battery.draw(this.soc,this.x/batteryWidth);
+        if ((battery.mousedown || battery.touchdown) && mx!=undefined && mx>0) {
+            var lx = battery.x;
+            battery.x = Math.round(mx/batteryDiv)*batteryDiv;
+            if (battery.x!=lx) {
+                battery.end_soc = battery.x/batteryWidth
+                battery.draw();
+            }
         }
     }
 }
