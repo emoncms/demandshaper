@@ -12,9 +12,16 @@ function load_device()
         $(".node-scheduler").attr("node",device);
 
         if (devices[device].type=="openevse") {
+            var vehicleid = "";
+            var carpass = "";
+            var current_soc = 0.2;
+            $.ajax({ url: emoncmspath+"demandshaper/ovms?vehicleid="+vehicleid+"&carpass="+carpass, dataType: 'json', async: false, success: function(result) {
+                current_soc = result.soc*0.01;
+            });
+        
             $("#openevse").show();
             battery.init("battery");
-            battery.draw(0.2,0.8);
+            battery.draw(current_soc,0.8);
             battery.events();
             
             $("#run_period").hide();
