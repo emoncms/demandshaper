@@ -14,7 +14,7 @@
             <button mode="on">On</button><button mode="off">Off</button><button mode="smart" class="active">Smart</button><button mode="timer">Timer</button>
           </div><br><br>
           
-          <div class="openevse" class="hide">
+          <div class="openevse hide">
             <p>Charge Current <span id="charge_current">0</span>A<br><span style="font-weight:normal; font-size:12px">Temperature <span id="openevse_temperature">10</span>C</span></p>
             <div id="battery_bound" style="width:100%">
                 <canvas id="battery"></canvas>
@@ -139,16 +139,17 @@
               <option value="economy7">Economy 7</option>
           </select>
           
-          <div class="openevse" class="hide">
-            <table>
+          <div class="openevse hide">
+            <table style="width:100%; text-align:left">
               <tr>
-                <td><span class="">Useable Battery Capacity: </span></td><td><input class="input" name="batterycapacity" type="text"/></td>
-                <td><span class="">EVSE Charge Rate: </span></td><td><input class="input" name="chargerate" type="text"/></td>
+                <td><span class="">Useable Battery Capacity: </span></td><td><input class="input" name="batterycapacity" type="text" style="width:80px"/> kWh</td>
+                <td><span class="">EVSE Charge Rate: </span></td><td><input class="input" name="chargerate" type="text" style="width:80px"/> A</td>
               </tr>
               <tr>
-                <td><span class="">OVMS Vehicle ID: </span></td><td><input class="input" name="vehicleid" type="text"/></td>
-                <td><span class="">OVMS Car Password: </span></td><td><input class="input" name="carpass" type="password"/></td>
+                <td><span class="">OVMS Vehicle ID: </span></td><td><input class="input" name="vehicleid" type="text" style="width:150px"/></td>
+                <td><span class="">OVMS Car Password: </span></td><td><input class="input" name="carpass" type="password" style="width:150px"/></td>
               </tr>
+              </table>
           </div>
           
       </div> <!-- schedule-inner2 -->
