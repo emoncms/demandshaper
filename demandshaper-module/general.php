@@ -139,6 +139,18 @@
               <option value="economy7">Economy 7</option>
           </select>
           
+          <div id="openevse" class="hide">
+            <table>
+              <tr>
+                <td><span class="">Useable Battery Capacity: </span></td><td><input class="input" name="batterycapacity" type="text"/></td>
+                <td><span class="">EVSE Charge Rate: </span></td><td><input class="input" name="chargerate" type="text"/></td>
+              </tr>
+              <tr>
+                <td><span class="">OVMS Vehicle ID: </span></td><td><input class="input" name="vehicleid" type="text"/></td>
+                <td><span class="">OVMS Car Password: </span></td><td><input class="input" name="carpass" type="password"/></td>
+              </tr>
+          </div>
+          
       </div> <!-- schedule-inner2 -->
     </div> <!-- schedule-inner -->
   </div> <!-- node-scheduler -->
