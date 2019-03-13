@@ -75,7 +75,7 @@ $last_timer = array();
 $last_ctrlmode = array();
 $last_flowtemp = array();
 $update_interval = 60;
-$last_state_check = 0;
+//$last_state_check = 0;
 $schedules = array();
 
 $lasttime = time();
@@ -134,7 +134,7 @@ while(true)
         if ($schedules!=null)
         {
             foreach ($schedules as $sid=>$schedule)
-            {
+            {   
                 $device = false;
                 if (isset($schedule->device)) $device = $schedule->device;
                 $device_type = false;
@@ -275,9 +275,15 @@ while(true)
                         $schedule = json_decode(json_encode($schedule));
                         print "  reschedule ".json_encode($schedule->periods)."\n";
                     }
-                    
                 } // if active
                 $schedules->$sid = $schedule;
+                
+                if ($device_type===false)
+                {
+                    print "DELETE: ".$sid."\n";
+                    unset($schedules->$sid);
+                }
+                
             } // foreach schedules 
             $demandshaper->set($userid,$schedules);
         } // valid schedules
@@ -286,15 +292,15 @@ while(true)
         $lasttime = $now;
     } // 10s update
     
-    if ($connected && (time()-$last_state_check)>300) {
-        $last_state_check = time();
-        foreach ($schedules as $schedule) {
-            $device = false;
-            if (isset($schedule->device)) $device = $schedule->device;
-            if ($device) $mqtt_client->publish("emon/$device/in/state","",0);
-        }
-    }
-    
+    // if ($connected && (time()-$last_state_check)>300) {
+    //     $last_state_check = time();
+    //     foreach ($schedules as $schedule) {
+    //         $device = false;
+    //         if (isset($schedule->device)) $device = $schedule->device;
+    //         print "emon/$device/in/state\n";
+    //         if ($device) $mqtt_client->publish("emon/$device/in/state","",0);
+    //     }
+    // }
     
     // MQTT Connect or Reconnect
     if (!$connected && (time()-$last_retry)>5.0) {
