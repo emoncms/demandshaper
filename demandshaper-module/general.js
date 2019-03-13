@@ -17,7 +17,7 @@ function load_device()
             var current_soc = 0.2;
             $.ajax({ url: emoncmspath+"demandshaper/ovms?vehicleid="+vehicleid+"&carpass="+carpass, dataType: 'json', async: false, success: function(result) {
                 current_soc = result.soc*0.01;
-            });
+            }});
         
             $("#openevse").show();
             battery.init("battery");

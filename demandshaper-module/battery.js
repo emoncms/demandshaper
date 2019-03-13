@@ -18,6 +18,7 @@ var battery = {
     mousedown: false,
     touchdown: false,
     pad: 10,
+    soc: 0.2,
 
     init: function(element) {
         this.element = element;
@@ -44,7 +45,9 @@ var battery = {
         if (end_soc<0.0) end_soc = 0.0;
         if (end_soc>1.0) end_soc = 1.0;
         if (end_soc<soc) end_soc = soc;
-        
+
+        this.soc = soc;
+                
         // ctx
         var c = document.getElementById(this.element);  
         var ctx = c.getContext("2d");
@@ -150,7 +153,7 @@ var battery = {
         if ((this.mousedown || this.touchdown) && mx!=undefined && mx>0) {
             var lx = this.x;
             this.x = Math.round(mx/batteryDiv)*batteryDiv;
-            if (this.x!=lx) battery.draw(0.2,this.x/batteryWidth);
+            if (this.x!=lx) battery.draw(this.soc,this.x/batteryWidth);
         }
     }
 }
