@@ -17,6 +17,7 @@ else
 fi
 
 sudo cp $DIR/$service.service /lib/systemd/system
+# Set ExecStart path to point to installed script location
 sudo sed -i "s~ExecStart=.*~ExecStart=/usr/bin/php $DIR/run.php~" /lib/systemd/system/$service.service
 sudo systemctl enable $service.service
 sudo systemctl restart $service.service
