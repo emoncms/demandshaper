@@ -167,6 +167,17 @@ body {padding:0}
   background-repeat: no-repeat;
   margin-right:10px;
 }
+
+.icon-emonth {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  background-image: url('emonth2.png');
+  background-position: 0 0;
+  background-size:18px;
+  background-repeat: no-repeat;
+  margin-right:10px;
+}
   
 .btn-group button{
   width:auto;
