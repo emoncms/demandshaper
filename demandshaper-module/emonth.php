@@ -9,17 +9,14 @@
         <br>-->
         
         <div style="text-align:center">
-        
             <div style="width:50%; float:left">
                 <p>Temperature</p>
                 <div><span id="emonth_temperature" style="font-size:32px"></span>C</div>
             </div>
-
             <div style="width:50%; float:left">
                 <p>Humidity</p>
                 <div><span id="emonth_humidity" style="font-size:32px"></span>%</div>
             </div>
-            
             <div style="clear:both"></div>
             <br>
         </div>
@@ -27,7 +24,31 @@
         <div id="placeholder_bound" style="width:100%; height:300px">
             <div id="placeholder" style="height:300px"></div>
         </div>
-        
+
+        <br>
+        <div style="text-align:center">
+            <div style="width:33%; float:left">
+                <p>Min</p>
+                <div>
+                  <span id="emonth_temperature_min" style="font-size:24px"></span>C / 
+                  <span id="emonth_humidity_min" style="font-size:24px"></span>%
+                </div>
+            </div>
+            <div style="width:33%; float:left">
+                <p>Max</p>
+                <div><span id="emonth_temperature_max" style="font-size:24px"></span>C / 
+                  <span id="emonth_humidity_max" style="font-size:24px"></span>%
+                </div>
+            </div>
+            <div style="width:33%; float:left">
+                <p>Mean</p>
+                <div><span id="emonth_temperature_mean" style="font-size:24px"></span>C / 
+                  <span id="emonth_humidity_mean" style="font-size:24px"></span>%
+                </div>
+            </div>
+            <div style="clear:both"></div>
+        </div>
+                
       </div> <!-- schedule-inner2 -->
     </div> <!-- schedule-inner -->
   </div> <!-- node-scheduler -->

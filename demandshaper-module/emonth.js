@@ -55,26 +55,60 @@ function load_graph() {
 
     var interval = 60;
     temperature_data = []
-    $.ajax({                                      
-        url: path+"feed/average.json?id="+temperature_feed+"&start="+start+"&end="+end+"&interval="+interval+apikeystr,
-        dataType: 'json',
-        async: false,                      
-        success: function(result) {
-            temperature_data = result;
-        }
-    });
-    
     humidity_data = []
     $.ajax({                                      
-        url: path+"feed/average.json?id="+humidity_feed+"&start="+start+"&end="+end+"&interval="+interval+apikeystr,
+        url: emoncmspath+"feed/data.json?ids="+temperature_feed+","+humidity_feed+"&start="+start+"&end="+end+"&interval="+interval+apikeystr,
         dataType: 'json',
-        async: false,                      
+        async: true,                      
         success: function(result) {
-            humidity_data = result;
+            temperature_data = result[0].data;
+            humidity_data = result[1].data;
+            draw_graph();
+            
+            // -----------------------------------------
+            // Temperature min/max/mean
+            // -----------------------------------------
+            var T_min = 100;
+            var T_max = -100;
+            var T_sum = 0;
+            var n = 0;
+            
+            for (var z in temperature_data) {
+                var T = temperature_data[z][1];
+                if (T<T_min) T_min = T;
+                if (T>T_max) T_max = T;
+                T_sum += T;
+                n++;
+            }
+            T_mean = T_sum / n;
+            
+            $("#emonth_temperature_min").html((T_min).toFixed(1));
+            $("#emonth_temperature_max").html((T_max).toFixed(1));
+            $("#emonth_temperature_mean").html((T_mean).toFixed(1));
+            
+            // -----------------------------------------
+            // Humidity min/max/mean
+            // -----------------------------------------
+            var H_min = 100;
+            var H_max = -100;
+            var H_sum = 0;
+            var n = 0;
+            
+            for (var z in humidity_data) {
+                var H = humidity_data[z][1];
+                if (H<H_min) H_min = H;
+                if (H>H_max) H_max = H;
+                H_sum += H;
+                n++;
+            }
+            H_mean = H_sum / n;
+            
+            $("#emonth_humidity_min").html((H_min).toFixed(1));
+            $("#emonth_humidity_max").html((H_max).toFixed(1));
+            $("#emonth_humidity_mean").html((H_mean).toFixed(1));
+            // -----------------------------------------
         }
     });
-    
-    draw_graph();
 }
 
 function draw_graph() {
