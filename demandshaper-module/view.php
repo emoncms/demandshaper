@@ -101,12 +101,26 @@ if (window.session!=undefined) {
           devices = {};
           var out = "";
           for (var z in result) {
-              if (result[z].type=="openevse" || result[z].type=="smartplug" || result[z].type=="hpmon" || result[z].type=="emonth") {
+              if (result[z].type=="openevse" || result[z].type=="smartplug" || result[z].type=="hpmon") {
                   devices[result[z].nodeid] = result[z];
                   // sidebar list
                   out += "<li><a href='"+path+"demandshaper?node="+result[z].nodeid+"'><span class='icon-"+result[z].type+"'></span>"+ucfirst(result[z].nodeid)+"</a></li>";
                   // select first device if device is not defined
                   if (device=="") device = result[z].nodeid;
+              }
+          }
+          n=0
+          for (var z in result) {
+              if (result[z].type=="emonth") {
+                  devices[result[z].nodeid] = result[z];
+                  // sidebar list
+                  border = "";
+                  if (n==0) border = "style='border-top:1px solid #aaa'";
+                  out += "<li "+border+"><a href='"+path+"demandshaper?node="+result[z].nodeid+"'><span class='icon-"+result[z].type+"'></span>"+ucfirst(result[z].nodeid)+"</a></li>";
+                  // select first device if device is not defined
+                  if (device=="") device = result[z].nodeid;
+                  
+                  n++
               }
           }
           
