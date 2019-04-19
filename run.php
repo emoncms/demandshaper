@@ -30,6 +30,10 @@ require "process_settings.php";
 require "Lib/EmonLogger.php";
 require "core.php";
 
+set_error_handler('exceptions_error_handler');
+$log = new EmonLogger(__FILE__);
+$log->info("Starting demandshaper service");
+
 // -------------------------------------------------------------------------
 // MQTT Connect
 // -------------------------------------------------------------------------
@@ -43,9 +47,10 @@ $mqtt_client->onMessage('message');
 
 $mysqli = @new mysqli($server,$username,$password,$database,$port);
 if ( $mysqli->connect_error ) {
-    echo "Can't connect to database, please verify credentials/configuration in settings.php<br />";
+    
+    $log->error("Can't connect to database, please verify credentials/configuration in settings.php");
     if ( $display_errors ) {
-        echo "Error message: <b>" . $mysqli->connect_error . "</b>";
+        $log->error("Error message: ".$mysqli->connect_error);
     }
     die();
 }
@@ -54,11 +59,11 @@ if ( $mysqli->connect_error ) {
 // Redis Connect
 // -------------------------------------------------------------------------
 $redis = new Redis();
-if (!$redis->connect($redis_server['host'], $redis_server['port'])) { echo "Can't connect to redis"; die; }
+if (!$redis->connect($redis_server['host'], $redis_server['port'])) { $log->error("Can't connect to redis"); die; }
 
 if (!empty($redis_server['prefix'])) $redis->setOption(Redis::OPT_PREFIX, $redis_server['prefix']);
 if (!empty($redis_server['auth']) && !$redis->auth($redis_server['auth'])) {
-    echo "Can't connect to redis, autentication failed"; die;
+    $log->error("Can't connect to redis, autentication failed"); die;
 }
 
 if (file_exists("$homedir/demandshaper/scheduler.php")) {
@@ -91,7 +96,7 @@ while(true)
     
     // demandshaper trigger
     if ($trigger = $redis->get("demandshaper:trigger")) {
-        print "trigger\n";
+        $log->info("trigger");
     }
     
     // ---------------------------------------------------------------------
@@ -103,19 +108,19 @@ while(true)
         // Energy Local Bethesda demand shaper
         if ($result = http_request("GET","https://dashboard.energylocal.org.uk/cydynni/demandshaper",array())) {
             $redis->set("demandshaper:bethesda",$result);
-            print "load: demandshaper:bethesda (".strlen($result).")\n";
+            $log->info("load: demandshaper:bethesda (".strlen($result).")");
         }
         
         // Uk Grid carbon intensity
         if ($result = http_request("GET","https://emoncms.org/demandshaper/carbonintensity",array())) {
             $redis->set("demandshaper:carbonintensity",$result);
-            print "load: demandshaper:carbonintensity (".strlen($result).")\n";
+            $log->info("load: demandshaper:carbonintensity (".strlen($result).")");
         }
         
         // Octopus agile
         if ($result = http_request("GET","https://emoncms.org/demandshaper/octopus",array())) {
             $redis->set("demandshaper:octopus",$result);
-            print "load: demandshaper:octopus (".strlen($result).")\n";
+            $log->info("load: demandshaper:octopus (".strlen($result).")");
         }
     }
 
@@ -149,8 +154,8 @@ while(true)
                                 
                 if ($device_type && $ctrlmode)
                 {
-                    print date("Y-m-d H:i:s")." Schedule:$device ".$schedule->ctrlmode."\n";
-                    print "  end timestamp: ".$schedule->end_timestamp."\n";
+                    $log->info(date("Y-m-d H:i:s")." Schedule:$device ".$schedule->ctrlmode);
+                    $log->info("  end timestamp: ".$schedule->end_timestamp);
                     // -----------------------------------------------------------------------
                     // Work out if schedule is running
                     // -----------------------------------------------------------------------  
@@ -179,15 +184,15 @@ while(true)
                     if ($schedule->ctrlmode=="off") $status = 0;
 
                     if ($status) {
-                        print "  status: ON\n";
+                        $log->info("  status: ON");
                         $schedule->started = true;
                         $time_elapsed = $now - $lasttime;
-                        print "  time elapsed: $time_elapsed\n";
+                        $log->info("  time elapsed: $time_elapsed");
                         $schedule->timeleft -= $time_elapsed; // $update_interval;
-                        print "  timeleft: ".$schedule->timeleft."s\n";
+                        $log->info("  timeleft: ".$schedule->timeleft."s");
                         if ($schedule->timeleft<0) $schedule->timeleft = 0;
                     } else {
-                        print "  status: OFF\n";
+                        $log->info("  status: OFF");
                     }
                     
                     // $connected = true; $device = "openevse";
@@ -223,7 +228,7 @@ while(true)
                                 }
                                 
                                 if ($timer[$device]!=$last_timer[$device] && ("$sh $sm"!="$eh $em")) {
-                                    print "  emon/$device/$api"." $timer[$device]\n";
+                                    $log->info("  emon/$device/$api"." $timer[$device]");
                                     $mqtt_client->publish("emon/$device/$api",$timer[$device],0);
                                     
                                     // Log temporarily
@@ -256,7 +261,7 @@ while(true)
                             if ($schedule->flowT!=$last_flowT[$device]) {
                                 if ($device_type=="smartplug" || $device_type=="hpmon") {
                                     $vout = round(($schedule->flowT-7.14)/0.0371);
-                                    print "emon/$device/vout ".$vout."\n";
+                                    $log->info("emon/$device/vout ".$vout);
                                     $mqtt_client->publish("emon/$device/in/vout",$vout,0);
                                 }
                             }
@@ -268,7 +273,7 @@ while(true)
                     // Recalculate schedule
                     // -----------------------------------------------------------------------
                     if ($now>$schedule->end_timestamp) {
-                        print "  SET timeleft to schedule period\n";
+                        $log->info("  SET timeleft to schedule period");
                         $schedule->timeleft = $schedule->period * 3600;
                         unset($schedule->started);
                     }
@@ -278,14 +283,14 @@ while(true)
                         $schedule->periods = $r["periods"];
                         $schedule->probability = $r["probability"];
                         $schedule = json_decode(json_encode($schedule));
-                        print "  reschedule ".json_encode($schedule->periods)."\n";
+                        $log->info("  reschedule ".json_encode($schedule->periods));
                     }
                 } // if active
                 $schedules->$sid = $schedule;
                 
                 if ($device_type===false)
                 {
-                    print "DELETE: ".$sid."\n";
+                    $log->info("DELETE: ".$sid);
                     unset($schedules->$sid);
                 }
                 
@@ -302,7 +307,7 @@ while(true)
     //     foreach ($schedules as $schedule) {
     //         $device = false;
     //         if (isset($schedule->device)) $device = $schedule->device;
-    //         print "emon/$device/in/state\n";
+    //         $log->info("emon/$device/in/state");
     //         if ($device) $mqtt_client->publish("emon/$device/in/state","",0);
     //     }
     // }
@@ -344,7 +349,6 @@ function message($message)
         
         if (isset($schedules->$device)) {
             $p = $message->payload;
-            // print $p."\n";
             
             if ($message->topic=="emon/$device/out/state") {
                 $p = json_decode($p);
@@ -400,4 +404,13 @@ function message($message)
 
 function time_conv($t){
     return floor($t*0.01) + ($t*0.01 - floor($t*0.01))/0.6;
+}
+
+function exceptions_error_handler($severity, $message, $filename, $lineno) {
+    if (error_reporting() == 0) {
+        return;
+    }
+    if (error_reporting() & $severity) {
+        throw new ErrorException($message, 0, $severity, $filename, $lineno);
+    }
 }
