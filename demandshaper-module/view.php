@@ -44,20 +44,8 @@ if (window.session!=undefined) {
 <script language="javascript" type="text/javascript" src="<?php echo $path;?>Modules/vis/visualisations/common/vis.helper.js"></script>
 
 <link rel="stylesheet" href="<?php echo $path; ?>Modules/demandshaper/demandshaper.css?v=<?php echo $v; ?>">
-<link rel="stylesheet" href="<?php echo $path; ?>Lib/misc/sidebar.css?v=<?php echo $v; ?>">
 <script type="text/javascript" src="<?php echo $path; ?>Modules/demandshaper/battery.js?v=<?php echo $v; ?>"></script>
-<script type="text/javascript" src="<?php echo $path; ?>Lib/misc/sidebar.js?v=<?php echo $v; ?>"></script>
 
-<div id="wrapper">
-  <!------------------------------------------------------------------------------------------------------>
-  <div class="sidenav">
-    <div class="sidenav-inner">
-      <ul class="sidenav-menu"></ul>
-    </div>
-  </div>
-  
-  <!------------------------------------------------------------------------------------------------------>
-  
   <div id="scheduler-top"></div>
   
   <div id="auth-check" class="hide">
@@ -96,7 +84,7 @@ if (window.session!=undefined) {
   update_sidebar();
   setInterval(update_sidebar,10000);
   function update_sidebar() {
-      $.ajax({ url: emoncmspath+"device/list.json", dataType: 'json', async: true, success: function(result) { 
+      $.ajax({ url: emoncmspath+"device/list.json", dataType: 'json', async: true, success: function(result) {
           // Associative array of devices by nodeid
           devices = {};
           var out = "";
@@ -133,9 +121,7 @@ if (window.session!=undefined) {
       return string.charAt(0).toUpperCase() + string.slice(1);
   }
   </script>
-  
 
-</div>
 <script>
 var emoncmspath = "<?php echo $emoncmspath; ?>";
 // -------------------------------------------------------------------------------------------------------
