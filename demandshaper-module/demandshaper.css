@@ -314,5 +314,9 @@ body {padding:0}
     background-color:rgba(255,255,255,0.1);
 }
 
-
+#ip_address {
+    color:#888;
+    font-weight:normal;
+    font-size:12px;
+}
 
