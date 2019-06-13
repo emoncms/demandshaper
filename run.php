@@ -85,7 +85,7 @@ $last_timer = array();
 $last_ctrlmode = array();
 $last_flowtemp = array();
 $update_interval = 60;
-//$last_state_check = 0;
+$last_state_check = 0;
 $schedules = array();
 
 $lasttime = time();
@@ -302,15 +302,15 @@ while(true)
         $lasttime = $now;
     } // 10s update
     
-    // if ($connected && (time()-$last_state_check)>300) {
-    //     $last_state_check = time();
-    //     foreach ($schedules as $schedule) {
-    //         $device = false;
-    //         if (isset($schedule->device)) $device = $schedule->device;
-    //         $log->info("emon/$device/in/state");
-    //         if ($device) $mqtt_client->publish("emon/$device/in/state","",0);
-    //     }
-    // }
+    if ($connected && (time()-$last_state_check)>300) {
+        $last_state_check = time();
+        foreach ($schedules as $schedule) {
+            $device = false;
+            if (isset($schedule->device)) $device = $schedule->device;
+            $log->info("emon/$device/in/state");
+            if ($device) $mqtt_client->publish("emon/$device/in/state","",0);
+        }
+    }
     
     // MQTT Connect or Reconnect
     if (!$connected && (time()-$last_retry)>5.0) {
@@ -341,7 +341,7 @@ function disconnect() {
 // -------------------------------------------------------------------------
 function message($message) 
 {
-    global $demandshaper, $userid, $schedules;
+    global $demandshaper, $userid, $schedules, $log;
     
     $topic_parts = explode("/",$message->topic);
     if (isset($topic_parts[1])) {
@@ -374,6 +374,8 @@ function message($message)
                     $schedules->$device->timer_start2 = time_conv($timer[2]);
                     $schedules->$device->timer_stop2 = time_conv($timer[3]);
                 }
+                
+                $schedules->$device->last_update_from_device = time();
                 $demandshaper->set($userid,$schedules);
             }
             
