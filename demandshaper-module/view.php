@@ -115,7 +115,14 @@ if (window.session!=undefined) {
           out += "<li id='add-device' style='border-top:1px solid #aaa; cursor:pointer'><a><i class='icon-plus icon-white'></i> Add Device</a></li>";
           
           $(".sidenav-menu").html(out);
-          if (!device_loaded) load_device();
+          if (!device_loaded) {
+              if (device!=undefined && devices[device]!=undefined) {
+                  hide_device_finder();
+                  load_device();
+              } else {
+                  show_device_finder();
+              }
+          }
       }});
   }
 
@@ -129,8 +136,7 @@ var emoncmspath = "<?php echo $emoncmspath; ?>";
 // -------------------------------------------------------------------------------------------------------
 // Device authentication transfer
 // -------------------------------------------------------------------------------------------------------
-auth_check();
-setInterval(auth_check,5000);
+var auth_check_interval = false;
 function auth_check(){
     $.ajax({ url: emoncmspath+"device/authcheck.json", dataType: 'json', async: true, success: function(data) {
         if (typeof data.ip !== "undefined") {
@@ -155,7 +161,20 @@ $(".auth-check-allow").click(function(){
 });
 
 $(".sidenav-menu").on("click","#add-device",function(){
+    show_device_finder();
+});
+
+function show_device_finder() {
     $("#no-devices-found").show();
     $("#scheduler-outer").hide();
-});
+    auth_check();
+    clearInterval(auth_check_interval);
+    auth_check_interval = setInterval(auth_check,5000);
+}
+
+function hide_device_finder() {
+    $("#no-devices-found").hide();
+    clearInterval(auth_check_interval);
+}
+
 </script>

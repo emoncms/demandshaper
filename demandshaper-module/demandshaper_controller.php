@@ -142,6 +142,42 @@ function demandshaper_controller()
             }
             break;
         
+        // This route fetches the device state directly from the smartplug, heatpump monitor using a http request
+        // This is used to confirm in the UI that the device state was set correctly
+        // It may be possible to transfer this to MQTT in future
+        case "get-state":
+            if (!$remoteaccess && $session["write"] && isset($_GET['device'])) {
+                $route->format = "json";
+                $device = $_GET['device'];
+                $schedules = $demandshaper->get($session["userid"]);
+                if (isset($schedules->$device)) {
+                    $state = new stdClass;
+                    $valid = true;
+                    
+                    if ($result = http_request("GET","http://".$schedules->$device->ip."/status",array())) {
+                        $result = json_decode($result);
+                        $state->ctrl_mode = $result->ctrl_mode;
+                    } else {
+                        $valid = false;
+                    }
+                    
+                    if ($result = http_request("GET","http://".$schedules->$device->ip."/config",array())) {
+                        $result = json_decode($result);
+                        $state->timer_start1 = conv_time($result->timer_start1);
+                        $state->timer_stop1 = conv_time($result->timer_stop1);
+                        $state->timer_start2 = conv_time($result->timer_start2);
+                        $state->timer_stop2 = conv_time($result->timer_stop2);
+                        $state->voltage_output = 1*$result->voltage_output;
+                    } else {
+                        $valid = false;
+                    }
+                    
+                    if ($valid) return $state; else return false;
+                }
+            }   
+        
+            break;
+        
         // Fetch EV SOC from ovms API    
         case "ovms":
             if ($session["write"] && isset($_GET["vehicleid"]) && isset($_GET["carpass"])) {
@@ -178,4 +214,10 @@ function demandshaper_controller()
     }
     
     return array('content'=>'#UNDEFINED#');
+}
+
+function conv_time($time) {
+    $h = floor($time*0.01);
+    $m = (($time*0.01) - $h)/0.6;
+    return $h+$m;
 }

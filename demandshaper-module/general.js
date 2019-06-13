@@ -1,10 +1,10 @@
+get_device_state_timeout = false
+
 function load_device()
 {
     if (device!=undefined && devices[device]!=undefined) {
         device_loaded = true;
         console.log("device loaded");
-
-        $("#no-devices-found").hide();
         $("#scheduler-outer").show();
 
         $("#devicename").html(jsUcfirst(device));
@@ -104,7 +104,7 @@ function load_device()
                     schedule.device_type = devices[device].type;
                     
                     // Load SOC
-                    if (schedule.device_type=="openevse" && device_fetch_first_run) {
+                    if (schedule.device_type=="openevse") {
                         battery.capacity = schedule.batterycapacity;
                         battery.charge_rate = schedule.chargerate;
                         if (schedule.ovms_vehicleid!='' && schedule.ovms_carpass!='') {
@@ -120,23 +120,25 @@ function load_device()
             }});
         }
 
-        update_status();
-        setInterval(update_status,5000);
-        function update_status(){
-            $.ajax({ url: emoncmspath+"input/get/"+device+apikeystr, dataType: 'json', async: true, success: function(result) {
-                if (result!=null) {
-                    if (result.amp!=undefined) $("#charge_current").html((result.amp.value*0.001).toFixed(1));
-                    if (result.temp1!=undefined) $("#openevse_temperature").html((result.temp1.value*0.1).toFixed(1));
-                    if (result.SNXflowT!=undefined) {
-                         $("#heatpump_flowT").html((result.SNXflowT.value).toFixed(1));
-                         if (schedule.flowT==undefined) {
-                             schedule.flowT = result.SNXflowT.value;
-                             $("#flowT input").val(result.SNXflowT.value.toFixed(1)+"C");
-                         }
+        if (schedule.device_type=="openevse" || schedule.device_type=="hpmon") {
+            update_status();
+            setInterval(update_status,5000);
+            function update_status(){
+                $.ajax({ url: emoncmspath+"input/get/"+device+apikeystr, dataType: 'json', async: true, success: function(result) {
+                    if (result!=null) {
+                        if (result.amp!=undefined) $("#charge_current").html((result.amp.value*0.001).toFixed(1));
+                        if (result.temp1!=undefined) $("#openevse_temperature").html((result.temp1.value*0.1).toFixed(1));
+                        if (result.SNXflowT!=undefined) {
+                             $("#heatpump_flowT").html((result.SNXflowT.value).toFixed(1));
+                             if (schedule.flowT==undefined) {
+                                 schedule.flowT = result.SNXflowT.value;
+                                 $("#flowT input").val(result.SNXflowT.value.toFixed(1)+"C");
+                             }
+                        }
+                        if (result.SNXheat!=undefined) $("#heatpump_heat").html((result.SNXheat.value).toFixed(0));
                     }
-                    if (result.SNXheat!=undefined) $("#heatpump_heat").html((result.SNXheat.value).toFixed(0));
-                }
-            }});
+                }});
+            }
         }
 
         // -------------------------------------------------------------------------
@@ -373,6 +375,11 @@ function load_device()
                 if (((new Date()).getTime()-last_submit)>1900) {
                    console.log("save");
                    submit_schedule(1);
+                   
+                   if (schedule.device_type=="smartplug" || schedule.device_type=="hpmon") {
+                       clearTimeout(get_device_state_timeout)
+                       get_device_state_timeout = setTimeout(function(){ get_device_state(); },1000);
+                   }
                 }
             },2000);
         }
@@ -390,6 +397,58 @@ function load_device()
                     }
                 }
             });
+        }
+
+        // --------------------------------------------------------------------------------------------
+        // Fetches the device state via http request
+        // used to provide user feedback to confirm that schedule has been transfered to device
+        // --------------------------------------------------------------------------------------------   
+        function get_device_state() {
+            $.ajax({ url: emoncmspath+"demandshaper/get-state?device="+device,
+                dataType: 'json',
+                async: true,
+                success: function(result) {
+                
+                    if (result==false) {
+                        console.log(device+" unresponsive");
+                        $("#device-state-message").html(device+" unresponsive");
+                        $(".node-scheduler-title").css("background-color","#bbb");
+                        $(".node-scheduler").css("background-color","#bbb");
+                        
+                        clearTimeout(get_device_state_timeout)
+                        get_device_state_timeout = setTimeout(function(){ get_device_state(); },5000);
+                    } else {
+                    
+                        state_matched = true;
+                        device_ctrl_mode = result.ctrl_mode.toLowerCase();
+                        if (schedule.ctrlmode!=device_ctrl_mode) state_matched = false;
+                        if (schedule.ctrlmode=="smart" && device_ctrl_mode=="timer") state_matched = true;
+                        if (schedule.timer_start1 != result.timer_start1) state_matched = false;
+                        if (schedule.timer_stop1 != result.timer_stop1) state_matched = false;
+                        if (schedule.timer_start2 != result.timer_start2) state_matched = false;
+                        if (schedule.timer_stop2 != result.timer_stop2) state_matched = false;
+                        
+                        if (schedule.device_type=="hpmon") {
+                            schedule_voltage_output = Math.round((schedule.flowT - 7.14)/0.0371);
+                            if (schedule_voltage_output != result.voltage_output) state_matched = false;
+                        }
+                        
+                        if (state_matched) {
+                            console.log("State matched");
+                            $("#device-state-message").html("");
+                            $(".node-scheduler-title").css("background-color","#ea510e");
+                            $(".node-scheduler").css("background-color","#ea510e");
+                        } else {
+                            console.log("Device settings mismatch");
+                            $(".node-scheduler-title").css("background-color","#bbb");
+                            $(".node-scheduler").css("background-color","#bbb");
+                            $("#device-state-message").html("Device settings mismatch");
+                            clearTimeout(get_device_state_timeout)
+                            get_device_state_timeout = setTimeout(function(){ get_device_state(); },5000);
+                        }
+                    }
+                }
+            });        
         }
 
         function draw_schedule_output(schedule)
@@ -561,6 +620,5 @@ function load_device()
         
     } else {
         $("#scheduler-outer").hide();
-        $("#no-devices-found").show();
     }
 }
