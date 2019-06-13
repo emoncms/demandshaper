@@ -326,3 +326,7 @@ body {padding:0}
     font-size:14px;
 }
 
+.span4 {
+    width: auto; !important
+}
+
