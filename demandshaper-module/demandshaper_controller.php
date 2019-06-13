@@ -31,9 +31,12 @@ function demandshaper_controller()
     switch ($route->action)
     {  
         case "":
+            $route->format = "html";
             if ($session["write"]) {
-                $route->format = "html";
                 return view("Modules/demandshaper/view.php", array("remoteaccess"=>$remoteaccess));
+            } else {
+                // redirect to login
+                return "";
             }
             break;
         
