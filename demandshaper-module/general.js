@@ -54,7 +54,9 @@ function load_device()
             chargerate: 3.8,
             ovms_vehicleid: '',
             ovms_carpass: '',
-            ev_soc: 0.2
+            ev_soc: 0.2,
+            last_update_from_device:0,
+            ip: ''
         };
 
         var schedule = default_schedule;
@@ -86,34 +88,37 @@ function load_device()
         // -------------------------------------------------------------------------
         // Fetch device schedule, init view
         // -------------------------------------------------------------------------
-        $.ajax({ url: emoncmspath+"demandshaper/get?device="+device+apikeystr, dataType: 'json', async: true, success: function(result) {
-            // Make schedule object global
-            if (result==null || result.schedule==null) {
-                // invalid schedule, use default applied above        
-            } else {
-                schedule = default_schedule;
-                for (var z in default_schedule) {
-                    if (result.schedule[z]!=undefined) schedule[z] = result.schedule[z];
-                }
-                
-                schedule.device = device;
-                schedule.device_type = devices[device].type;
-                
-                // Load SOC
-                if (schedule.device_type=="openevse") {
-                    battery.capacity = schedule.batterycapacity;
-                    battery.charge_rate = schedule.chargerate;
-                    if (schedule.ovms_vehicleid!='' && schedule.ovms_carpass!='') {
-                        $.ajax({ url: emoncmspath+"demandshaper/ovms?vehicleid="+schedule.ovms_vehicleid+"&carpass="+schedule.ovms_carpass, dataType: 'json', async: true, success: function(result) {
-                            schedule.ev_soc = result.soc*0.01;
-                            battery.soc = schedule.ev_soc;
-                            battery.draw();
-                        }});
+        update_device();
+        function update_device() {
+            $.ajax({ url: emoncmspath+"demandshaper/get?device="+device+apikeystr, dataType: 'json', async: true, success: function(result) {
+                // Make schedule object global
+                if (result==null || result.schedule==null) {
+                    // invalid schedule, use default applied above        
+                } else {
+                    schedule = default_schedule;
+                    for (var z in default_schedule) {
+                        if (result.schedule[z]!=undefined) schedule[z] = result.schedule[z];
+                    }
+                    
+                    schedule.device = device;
+                    schedule.device_type = devices[device].type;
+                    
+                    // Load SOC
+                    if (schedule.device_type=="openevse" && device_fetch_first_run) {
+                        battery.capacity = schedule.batterycapacity;
+                        battery.charge_rate = schedule.chargerate;
+                        if (schedule.ovms_vehicleid!='' && schedule.ovms_carpass!='') {
+                            $.ajax({ url: emoncmspath+"demandshaper/ovms?vehicleid="+schedule.ovms_vehicleid+"&carpass="+schedule.ovms_carpass, dataType: 'json', async: true, success: function(result) {
+                                schedule.ev_soc = result.soc*0.01;
+                                battery.soc = schedule.ev_soc;
+                                battery.draw();
+                            }});
+                        }
                     }
                 }
-            }
-            calc_schedule();
-        }});
+                calc_schedule();
+            }});
+        }
 
         update_status();
         setInterval(update_status,5000);
@@ -310,12 +315,20 @@ function load_device()
             }});
         });
 
-        function calc_schedule() {
+        // --------------------------------------------------------------------------------------------
+        // Populates UI with schedule params        
+        // --------------------------------------------------------------------------------------------
+        function draw_schedule() {
             $("#mode button[mode="+schedule.ctrlmode+"]").addClass('active').siblings().removeClass('active');
             if (schedule.ctrlmode=="timer") { $(".smart").hide(); $(".timer").show(); $(".repeat").show(); }
             if (schedule.ctrlmode=="smart") { $(".smart").show(); $(".timer").hide(); $(".repeat").show(); }
             if (schedule.ctrlmode=="on") { $(".smart").hide(); $(".timer").hide(); $(".repeat").hide(); }
             if (schedule.ctrlmode=="off") { $(".smart").hide(); $(".timer").hide(); $(".repeat").hide(); }
+            
+            
+            // var elapsed = Math.round((new Date()).getTime()*0.001 - schedule.last_update_from_device);
+            // $("#last_update_from_device").html(elapsed+"s ago");
+            if (schedule.ip!="") $("#ip_address").html("IP Address: <a href='http://"+schedule.ip+"'>"+schedule.ip+"</a>");
             
             $("#period input[type=time]").val(timestr(schedule.period,false));
             $("#end input[type=time]").val(timestr(schedule.end,false));
@@ -336,6 +349,23 @@ function load_device()
             $(".scheduler-checkbox[name='interruptible']").attr("state",schedule.interruptible);
             
             $(".scheduler-select[name='signal']").val(schedule.signal);
+                        
+            if (schedule.device_type=="openevse") {   
+                $(".input[name=batterycapacity").val(schedule.batterycapacity);
+                $(".input[name=chargerate").val(schedule.chargerate);
+                $(".input[name=vehicleid").val(schedule.ovms_vehicleid);
+                $(".input[name=carpass").val(schedule.ovms_carpass);
+                battery.draw();
+            }
+        }
+        
+        // --------------------------------------------------------------------------------------------
+        // Submits schedule for calculation
+        // The schedule is submited without saving to start with assuming user is still changing schedule
+        // After 1.9s of inactivity the schedule is autosaved.
+        // --------------------------------------------------------------------------------------------
+        function calc_schedule() {
+            draw_schedule();
             
             submit_schedule(0);
             last_submit = (new Date()).getTime();
@@ -345,14 +375,6 @@ function load_device()
                    submit_schedule(1);
                 }
             },2000);
-            
-            if (schedule.device_type=="openevse") {   
-                $(".input[name=batterycapacity").val(schedule.batterycapacity);
-                $(".input[name=chargerate").val(schedule.chargerate);
-                $(".input[name=vehicleid").val(schedule.ovms_vehicleid);
-                $(".input[name=carpass").val(schedule.ovms_carpass);
-                battery.draw();
-            }
         }
 
         function submit_schedule(save) {

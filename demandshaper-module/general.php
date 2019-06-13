@@ -152,9 +152,10 @@
               </tr>
               </table>
           </div>
-          
+                    
       </div> <!-- schedule-inner2 -->
     </div> <!-- schedule-inner -->
+    <div id="ip_address"></div>
   </div> <!-- node-scheduler -->
 </div> <!-- table -->
 </div>

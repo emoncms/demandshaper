@@ -112,6 +112,8 @@ if (window.session!=undefined) {
               }
           }
           
+          out += "<li id='add-device' style='border-top:1px solid #aaa; cursor:pointer'><a><i class='icon-plus icon-white'></i> Add Device</a></li>";
+          
           $(".sidenav-menu").html(out);
           if (!device_loaded) load_device();
       }});
@@ -150,5 +152,10 @@ $(".auth-check-allow").click(function(){
         $("#auth-check").hide();
         $("#no-devices-found-checking").html("Please wait for device to connect");
     }});
+});
+
+$(".sidenav-menu").on("click","#add-device",function(){
+    $("#no-devices-found").show();
+    $("#scheduler-outer").hide();
 });
 </script>
