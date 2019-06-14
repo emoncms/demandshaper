@@ -252,6 +252,12 @@ while(true)
                             if ($device_type=="smartplug" || $device_type=="hpmon") {
                                 $mqtt_client->publish("emon/$device/in/ctrlmode",$ctrlmode_status,0);
                             }
+
+                            if ($device_type=="openevse") {
+                                if ($ctrlmode=="on" || $ctrlmode=="off") {
+                                    $mqtt_client->publish("emon/$device/rapi/in/\$ST","00 00 00 00",0);
+                                }
+                            }
                         }
                         $last_ctrlmode[$device] = $ctrlmode;
                         

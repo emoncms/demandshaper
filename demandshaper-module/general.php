@@ -14,8 +14,6 @@
             <button mode="on">On</button><button mode="off">Off</button><button mode="smart" class="active">Smart</button><button mode="timer">Timer</button>
           </div><br><br>
           
-          <div id="device-state-message"></div>
-          
           <div class="openevse hide">
             <p>Charge Current <span id="charge_current">0</span>A<br><span style="font-weight:normal; font-size:12px">Temperature <span id="openevse_temperature">10</span>C</span></p>
             <div id="battery_bound" style="width:100%">
@@ -122,9 +120,8 @@
           </div>
           <!---------------------------------------------------------------------------------------------------------------------------->
         
-          <div style="height:50px"></div>
           
-          <div id="schedule-output" style="font-weight:normal"></div>
+          <div id="schedule-output" style="font-weight:normal; padding-top:20px; padding-bottom:20px"></div>
           <div id="timeleft" style="font-weight:normal; font-size:14px"></div>
           <div id="placeholder_bound" style="width:100%; height:300px">
             <div id="placeholder" style="height:300px"></div>
@@ -176,4 +173,4 @@
     </div>
 </div>
 
-<script type="text/javascript" src="<?php echo $path; ?>Modules/demandshaper/general.js?v=5"></script>
+<script type="text/javascript" src="<?php echo $path; ?>Modules/demandshaper/general.js?v=6"></script>

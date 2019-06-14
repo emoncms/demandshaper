@@ -104,28 +104,56 @@ function schedule($redis,$schedule)
     if ($signal=="octopus") {
         $optimise = MIN;
         //$result = json_decode(file_get_contents("https://api.octopus.energy/v1/products/AGILE-18-02-21/electricity-tariffs/E-1R-AGILE-18-02-21-D/standard-unit-rates/"));
+        // 1. Fetch Octopus forecast
         $result = json_decode($redis->get("demandshaper:octopus"));
-        $start = $timestamp;
+        $start = $timestamp; // current time
         $td = 0;
-
+        
+        // if forecast is valid
         if ($result!=null && isset($result->results)) {
+            /* for each half hour in forecast
             for ($i=count($result->results)-1; $i>0; $i--) {
-            
                 $datetimestr = $result->results[$i]->valid_from;
-                $co2intensity = $result->results[$i]->value_inc_vat;
-                
+                $price = $result->results[$i]->value_inc_vat;
                 $date = new DateTime($datetimestr);
                 $timestamp = $date->getTimestamp();
                 if ($timestamp>=$start && $td<48) {
-                    
                     $h = 1*$date->format('H');
                     $m = 1*$date->format('i')/60;
                     $hour = $h + $m;
-                    
                     if ($timestamp>=$end_timestamp) $available = 0;
-                    if ($timestamp>=$start_timestamp) $forecast[] = array($timestamp*1000,$co2intensity,$hour,$available,0);
+                    if ($timestamp>=$start_timestamp) $forecast[] = array($timestamp*1000,$price,$hour,$available,0);
                     $td++;
                 }
+            }*/
+            
+            // sort octopus forecast into time => price associative array
+            $octopus = array();
+            foreach ($result->results as $row) {
+                $date = new DateTime($row->valid_from);
+                $octopus[$date->getTimestamp()] = $row->value_inc_vat;
+            }
+            
+            $timestamp = $start_timestamp;
+            for ($i=0; $i<$divisions; $i++) {
+
+                $date->setTimestamp($timestamp);
+                $h = 1*$date->format('H');
+                $m = 1*$date->format('i')/60;
+                $hour = $h + $m;
+                
+                if (isset($octopus[$timestamp])) {
+                    $price = $octopus[$timestamp]; 
+                } else if (isset($octopus[$timestamp-(24*3600)])) {
+                    $price = $octopus[$timestamp-(24*3600)]; 
+                } else {
+                    $price = 12.0;
+                }
+                
+                // mark availability up to end time
+                if ($timestamp>=$end_timestamp) $available = 0;
+                $forecast[] = array($timestamp*1000,$price,$hour,$available,0);
+                $timestamp += $resolution; 
             }
         }
     }
@@ -260,8 +288,9 @@ function schedule($redis,$schedule)
             }
             
             $periods = array();
-            $periods[] = array("start"=>array($tstart,$start_hour), "end"=>array($tend,$end_hour));
-            
+            if ($period>0) {
+                $periods[] = array("start"=>array($tstart,$start_hour), "end"=>array($tend,$end_hour));
+            }
             return array("periods"=>$periods,"probability"=>$forecast);
 
         } else {

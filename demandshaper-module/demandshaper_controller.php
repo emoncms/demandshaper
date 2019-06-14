@@ -154,22 +154,67 @@ function demandshaper_controller()
                     $state = new stdClass;
                     $valid = true;
                     
-                    if ($result = http_request("GET","http://".$schedules->$device->ip."/status",array())) {
-                        $result = json_decode($result);
-                        $state->ctrl_mode = $result->ctrl_mode;
-                    } else {
-                        $valid = false;
-                    }
-                    
-                    if ($result = http_request("GET","http://".$schedules->$device->ip."/config",array())) {
-                        $result = json_decode($result);
-                        $state->timer_start1 = conv_time($result->timer_start1);
-                        $state->timer_stop1 = conv_time($result->timer_stop1);
-                        $state->timer_start2 = conv_time($result->timer_start2);
-                        $state->timer_stop2 = conv_time($result->timer_stop2);
-                        $state->voltage_output = 1*$result->voltage_output;
-                    } else {
-                        $valid = false;
+                    if ($schedules->$device->device_type=="hpmon" || $schedules->$device->device_type=="smartplug") {
+                     
+                        if ($result = http_request("GET","http://".$schedules->$device->ip."/status",array())) {
+                            $result = json_decode($result);
+                            $state->ctrl_mode = $result->ctrl_mode;
+                        } else {
+                            $valid = false;
+                        }
+                        
+                        if ($result = http_request("GET","http://".$schedules->$device->ip."/config",array())) {
+                            $result = json_decode($result);
+                            $state->timer_start1 = conv_time($result->timer_start1);
+                            $state->timer_stop1 = conv_time($result->timer_stop1);
+                            $state->timer_start2 = conv_time($result->timer_start2);
+                            $state->timer_stop2 = conv_time($result->timer_stop2);
+                            $state->voltage_output = 1*$result->voltage_output;
+                        } else {
+                            $valid = false;
+                        }
+                        
+                    } else if ($schedules->$device->device_type=="openevse") {
+                        $schedules->$device->ip = "192.168.1.152";
+                        
+                        // Get OpenEVSE timer state
+                        if ($result = http_request("GET","http://".$schedules->$device->ip."/r?json=1&rapi=\$GD",array())) {
+                            // ret: $OK 0 0 0 0^20, $OK 14 30 18 45^2E
+                            $result = json_decode($result);
+                            $ret = explode(" ",substr($result->ret,4,11));
+                            
+                            $state->timer_start1 = $ret[0]+($ret[1]/60);
+                            $state->timer_stop1 = $ret[2]+($ret[3]/60);
+                            $state->timer_start2 = 0;
+                            $state->timer_stop2 = 0;
+                        } else {
+                            $valid = false;
+                        }
+                        
+                        // Get OpenEVSE state
+                        if ($result = http_request("GET","http://".$schedules->$device->ip."/r?json=1&rapi=\$GS",array())) {
+                            // ret: $OK 1 18524^2B
+                            $result = json_decode($result);
+                            $ret = explode(" ",$result->ret);
+                            if ($ret[1]==254) {
+                                if ($state->timer_start1==0 && $state->timer_stop1==0) {
+                                    $state->ctrl_mode = "off";
+                                } else {
+                                    $state->ctrl_mode = "timer";
+                                }
+                            } 
+                            else if ($ret[1]==1) {
+                                if ($state->timer_start1==0 && $state->timer_stop1==0) {
+                                    $state->ctrl_mode = "on";
+                                } else {
+                                    $state->ctrl_mode = "timer";
+                                }
+                            }
+                        } else {
+                            $valid = false;
+                        }
+                        
+                        
                     }
                     
                     if ($valid) return $state; else return false;

@@ -8,7 +8,7 @@ function load_device()
         $("#scheduler-outer").show();
 
         $("#devicename").html(jsUcfirst(device));
-        $(".node-scheduler-title").html("<span class='icon-"+devices[device].type+"'></span>"+device);
+        $(".node-scheduler-title").html("<span class='icon-"+devices[device].type+"'></span>"+device+" <span id='device-state-message'></span>");
         $(".node-scheduler").attr("node",device);
 
         if (devices[device].type=="openevse") {
@@ -99,10 +99,10 @@ function load_device()
                     for (var z in default_schedule) {
                         if (result.schedule[z]!=undefined) schedule[z] = result.schedule[z];
                     }
-                    
+
                     schedule.device = device;
                     schedule.device_type = devices[device].type;
-                    
+
                     // Load SOC
                     if (schedule.device_type=="openevse") {
                         battery.capacity = schedule.batterycapacity;
@@ -368,18 +368,17 @@ function load_device()
         // --------------------------------------------------------------------------------------------
         function calc_schedule() {
             draw_schedule();
-            
             submit_schedule(0);
             last_submit = (new Date()).getTime();
             setTimeout(function(){
                 if (((new Date()).getTime()-last_submit)>1900) {
                    console.log("save");
                    submit_schedule(1);
-                   
-                   if (schedule.device_type=="smartplug" || schedule.device_type=="hpmon") {
+
+                   //if (schedule.device_type=="smartplug" || schedule.device_type=="hpmon") {
                        clearTimeout(get_device_state_timeout)
                        get_device_state_timeout = setTimeout(function(){ get_device_state(); },1000);
-                   }
+                   //}
                 }
             },2000);
         }
@@ -410,23 +409,35 @@ function load_device()
                 success: function(result) {
                 
                     if (result==false) {
-                        console.log(device+" unresponsive");
-                        $("#device-state-message").html(device+" unresponsive");
+                        console.log("Unresponsive");
+                        $("#device-state-message").html("Unresponsive");
                         $(".node-scheduler-title").css("background-color","#bbb");
                         $(".node-scheduler").css("background-color","#bbb");
                         
                         clearTimeout(get_device_state_timeout)
                         get_device_state_timeout = setTimeout(function(){ get_device_state(); },5000);
                     } else {
-                    
+                        //console.log(schedule)
+                        //console.log(result)
                         state_matched = true;
+                        
                         device_ctrl_mode = result.ctrl_mode.toLowerCase();
                         if (schedule.ctrlmode!=device_ctrl_mode) state_matched = false;
                         if (schedule.ctrlmode=="smart" && device_ctrl_mode=="timer") state_matched = true;
-                        if (schedule.timer_start1 != result.timer_start1) state_matched = false;
-                        if (schedule.timer_stop1 != result.timer_stop1) state_matched = false;
-                        if (schedule.timer_start2 != result.timer_start2) state_matched = false;
-                        if (schedule.timer_stop2 != result.timer_stop2) state_matched = false;
+                        if (!state_matched) console.log(schedule.ctrlmode+"!="+device_ctrl_mode)
+                        
+                        if (schedule.periods.length>0) {
+                            if (schedule.periods[0].start[1] != result.timer_start1) { 
+                                state_matched = false; 
+                                console.log(schedule.periods[0].start[1]+"!="+result.timer_start1); 
+                            }
+                            if (schedule.periods[0].end[1] != result.timer_stop1) { 
+                                state_matched = false; 
+                                console.log(schedule.periods[0].end[1]+"!="+result.timer_stop1); 
+                            }
+                        }
+                        //if (schedule.timer_start2 != result.timer_start2) { state_matched = false; console.log(schedule.timer_start2+"!="+result.timer_start2); }
+                        //if (schedule.timer_stop2 != result.timer_stop2) { state_matched = false; console.log(schedule.timer_stop2+"!="+result.timer_stop2); }
                         
                         if (schedule.device_type=="hpmon") {
                             schedule_voltage_output = Math.round((schedule.flowT - 7.14)/0.0371);
@@ -435,14 +446,17 @@ function load_device()
                         
                         if (state_matched) {
                             console.log("State matched");
-                            $("#device-state-message").html("");
+                            $("#device-state-message").html("Saved");
+                            setTimeout(function(){
+                                $("#device-state-message").html("");
+                            },2000);
                             $(".node-scheduler-title").css("background-color","#ea510e");
                             $(".node-scheduler").css("background-color","#ea510e");
                         } else {
-                            console.log("Device settings mismatch");
+                            console.log("Settings Mismatch");
                             $(".node-scheduler-title").css("background-color","#bbb");
                             $(".node-scheduler").css("background-color","#bbb");
-                            $("#device-state-message").html("Device settings mismatch");
+                            $("#device-state-message").html("Settings Mismatch");
                             clearTimeout(get_device_state_timeout)
                             get_device_state_timeout = setTimeout(function(){ get_device_state(); },5000);
                         }
@@ -482,14 +496,21 @@ function load_device()
             for (var z in schedule.periods) {
                 periods.push(timestr(1*schedule.periods[z].start[1],true)+" to "+timestr(1*schedule.periods[z].end[1],true));
             }
-            var out = "<br>"; 
+            var out = ""; 
             if (periods.length) {
                 out = jsUcfirst(device)+" scheduled to run: <b>"+periods.join(", ")+"</b><br>";
             }
             $("#schedule-output").html(out);
-                
             $("#timeleft").html(Math.round(schedule.timeleft/60)+" mins left to run");
 
+            if (out=="") {
+                $("#schedule-output").hide();
+                 $("#timeleft").hide();
+            } else {
+                $("#schedule-output").show();
+                 $("#timeleft").show();
+            }
+            
             // --------------------------------------------------------------------------------------------
             // Draw schedule graph
             // --------------------------------------------------------------------------------------------
