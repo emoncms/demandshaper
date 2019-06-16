@@ -65,11 +65,13 @@ if (window.session!=undefined) {
       <div id="no-devices-found-checking">
           <p>Checking for pairing request</p><br>
           <img src="<?php echo $path; ?>Modules/demandshaper/ajax-loader.gif">
+          <!--
           <br><br>
           <p>1. Plug your smart plug into an electrical socket. The light on the plug will show green for 3 seconds followed by a short off period and then a couple of very short flashes. This indicates that the plug is working and has created a WIFI Access Point.</p>
           <p>2. The WIFI Access Point should appear in your laptop or phones available WIFI networks, the SSID will contain the name smartplug followed by a number e.g: 'smartplug1'.</p>
           <p>3. Connect to this network, open an internet browser and enter the following address:</p>
           <p>http://192.168.4.1</p>
+          -->
       </div>
   </div>
 
