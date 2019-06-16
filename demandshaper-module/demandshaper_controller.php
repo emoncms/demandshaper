@@ -126,6 +126,20 @@ function demandshaper_controller()
             }
             break;
 
+        case "list":
+            if (!$remoteaccess && $session["read"]) {
+                $route->format = "json";
+                return $demandshaper->get($session["userid"]);
+            }
+            break;
+            
+        case "clearall":
+            if (!$remoteaccess && $session["write"]) {
+                $route->format = "text";
+                $demandshaper->set($session["userid"],new stdClass());
+                return "schedules cleared";
+            }
+            break;
             
         case "delete":
             if (!$remoteaccess && $session["write"] && isset($_GET['device'])) {

@@ -297,21 +297,24 @@ function load_device()
         $("#delete-device-confirm").click(function(){
             schedule.ctrlmode = "off";
             calc_schedule();
-            // 1. Delete device
-            $.ajax({ url: path+"device/delete.json", data: "id="+devices[schedule.device].id, async: true, success: function(data) {
-                // 2. Delete device inputs
-                $.ajax({ url: path+"input/list.json", async: true, success: function(data) {
-                    // get list of device inputs
-                    var device_inputs = [];
-                    for (var z in data) {
-                       if (data[z].nodeid==schedule.device) {
-                          device_inputs.push(1*data[z].id);
-                       }
-                    }
-                    console.log("Deleting inputs:");
-                    console.log(device_inputs);
-                    $.ajax({ url: path+"input/delete.json", data: "inputids="+JSON.stringify(device_inputs), async: true, success: function(data){
-                        location.href = "/";
+            // 1. Delete demandshaper schedule entry
+            $.ajax({ url: path+"demandshaper/delete?device="+schedule.device, async: true, success: function(data) {
+                // 2. Delete device
+                $.ajax({ url: path+"device/delete.json", data: "id="+devices[schedule.device].id, async: true, success: function(data) {
+                    // 3. Delete device inputs
+                    $.ajax({ url: path+"input/list.json", async: true, success: function(data) {
+                        // get list of device inputs
+                        var device_inputs = [];
+                        for (var z in data) {
+                           if (data[z].nodeid==schedule.device) {
+                              device_inputs.push(1*data[z].id);
+                           }
+                        }
+                        console.log("Deleting inputs:");
+                        console.log(device_inputs);
+                        $.ajax({ url: path+"input/delete.json", data: "inputids="+JSON.stringify(device_inputs), async: true, success: function(data){
+                            location.href = emoncmspath+"demandshaper";
+                        }});
                     }});
                 }});
             }});
@@ -426,6 +429,8 @@ function load_device()
                         if (schedule.ctrlmode=="smart" && device_ctrl_mode=="timer") state_matched = true;
                         if (!state_matched) console.log(schedule.ctrlmode+"!="+device_ctrl_mode)
                         
+                        if (schedule.periods==undefined) schedule.periods = []
+                        
                         if (schedule.periods.length>0) {
                             if (schedule.periods[0].start[1] != result.timer_start1) { 
                                 state_matched = false; 
@@ -470,6 +475,8 @@ function load_device()
             // --------------------------------------------------------------------------------------------
             // Schedule summaries
             // --------------------------------------------------------------------------------------------
+            if (schedule.periods==undefined) schedule.periods = []
+            
             if (schedule.periods && schedule.periods.length) {
                 var now = new Date();
                 var now_hours = (now.getHours() + (now.getMinutes()/60));
