@@ -257,6 +257,8 @@ while(true)
                                 if ($ctrlmode=="on" || $ctrlmode=="off") {
                                     $mqtt_client->publish("emon/$device/rapi/in/\$ST","00 00 00 00",0);
                                 }
+                                if ($ctrlmode=="on") $mqtt_client->publish("emon/$device/rapi/in/\$FE","",0);
+                                if ($ctrlmode=="off") $mqtt_client->publish("emon/$device/rapi/in/\$FS","",0);
                             }
                         }
                         $last_ctrlmode[$device] = $ctrlmode;
