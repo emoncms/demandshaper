@@ -17,14 +17,14 @@ defined('EMONCMS_EXEC') or die('Restricted access');
 
 function demandshaper_controller()
 {
-    global $mysqli, $redis, $session, $route, $homedir;
+    global $mysqli, $redis, $session, $route, $homedir, $mqtt_server;
     $result = false;
 
     $route->format = "json";
     $result = false;
 
     $remoteaccess = false;
-
+    
     include "Modules/demandshaper/demandshaper_model.php";
     $demandshaper = new DemandShaper($mysqli,$redis);
     
@@ -152,37 +152,32 @@ function demandshaper_controller()
                 $schedules = $demandshaper->get($session["userid"]);
                 if (isset($schedules->$device)) {
                     $state = new stdClass;
-                    $valid = true;
+                    
+                    include "Modules/demandshaper/MQTTRequest.php";
+                    $mqtt_request = new MQTTRequest($mqtt_server);
                     
                     if ($schedules->$device->device_type=="hpmon" || $schedules->$device->device_type=="smartplug") {
-                     
-                        if ($result = http_request("GET","http://".$schedules->$device->ip."/status",array())) {
-                            $result = json_decode($result);
-                            $state->ctrl_mode = $result->ctrl_mode;
-                        } else {
-                            $valid = false;
-                        }
                         
-                        if ($result = http_request("GET","http://".$schedules->$device->ip."/config",array())) {
-                            $result = json_decode($result);
-                            $state->timer_start1 = conv_time($result->timer_start1);
-                            $state->timer_stop1 = conv_time($result->timer_stop1);
-                            $state->timer_start2 = conv_time($result->timer_start2);
-                            $state->timer_stop2 = conv_time($result->timer_stop2);
-                            $state->voltage_output = 1*$result->voltage_output;
+                        if ($result = json_decode($mqtt_request->request("emon/$device/in/state","","emon/$device/out/state"))) {
+                            $state->ctrl_mode = $result->ctrlmode;
+                            $timer_parts = explode(" ",$result->timer);
+                            $state->timer_start1 = conv_time($timer_parts[0]);
+                            $state->timer_stop1 = conv_time($timer_parts[1]);
+                            $state->timer_start2 = conv_time($timer_parts[2]);
+                            $state->timer_stop2 = conv_time($timer_parts[3]);
+                            $state->voltage_output = $result->vout*1;
+                            return $state;
                         } else {
-                            $valid = false;
+                            return false;
                         }
-                        
+                            
                     } else if ($schedules->$device->device_type=="openevse") {
-                        $schedules->$device->ip = "192.168.1.152";
+                        
+                        $valid = true;
                         
                         // Get OpenEVSE timer state
-                        if ($result = http_request("GET","http://".$schedules->$device->ip."/r?json=1&rapi=\$GD",array())) {
-                            // ret: $OK 0 0 0 0^20, $OK 14 30 18 45^2E
-                            $result = json_decode($result);
-                            $ret = explode(" ",substr($result->ret,4,11));
-                            
+                        if ($result = $mqtt_request->request("emon/$device/rapi/in/\$GD","","emon/$device/rapi/out")) {
+                            $ret = explode(" ",substr($result,4,11));
                             $state->timer_start1 = $ret[0]+($ret[1]/60);
                             $state->timer_stop1 = $ret[2]+($ret[3]/60);
                             $state->timer_start2 = 0;
@@ -192,10 +187,8 @@ function demandshaper_controller()
                         }
                         
                         // Get OpenEVSE state
-                        if ($result = http_request("GET","http://".$schedules->$device->ip."/r?json=1&rapi=\$GS",array())) {
-                            // ret: $OK 1 18524^2B
-                            $result = json_decode($result);
-                            $ret = explode(" ",$result->ret);
+                        if ($result = $mqtt_request->request("emon/$device/rapi/in/\$GS","","emon/$device/rapi/out")) {
+                            $ret = explode(" ",$result);
                             if ($ret[1]==254) {
                                 if ($state->timer_start1==0 && $state->timer_stop1==0) {
                                     $state->ctrl_mode = "off";
@@ -214,10 +207,8 @@ function demandshaper_controller()
                             $valid = false;
                         }
                         
-                        
+                        if ($valid) return $state; else return false;
                     }
-                    
-                    if ($valid) return $state; else return false;
                 }
             }   
         

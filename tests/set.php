@@ -27,7 +27,7 @@ $connected = false;
 $mqtt_client->onConnect( function() use ($mqtt_client) {
     global $connected; $connected = true;
     echo "Connected to server\n";
-    $mqtt_client->subscribe("emon/openevse/rapi/#",2);
+    $mqtt_client->subscribe("emon/openevse/rapi/out",2);
 });
 
 $mqtt_client->onDisconnect( function() {
@@ -39,7 +39,7 @@ $mqtt_client->onMessage( function($message) {
     print json_encode($message)."\n";
 });
 
-$lasttime = 0;
+$lasttime = -10;
 $last_retry = 0;
 
 while(true) 
@@ -52,7 +52,7 @@ while(true)
         // Publish to MQTT
         if ($connected) {
             print "publish\n";
-            $mqtt_client->publish("emon/openevse/rapi/in/\$ST","4 0 5 30",0); 
+            $mqtt_client->publish("emon/openevse/rapi/in/\$GT","",0); 
         }
     }
     
