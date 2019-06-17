@@ -65,13 +65,11 @@ if (window.session!=undefined) {
       <div id="no-devices-found-checking">
           <p>Checking for pairing request</p><br>
           <img src="<?php echo $path; ?>Modules/demandshaper/ajax-loader.gif">
-          <!--
           <br><br>
-          <p>1. Plug your smart plug into an electrical socket. The light on the plug will show green for 3 seconds followed by a short off period and then a couple of very short flashes. This indicates that the plug is working and has created a WIFI Access Point.</p>
-          <p>2. The WIFI Access Point should appear in your laptop or phones available WIFI networks, the SSID will contain the name smartplug followed by a number e.g: 'smartplug1'.</p>
-          <p>3. Connect to this network, open an internet browser and enter the following address:</p>
-          <p>http://192.168.4.1</p>
-          -->
+          
+          <div class="wizard-box-controls"><div class="wizard-title">Smartplug Setup</div><div class="wizard-next">Next</div><div class="wizard-back">Back</div></div>
+          <div class="wizard-box" step=0></div>
+          
       </div>
   </div>
 
@@ -183,5 +181,40 @@ function hide_device_finder() {
     $("#no-devices-found").hide();
     clearInterval(auth_check_interval);
 }
+
+var step = 0;
+var steps = [
+
+    "Plug your smart plug into an electrical socket. The light on the plug will show green for 3 seconds followed by a short off period and then a couple of very short flashes. This indicates that the plug is working and has created a WIFI Access Point.",
+    
+    "The WIFI Access Point should appear in your laptop or phones available WIFI networks, the SSID will contain the name smartplug followed by a number e.g: 'smartplug1'.<br><br>Connect to this network, once connected click on the following link to open the smartplug configuration interface in a new window: <b>http://192.168.4.1</b>",
+    
+    "On the smartplug configuration interface select the WIFI network you wish to connect to, enter the passkey and click connect.<br><br>The green light on the smartplug will now turn on again. If the connection is successful you will see 10 very fast consecutive flashes.<br><br>The web interface will also show that the module has connected and its IP address.",
+    
+    "<b>Failed Connection</b><br>If the smartplug fails to connect to the selected WIFI network the green LED will stay on with a slight pulsing rythym for 30 seconds before the plug automatically resets and tries again. To re-enter setup mode hold the button on the front of the smartplug down while the green LED is on.",
+    
+    "With the smartplug WIFI settings configured connect back to you home network and keep this window open.<br><br>After a couple of minutes a notice will appear asking whether to allow device at the given ip address to connect.<br><br>Click allow and wait a couple of minutes for the device to appear."
+]
+
+$(".wizard-box").html(steps[step]);
+if (step==0) $(".wizard-back").hide();
+
+
+$(".wizard-next").click(function(){
+    end = steps.length-1
+    step++;
+    if (step>end) step=end;
+    $(".wizard-box").html(steps[step]);
+    $(".wizard-back").show();
+    if (step==end) $(".wizard-next").hide();
+});
+
+$(".wizard-back").click(function(){
+    step--;
+    if (step<0) step=0;
+    $(".wizard-box").html(steps[step]);
+    $(".wizard-next").show();
+    if (step==0) $(".wizard-back").hide();
+});
 
 </script>
