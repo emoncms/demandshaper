@@ -14,9 +14,9 @@ http://openenergymonitor.org
 global $path;
 
 $device = "";
-if (isset($_GET['node'])) $device = $_GET['node'];
+if (isset($_GET['device'])) $device = $_GET['device'];
 
-$v=10;
+$v=11;
 
 $emoncmspath = $path;
 if ($remoteaccess) $emoncmspath .= "remoteaccess/";
@@ -26,7 +26,7 @@ if ($remoteaccess) $emoncmspath .= "remoteaccess/";
 <script>
 var path = "<?php echo $path; ?>";
 var emoncmspath = "<?php echo $emoncmspath; ?>";
-var device = "<?php echo $device; ?>";
+var device_name = "<?php echo $device; ?>";
 var devices = {};
 
 var apikeystr = "";
@@ -86,48 +86,35 @@ if (window.session!=undefined) {
   ?>
 
   <script>
-  init_sidebar({menu_element:"#demandshaper_menu"});
-  
-  device_loaded = false;
+
+  device_id = false
+  device_type = false
+  device_loaded = false
   
   update_sidebar();
   setInterval(update_sidebar,10000);
   function update_sidebar() {
-      $.ajax({ url: emoncmspath+"device/list.json", dataType: 'json', async: true, success: function(result) {
-          // Associative array of devices by nodeid
-          devices = {};
-          var out = "";
-          for (var z in result) {
-              if (result[z].type=="openevse" || result[z].type=="smartplug" || result[z].type=="hpmon") {
-                  devices[result[z].nodeid] = result[z];
-                  // sidebar list
-                  out += "<li><a href='"+path+"demandshaper?node="+result[z].nodeid+"'><span class='icon-"+result[z].type+"'></span>"+ucfirst(result[z].nodeid)+"</a></li>";
-                  // select first device if device is not defined
-                  if (device=="") device = result[z].nodeid;
-              }
-          }
-          n=0
-          for (var z in result) {
-              if (result[z].type=="emonth") {
-                  devices[result[z].nodeid] = result[z];
-                  // sidebar list
-                  border = "";
-                  if (n==0) border = "style='border-top:1px solid #aaa'";
-                  out += "<li "+border+"><a href='"+path+"demandshaper?node="+result[z].nodeid+"'><span class='icon-"+result[z].type+"'></span>"+ucfirst(result[z].nodeid)+"</a></li>";
-                  // select first device if device is not defined
-                  if (device=="") device = result[z].nodeid;
-                  
-                  n++
-              }
-          }
+      $.ajax({ url: emoncmspath+"demandshaper/list", dataType: 'json', async: true, success: function(result) {
+          devices = result;
           
-          out += "<li id='add-device' style='border-top:1px solid #aaa; cursor:pointer'><a><i class='icon-plus icon-white'></i> Add Device</a></li>";
+          // Build menu
+          // var out = "";
+          for (var name in devices) {
+          //  out += "<li><a href='"+path+"demandshaper?node="+name+"'><span class='icon-"+devices[name].type+"'></span>"+ucfirst(name)+"</a></li>";
+          //  select first device if device is not defined
+              if (!device_name) device_name = name;
+          }
+          // out += "<li id='add-device' style='border-top:1px solid #aaa; cursor:pointer'><a><i class='icon-plus icon-white'></i> Add Device</a></li>";
+          // $(".sidenav-menu").html(out);
           
-          $(".sidenav-menu").html(out);
           if (!device_loaded) {
-              if (device!=undefined && devices[device]!=undefined) {
+              if (device_name && devices[device_name]!=undefined) {
                   hide_device_finder();
-                  load_device();
+                  
+                  device_id = devices[device_name].id;
+                  device_type = devices[device_name].type;
+                  
+                  load_device(device_id, device_name, device_type);
               } else {
                   show_device_finder();
               }

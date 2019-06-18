@@ -25,6 +25,22 @@ class DemandShaper
         $this->redis = $redis;
     }
     
+    public function get_list($device,$userid) {
+        $devices_all = $device->get_list($userid);
+        $devices = array();
+        foreach ($devices_all as $d) {
+            $name = $d["nodeid"];
+            if (in_array($d['type'],array("openevse","smartplug","hpmon")))
+                $devices[$name] = array("id"=>$d["id"]*1,"type"=>$d["type"]);
+        }
+        foreach ($devices_all as $d) {
+            $name = $d["nodeid"];
+            if (in_array($d['type'],array("emonth")))
+                $devices[$name] = array("id"=>$d["id"]*1,"type"=>$d["type"]);
+        }
+        return $devices;
+    }
+    
     public function set($userid,$schedules)
     {
         // Basic validation

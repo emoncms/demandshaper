@@ -28,6 +28,9 @@ function demandshaper_controller()
     include "Modules/demandshaper/demandshaper_model.php";
     $demandshaper = new DemandShaper($mysqli,$redis);
     
+    require_once "Modules/device/device_model.php";
+    $device = new Device($mysqli,$redis);
+    
     switch ($route->action)
     {  
         case "":
@@ -126,7 +129,15 @@ function demandshaper_controller()
             }
             break;
 
+        // Device list used for menu
         case "list":
+            if (!$remoteaccess && $session["read"]) {
+                $route->format = "json";
+                return $demandshaper->get_list($device,$session['userid']);
+            }
+            break;
+
+        case "schedules":
             if (!$remoteaccess && $session["read"]) {
                 $route->format = "json";
                 return $demandshaper->get($session["userid"]);
