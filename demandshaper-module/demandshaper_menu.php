@@ -1,8 +1,15 @@
 <?php
-$menu['sidebar']['emoncms'][] = array(
-    'text' => _("DemandShaper"),
-    'path' => 'demandshaper',
-    'icon' => 'calendar',
-    'data'=> array('sidebar' => '#sidebar_demandshaper')
+$menu['tabs'][] = array(
+    'icon'=>'calendar',
+    'title'=> _("Apps"),
+    'path'=> 'demandshaper',
+    'data'=> array(
+        'sidebar' => '#sidebar_demandshaper',
+        'is-link' => 'true'
+    )
 );
-$menu['sidebar']['includes']['emoncms']['demandshaper'] = view('Modules/demandshaper/Views/sidebar.php',array());
+
+$menu['sidebar']['demandshaper'][] = array(
+    'active'=>'demandshaper',
+    'text' => '<ul class="sidenav-menu nav sidebar-menu sub-nav"></ul>',
+);
