@@ -34,7 +34,12 @@ if (window.session!=undefined) {
     apikeystr = "&apikey="+session["apikey_write"];
 }
 </script>
-
+<style>
+    #icon-list svg {
+        opacity: .7
+    }
+}
+</style>
 <!--[if IE]><script language="javascript" type="text/javascript" src="<?php echo $path;?>Lib/flot/excanvas.min.js"></script><![endif]-->
 <script language="javascript" type="text/javascript" src="<?php echo $path; ?>Lib/flot/jquery.flot.min.js"></script>
 <script language="javascript" type="text/javascript" src="<?php echo $path; ?>Lib/flot/jquery.flot.selection.min.js"></script>
@@ -57,7 +62,7 @@ if (window.session!=undefined) {
 
       <h2 id="no-devices-found-title">No Devices Found</h2>
       
-      <h2>
+      <h2 id="icon-list">
         <svg class="icon plus"><use xlink:href="#icon-smartplug"></use></svg>
         <svg class="icon plus"><use xlink:href="#icon-hpmon"></use></svg>
         <svg class="icon plus"><use xlink:href="#icon-openevse"></use></svg>
