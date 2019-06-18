@@ -1,24 +1,23 @@
 var temperature_feed = false;
 var humidity_feed = false;
 
-function load_device() {
+function load_device(device_id, device_name, device_type)
+{
+    device_loaded = true;
+    console.log("device loaded");
 
-
-    if (device!=undefined && devices[device]!=undefined) {
-        device_loaded = true;
-        console.log("device loaded");
-
-        $("#devicename").html(jsUcfirst(device));
-        $(".node-scheduler-title").html("<span class='icon-"+devices[device].type+"'></span>"+device);
-        $(".node-scheduler").attr("node",device);
-        
-        first_load = true;
-        update_status();
-        setInterval(update_status,5000);
-        function update_status(){
-            $.ajax({ url: emoncmspath+"input/get/"+device+apikeystr, dataType: 'json', async: true, success: function(result) {
-                if (result!=null) {
-                    if (result.temperature!=undefined && result.humidity!=undefined) {
+    $("#devicename").html(jsUcfirst(device_name));
+    $(".node-scheduler-title").html("<span class='icon-"+device_type+"'></span>"+device_name);
+    $(".node-scheduler").attr("node",device_name);
+    
+    first_load = true;
+    update_status();
+    setInterval(update_status,5000);
+    function update_status(){
+        $.ajax({ url: emoncmspath+"input/get/"+device_name+apikeystr, dataType: 'json', async: true, success: function(result) {
+            if (result!=null) {
+                if (result.temperature!=undefined && result.humidity!=undefined) {
+                    if (result.temperature.value!=null && result.humidity.value!=null) {
                         $("#emonth_temperature").html((result.temperature.value).toFixed(1));
                         $("#emonth_humidity").html((result.humidity.value).toFixed(1));
                         
@@ -39,8 +38,8 @@ function load_device() {
                         }
                     }
                 }
-            }});
-        }
+            }
+        }});
     }
     
     $(window).resize(function(){

@@ -9,11 +9,11 @@
         <br>-->
         
         <div style="text-align:center">
-            <div style="width:50%; float:left">
+            <div style="width:50%; float:left; color:#e14040;">
                 <p>Temperature</p>
                 <div><span id="emonth_temperature" style="font-size:32px"></span>C</div>
             </div>
-            <div style="width:50%; float:left">
+            <div style="width:50%; float:left; color:#4072e1;">
                 <p>Humidity</p>
                 <div><span id="emonth_humidity" style="font-size:32px"></span>%</div>
             </div>
@@ -69,4 +69,4 @@
     </div>
 </div>
 
-<script type="text/javascript" src="<?php echo $path; ?>Modules/demandshaper/emonth.js?v=5"></script>
+<script type="text/javascript" src="<?php echo $path; ?>Modules/demandshaper/emonth.js?v=6"></script>
