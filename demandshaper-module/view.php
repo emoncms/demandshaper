@@ -56,10 +56,13 @@ if (window.session!=undefined) {
   <div id="no-devices-found" class="hide">
 
       <h2 id="no-devices-found-title">No Devices Found</h2>
-            
-      <div style="display:inline-block; padding:10px"><span class='icon-smartplug'></span></div>
-      <div style="display:inline-block; padding:10px"><span class='icon-hpmon'></span></div>
-      <div style="display:inline-block; padding:10px"><span class='icon-openevse'></span></div>
+      
+      <h2>
+        <svg class="icon plus"><use xlink:href="#icon-smartplug"></use></svg>
+        <svg class="icon plus"><use xlink:href="#icon-hpmon"></use></svg>
+        <svg class="icon plus"><use xlink:href="#icon-openevse"></use></svg>
+        <svg class="icon plus"><use xlink:href="#icon-emonth"></use></svg>
+      </h2>
       <div style="height:10px"></div>
 
       <div id="no-devices-found-checking">

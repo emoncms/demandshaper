@@ -134,50 +134,6 @@ body {padding:0}
 .weekly-scheduler-text {
     margin-top:15px;
 }
-
-.icon-smartplug {
-  display: inline-block;
-  width: 18px;
-  height: 18px;
-  background-image: url('smartplug.png');
-  background-position: 0 0;
-  background-size:18px;
-  background-repeat: no-repeat;
-  margin-right:10px;
-}
-
-.icon-openevse {
-  display: inline-block;
-  width: 20px;
-  height: 20px;
-  background-image: url('openevse.png');
-  background-position: 0 0;
-  background-size:20px;
-  background-repeat: no-repeat;
-  margin-right:10px;
-}
-
-.icon-hpmon {
-  display: inline-block;
-  width: 20px;
-  height: 20px;
-  background-image: url('heatpumpmonitor.png');
-  background-position: 0 0;
-  background-size:20px;
-  background-repeat: no-repeat;
-  margin-right:10px;
-}
-
-.icon-emonth {
-  display: inline-block;
-  width: 18px;
-  height: 18px;
-  background-image: url('emonth2.png');
-  background-position: 0 0;
-  background-size:18px;
-  background-repeat: no-repeat;
-  margin-right:10px;
-}
   
 .btn-group button{
   width:auto;

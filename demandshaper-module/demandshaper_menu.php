@@ -23,10 +23,8 @@ if ($session['read']) {
     foreach ($devices as $name=>$d) {
         $menu['sidebar']['demandshaper'][] = array(
             'icon' => "icon-".$d["type"],
-            'title' => $name,
             'text' => ucfirst($name),
             'path' => "demandshaper?device=".$name,
-            'data' => array(),
             'order'=> $o
         );
         $o++;
@@ -34,10 +32,10 @@ if ($session['read']) {
     
     $menu['sidebar']['demandshaper'][] = array(
         'icon' => "plus",
-        'title' => "Add Device",
         'text' => "Add Device",
         'path' => "demandshaper#add",
-        'data' => array("id"=>"add-device", "is-link"=>false),
+        'data' => array("id"=>"add-device"),
         'order'=> $o
     );
+
 }
