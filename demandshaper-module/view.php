@@ -67,7 +67,11 @@ if (window.session!=undefined) {
           <img src="<?php echo $path; ?>Modules/demandshaper/ajax-loader.gif">
           <br><br>
           
-          <div class="wizard-box-controls"><div class="wizard-title">Smartplug Setup</div><div class="wizard-next">Next</div><div class="wizard-back">Back</div></div>
+          <div class="wizard-box-controls">
+            <div class="wizard-title">Smartplug Setup <span class="p-2" style="font-size:larger"></span></div>
+            <div class="wizard-next">Next</div>
+            <div class="wizard-back">Back</div>
+          </div>
           <div class="wizard-box" step=0></div>
           
       </div>
@@ -199,6 +203,16 @@ var steps = [
 $(".wizard-box").html(steps[step]);
 if (step==0) $(".wizard-back").hide();
 
+indicator = function(_step) {
+    let off = '○',
+        on = '●',
+        indicator = '';
+    steps.forEach(function(item,index) {
+        indicator += index < _step + 1 ? on: off;
+    })
+    return indicator
+}
+$(".wizard-title span").text(indicator(0));
 
 $(".wizard-next").click(function(){
     end = steps.length-1
@@ -207,6 +221,7 @@ $(".wizard-next").click(function(){
     $(".wizard-box").html(steps[step]);
     $(".wizard-back").show();
     if (step==end) $(".wizard-next").hide();
+    $(".wizard-title span").text(indicator(step));
 });
 
 $(".wizard-back").click(function(){
@@ -215,6 +230,7 @@ $(".wizard-back").click(function(){
     $(".wizard-box").html(steps[step]);
     $(".wizard-next").show();
     if (step==0) $(".wizard-back").hide();
+    $(".wizard-title span").html(indicator(step));
 });
 
 </script>
