@@ -34,7 +34,12 @@ if (window.session!=undefined) {
     apikeystr = "&apikey="+session["apikey_write"];
 }
 </script>
-
+<style>
+    #icon-list svg {
+        opacity: .7
+    }
+}
+</style>
 <!--[if IE]><script language="javascript" type="text/javascript" src="<?php echo $path;?>Lib/flot/excanvas.min.js"></script><![endif]-->
 <script language="javascript" type="text/javascript" src="<?php echo $path; ?>Lib/flot/jquery.flot.min.js"></script>
 <script language="javascript" type="text/javascript" src="<?php echo $path; ?>Lib/flot/jquery.flot.selection.min.js"></script>
@@ -56,10 +61,13 @@ if (window.session!=undefined) {
   <div id="no-devices-found" class="hide">
 
       <h2 id="no-devices-found-title">No Devices Found</h2>
-            
-      <div style="display:inline-block; padding:10px"><span class='icon-smartplug'></span></div>
-      <div style="display:inline-block; padding:10px"><span class='icon-hpmon'></span></div>
-      <div style="display:inline-block; padding:10px"><span class='icon-openevse'></span></div>
+      
+      <h2 id="icon-list">
+        <svg class="icon plus"><use xlink:href="#icon-smartplug"></use></svg>
+        <svg class="icon plus"><use xlink:href="#icon-hpmon"></use></svg>
+        <svg class="icon plus"><use xlink:href="#icon-openevse"></use></svg>
+        <svg class="icon plus"><use xlink:href="#icon-emonth"></use></svg>
+      </h2>
       <div style="height:10px"></div>
 
       <div id="no-devices-found-checking">
