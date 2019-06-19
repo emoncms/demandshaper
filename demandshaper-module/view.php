@@ -165,8 +165,10 @@ $(".auth-check-allow").click(function(){
 });
 
 $("#add-device").click(function(event){
-    event.preventDefault();
-    show_device_finder();
+    if(typeof show_device_finder === 'function') {
+        event.preventDefault();
+        show_device_finder();
+    }
 });
 
 function show_device_finder() {
