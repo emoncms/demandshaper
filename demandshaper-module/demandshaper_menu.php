@@ -22,7 +22,7 @@ if ($session['read']) {
     $o=0;
     foreach ($devices as $name=>$d) {
         $menu['sidebar']['demandshaper'][] = array(
-            'icon' => "icon-".$d["type"],
+            'icon' => $d["type"],
             'text' => ucfirst($name),
             'path' => "demandshaper?device=".$name,
             'order'=> $o
