@@ -164,7 +164,7 @@ $(".auth-check-allow").click(function(){
     }});
 });
 
-$(".sidenav-menu").on("click","#add-device",function(event){
+$("#add-device").click(function(event){
     event.preventDefault();
     show_device_finder();
 });
