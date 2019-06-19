@@ -34,7 +34,7 @@ if ($session['read']) {
         'icon' => "plus",
         'text' => "Add Device",
         'path' => "demandshaper#add",
-        'data' => array("id"=>"add-device"),
+        'id'=> "add-device",
         'order'=> $o
     );
 }
