@@ -66,11 +66,8 @@ if (!empty($redis_server['auth']) && !$redis->auth($redis_server['auth'])) {
     $log->error("Can't connect to redis, autentication failed"); die;
 }
 
-if (file_exists("$homedir/demandshaper/scheduler.php")) {
-    require "$homedir/demandshaper/scheduler.php";
-}
-else if (file_exists("$homedir/modules/demandshaper/scheduler.php")) {
-    require "$homedir/modules/demandshaper/scheduler.php";
+if (file_exists("$linked_modules_dir/demandshaper/scheduler.php")) {
+    require "$linked_modules_dir/demandshaper/scheduler.php";
 }
 require "Modules/demandshaper/demandshaper_model.php";
 $demandshaper = new DemandShaper($mysqli,$redis);

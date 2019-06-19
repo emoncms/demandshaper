@@ -17,7 +17,7 @@ defined('EMONCMS_EXEC') or die('Restricted access');
 
 function demandshaper_controller()
 {
-    global $mysqli, $redis, $session, $route, $homedir, $mqtt_server;
+    global $mysqli, $redis, $session, $route, $mqtt_server, $linked_modules_dir;
     $result = false;
 
     $route->format = "json";
@@ -48,7 +48,7 @@ function demandshaper_controller()
                 $route->format = "json";
                 
                 if (isset($_GET['schedule'])) {
-                    include "$homedir/demandshaper/scheduler.php";
+                    include "$linked_modules_dir/demandshaper/scheduler.php";
                     
                     $save = 1;
                     if (isset($_GET['save']) && $_GET['save']==0) $save = 0;
@@ -116,7 +116,7 @@ function demandshaper_controller()
                     if (isset($schedules->$device)) $schedule = $schedules->$device;
                     else {
                         // Calculate an empty schedule to show in graph view
-                        include "$homedir/demandshaper/scheduler.php";
+                        include "$linked_modules_dir/demandshaper/scheduler.php";
                         $schedule = new stdClass();
                         $schedule->end = 0;
                         $schedule->period = 0;
