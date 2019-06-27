@@ -25,6 +25,8 @@ function load_device(device_id, device_name, device_type)
     if (device_type=="hpmon") {
         $(".heatpumpmonitor").show();
     }
+    
+    var profile = {}
 
     // -------------------------------------------------------------------------
     // Defaults
@@ -90,6 +92,7 @@ function load_device(device_id, device_name, device_type)
     // -------------------------------------------------------------------------
     update_device();
     function update_device() {
+    
         $.ajax({ url: emoncmspath+"demandshaper/get?device="+device_name+apikeystr, dataType: 'json', async: true, success: function(result) {
             // Make schedule object global
             if (result==null || result.schedule==null) {
@@ -102,7 +105,7 @@ function load_device(device_id, device_name, device_type)
 
                 schedule.device = device_name;
                 schedule.device_type = device_type;
-
+                
                 // Load SOC
                 if (schedule.device_type=="openevse") {
                     battery.capacity = schedule.batterycapacity;
@@ -395,7 +398,15 @@ function load_device(device_id, device_name, device_type)
                 schedule = (result==null || result.schedule==null) ? {} : result.schedule;
                 success = !(result.hasOwnProperty('success') && result.success === false);
                 if (success){
-                    draw_schedule_output(schedule);
+                
+                    $.ajax({ url: emoncmspath+"demandshaper/forecast?signal="+schedule.signal,
+                    dataType: 'json',
+                    async: true,
+                    success: function(result) {
+                        profile = result.profile
+                        draw_schedule_output(schedule);
+                    }});
+                    
                 }
             }
         });
@@ -521,89 +532,96 @@ function load_device(device_id, device_name, device_type)
         // --------------------------------------------------------------------------------------------
         // Draw schedule graph
         // --------------------------------------------------------------------------------------------
-        if (schedule.probability!=undefined) {
-            var probability = schedule.probability;
-            
-            var interval = 1800;
-            interval = (probability[1][0]-probability[0][0])*0.001;
-            
-            var hh = 0;
-            for (var z in probability) {
-                if (1*probability[z][2]==schedule.end) hh = z;
-            }
-
-            // Shade out time after end of schedule
-            var markings = [];
-            if (hh>0 && periods.length) markings.push({ color: "rgba(0,0,0,0.1)", xaxis: { from: probability[hh][0] } });
-            options.grid.markings = markings;
-            
-            // Show bars if interval is 1800s
-            var bars = true;
-            //if (interval<1800) bars = false;
-            
-            if (bars) {
-                options.bars = { show: true, barWidth:interval*1000*0.8, lineWidth:0 };
-            } else {
-                options.lines = {fill:true};
-            }
-            
-            // Generate series for active and inactive slots
-            var sum = 0;
-            var sum_n = 0;
-            var peak = 0;
-            available = [];
-            unavailable = [];
-            for (var z in probability) {
-                var time = probability[z][0];
-                var value = probability[z][1];
-                var active = probability[z][4];
-                if (value>peak) peak = value;
-                    
-                if (active) { 
-                    available.push([time,value]); 
-                    sum += value; sum_n++;
-                    if (bars) value=null;
-                } 
-                unavailable.push([time,value]);
-            }
-            
-            // Display CO2 in window
-            var out = "";
-            if (sum_n>0) {
-                var mean = sum/sum_n;
-                
-                if (schedule.signal=="carbonintensity") {
-                    var co2_km = (mean / 4.0) / 1.6;
-                    var prc = 100-(100*(co2_km / 130));
-                    if (device_type=="openevse") out = "Charge ";
-                    out += "CO2 intensity: "+Math.round(mean)+" gCO2/kWh"
-                    if (device_type=="openevse") {
-                        out += ", "+Math.round(co2_km)+" gCO2/km, "+Math.round(prc)+"% <span title='Compared to 50 MPG Petrol car'>reduction</span>.";
-                    } else if (device_type=="hpmon") {
-                        out += ", "+Math.round(mean/3.8)+" gCO2/kWh Heat @ COP 3.8";
-                    } else {
-                        out += ", "+Math.round(100.0*(1.0-(mean/peak)))+"% reduction vs peak";
-                    }
-                } else if (schedule.signal=="octopus" || schedule.signal=="economy7") {
-
-                    if (device_type=="openevse") {
-                        var p_per_mile = (mean / 4.0);
-                        var prc = 100-(100*(p_per_mile / 10.0));
-                        out = "Cost: "+(p_per_mile).toFixed(1)+"p/mile"
-                        
-                    } else if (device_type=="hpmon") {
-                        out = ", "+Math.round(mean/3.8)+" p/kWh Heat @ COP 3.8";
-                    } else {
-                        out = "Average cost: "+mean.toFixed(1)+"p/kWh, "+Math.round(100.0*(1.0-(mean/peak)))+"% reduction vs peak";
-                    }  
-                } else {
-                    out = Math.round(100.0*(1.0-(mean/peak)))+"% reduction vs peak";  
-                }
-            }
-            $("#schedule-co2").html(out);
-            
-            draw_graph();
+        var periods = schedule.periods;
+        
+        var interval = 1800;
+        interval = (profile[1][0]-profile[0][0])*0.001;
+        
+        var hh = 0;
+        for (var z in profile) {
+            if (1*profile[z][2]==schedule.end) hh = z;
         }
+
+        // Shade out time after end of schedule
+        var markings = [];
+        if (hh>0 && periods.length) markings.push({ color: "rgba(0,0,0,0.1)", xaxis: { from: profile[hh][0] } });
+        options.grid.markings = markings;
+        
+        // Show bars if interval is 1800s
+        var bars = true;
+        //if (interval<1800) bars = false;
+        
+        if (bars) {
+            options.bars = { show: true, barWidth:interval*1000*0.8, lineWidth:0 };
+        } else {
+            options.lines = {fill:true};
+        }
+        
+        // Generate series for active and inactive slots
+        var sum = 0;
+        var sum_n = 0;
+        var peak = 0;
+        var active = 0;
+        available = [];
+        unavailable = [];
+        
+        console.log(periods)
+        
+        for (var z in profile) {
+            var time = profile[z][0];
+            var value = profile[z][1];
+            
+            if (value>peak) peak = value;
+            
+            active = false;
+            for (var p in periods) {
+                if (time>=periods[p].start[0]*1000 && time<periods[p].end[0]*1000) active = true;
+            }
+                
+            if (active) { 
+                available.push([time,value]); 
+                sum += value; sum_n++;
+                if (bars) value=null;
+            } 
+            unavailable.push([time,value]);
+        }
+        
+        // Display CO2 in window
+        var out = "";
+        if (sum_n>0) {
+            var mean = sum/sum_n;
+            
+            if (schedule.signal=="carbonintensity") {
+                var co2_km = (mean / 4.0) / 1.6;
+                var prc = 100-(100*(co2_km / 130));
+                if (device_type=="openevse") out = "Charge ";
+                out += "CO2 intensity: "+Math.round(mean)+" gCO2/kWh"
+                if (device_type=="openevse") {
+                    out += ", "+Math.round(co2_km)+" gCO2/km, "+Math.round(prc)+"% <span title='Compared to 50 MPG Petrol car'>reduction</span>.";
+                } else if (device_type=="hpmon") {
+                    out += ", "+Math.round(mean/3.8)+" gCO2/kWh Heat @ COP 3.8";
+                } else {
+                    out += ", "+Math.round(100.0*(1.0-(mean/peak)))+"% reduction vs peak";
+                }
+            } else if (schedule.signal=="octopus" || schedule.signal=="economy7") {
+
+                if (device_type=="openevse") {
+                    var p_per_mile = (mean / 4.0);
+                    var prc = 100-(100*(p_per_mile / 10.0));
+                    out = "Cost: "+(p_per_mile).toFixed(1)+"p/mile"
+                    
+                } else if (device_type=="hpmon") {
+                    out = ", "+Math.round(mean/3.8)+" p/kWh Heat @ COP 3.8";
+                } else {
+                    out = "Average cost: "+mean.toFixed(1)+"p/kWh, "+Math.round(100.0*(1.0-(mean/peak)))+"% reduction vs peak";
+                }  
+            } else {
+                out = Math.round(100.0*(1.0-(mean/peak)))+"% reduction vs peak";  
+            }
+        }
+        $("#schedule-co2").html(out);
+        
+        draw_graph();
     }
 
     function draw_graph() {

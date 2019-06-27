@@ -42,6 +42,13 @@ function demandshaper_controller()
                 return "";
             }
             break;
+            
+        case "forecast":
+            $signal = "carbonintensity";
+            if (isset($_GET['signal'])) $signal = $_GET['signal'];
+            include "$linked_modules_dir/demandshaper/scheduler.php";
+            return get_forecast($redis,$signal);
+            break;
         
         case "submit":
             if (!$remoteaccess && $session["write"]) {
@@ -61,8 +68,8 @@ function demandshaper_controller()
                     if (!isset($schedule->interruptible)) return array("content"=>"Missing interruptible parameter in schedule object");
                     if (!isset($schedule->runonce)) return array("content"=>"Missing runonce parameter in schedule object");
                     if ($schedule->runonce) $schedule->runonce = time();
-                    
                     $device = $schedule->device;
+                    
                     $schedules = $demandshaper->get($session["userid"]);
                     $last_schedule = $schedules->$device;
 
@@ -87,12 +94,19 @@ function demandshaper_controller()
                     
                     $timeleft = $end_timestamp - $now;
                     if ($schedule->timeleft>$timeleft) $schedule->timeleft = $timeleft;
+                    
+                    if (isset($schedule->probability)) unset($schedule->probability);
+                    if (isset($schedule->profile)) unset($schedule->profile);
                     // -------------------------------------------------
                     
-                    $result = schedule($redis,$schedule);
-                    
-                    $schedule->periods = $result["periods"];
-                    $schedule->probability = $result["probability"];
+                    if ($schedule->ctrlmode=="smart") {
+                        $forecast = get_forecast($redis,$schedule->signal);
+                        $schedule->periods = schedule_smart($forecast,$schedule->timeleft,$schedule->end,$schedule->interruptible);
+                        
+                    } else if ($schedule->ctrlmode=="timer") {
+                        $forecast = get_forecast($redis,$schedule->signal);
+                        $schedule->periods = schedule_timer($forecast, $schedule->timer_start1,$schedule->timer_stop1,$schedule->timer_start2,$schedule->timer_stop2);
+                    } 
                     
                     if ($save) {
                         $schedules->$device = $schedule;
@@ -117,12 +131,7 @@ function demandshaper_controller()
                     else {
                         // Calculate an empty schedule to show in graph view
                         include "$linked_modules_dir/demandshaper/scheduler.php";
-                        $schedule = new stdClass();
-                        $schedule->end = 0;
-                        $schedule->period = 0;
-                        $schedule->interruptible = 0;
-                        $schedule->runonce = 0;
-                        $schedule = schedule($redis,$schedule);
+                        $schedule = schedule($redis,'carbonintensity'.'off', 0,0,0, 0,0,0,0);
                     }
                     return array("schedule"=>$schedule);
                 }

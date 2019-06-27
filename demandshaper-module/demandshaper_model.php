@@ -47,6 +47,18 @@ class DemandShaper
         $userid = (int) $userid;
         $schedules = json_encode($schedules);
         
+        if ($schedules_old = $this->redis->get("demandshaper:schedules")) {
+            $schedules_old = json_decode($schedules_old);
+        }
+        $this->redis->set("demandshaper:schedules",$schedules);
+        
+        //$save_to_disk = array('timer_start1','timer_stop1','timer_start2','timer_stop2','ctrlmode','end','signal','interruptible','period','device','flowT','repeat','device_type');
+        //$old = array();
+        //$current = array();
+        //foreach ($save_to_disk as $key) {
+        //    $old
+        //}
+        
         $result = $this->mysqli->query("SELECT `userid` FROM demandshaper WHERE `userid`='$userid'");
         if ($result->num_rows) {
             $stmt = $this->mysqli->prepare("UPDATE demandshaper SET `schedules`=? WHERE `userid`=?");

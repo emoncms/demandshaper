@@ -284,7 +284,12 @@ while(true)
                     }
                     
                     if (!isset($schedule->started) || $schedule->interruptible) {
-                        $r = schedule($redis,$schedule);
+                        $r = schedule(
+                            $redis, 
+                            $schedule->signal,$schedule->ctrlmode, 
+                            $schedule->timeleft,$schedule->end,$schedule->interruptible, 
+                            $schedule->timer_start1,$schedule->timer_stop1,$schedule->timer_start2,$schedule->timer_stop2
+                        );
                         $schedule->periods = $r["periods"];
                         $schedule->probability = $r["probability"];
                         $schedule = json_decode(json_encode($schedule));
