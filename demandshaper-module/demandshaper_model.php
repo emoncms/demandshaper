@@ -18,9 +18,11 @@ class DemandShaper
 {
     private $mysqli;
     private $redis;
+    private $log;
     
     public function __construct($mysqli,$redis)
     {
+        $this->log = new EmonLogger(__FILE__);
         $this->mysqli = $mysqli;
         $this->redis = $redis;
     }
@@ -45,40 +47,48 @@ class DemandShaper
     {
         // Basic validation
         $userid = (int) $userid;
-        $schedules = json_encode($schedules);
         
         if ($schedules_old = $this->redis->get("demandshaper:schedules")) {
             $schedules_old = json_decode($schedules_old);
         }
-        $this->redis->set("demandshaper:schedules",$schedules);
+        $this->redis->set("demandshaper:schedules",json_encode($schedules));
         
-        //$save_to_disk = array('timer_start1','timer_stop1','timer_start2','timer_stop2','ctrlmode','end','signal','interruptible','period','device','flowT','repeat','device_type');
-        //$old = array();
-        //$current = array();
-        //foreach ($save_to_disk as $key) {
-        //    $old
-        //}
-        
-        $result = $this->mysqli->query("SELECT `userid` FROM demandshaper WHERE `userid`='$userid'");
-        if ($result->num_rows) {
-            $stmt = $this->mysqli->prepare("UPDATE demandshaper SET `schedules`=? WHERE `userid`=?");
-            $stmt->bind_param("si",$schedules,$userid);
-            if (!$stmt->execute()) {
-                return array('success'=>false, 'message'=>"Error saving demandshaper settings");
-            }
-            
-            $this->redis->set("schedules",$schedules);
-            return array('success'=>true);
-            
-        } else {
-            $stmt = $this->mysqli->prepare("INSERT INTO demandshaper (`userid`,`schedules`) VALUES (?,?)");
-            $stmt->bind_param("is", $userid,$schedules);
-            if (!$stmt->execute()) {
-                return array('success'=>false, 'message'=>"Error saving demandshaper settings");
-            }
-            $this->redis->set("schedules",$schedules);
-            return array('success'=>true);
+        // remove runtime settings
+        $schedules_to_disk = $schedules;
+        foreach ($schedules_to_disk as $device=>$schedule) {
+            unset($schedules_to_disk->$device->runtime);
         }
+        
+        // remove runtime settings
+        $last_schedules_to_disk = $schedules_old;
+        foreach ($last_schedules_to_disk as $device=>$schedule) {
+            unset($last_schedules_to_disk->$device->runtime);
+        }
+        
+        if (json_encode($schedules_to_disk)!=json_encode($last_schedules_to_disk)) {
+        
+            $result = $this->mysqli->query("SELECT `userid` FROM demandshaper WHERE `userid`='$userid'");
+            if ($result->num_rows) {
+                $stmt = $this->mysqli->prepare("UPDATE demandshaper SET `schedules`=? WHERE `userid`=?");
+                $stmt->bind_param("si",json_encode($schedules_to_disk),$userid);
+                if (!$stmt->execute()) {
+                    return array('success'=>false, 'message'=>"Error saving demandshaper settings");
+                }
+                $this->log->error("Saved to disk");
+                return array('success'=>true, 'message'=>"Saved to disk");
+                
+            } else {
+                $stmt = $this->mysqli->prepare("INSERT INTO demandshaper (`userid`,`schedules`) VALUES (?,?)");
+                $stmt->bind_param("is", $userid,json_encode($schedules_to_disk));
+                if (!$stmt->execute()) {
+                    return array('success'=>false, 'message'=>"Error saving demandshaper settings");
+                }
+                $this->log->error("Saved to disk");
+                return array('success'=>true, 'message'=>"Saved to disk");
+            }
+        }
+        $this->log->error("Saved to redis only");
+        return array('success'=>true, 'message'=>"Saved to redis only");
     }
     
     public function get($userid)
@@ -86,7 +96,7 @@ class DemandShaper
         $userid = (int) $userid;
         
         // Attempt first to load from cache
-        $schedulesjson = $this->redis->get("schedules");
+        $schedulesjson = $this->redis->get("demandshaper:schedules");
         
         if ($schedulesjson) {
             $schedules = json_decode($schedulesjson);
@@ -95,7 +105,10 @@ class DemandShaper
             $result = $this->mysqli->query("SELECT schedules FROM demandshaper WHERE `userid`='$userid'");
             if ($row = $result->fetch_object()) {
                 $schedules = json_decode($row->schedules);
-                $this->redis->set("schedules",json_encode($schedules));
+                foreach ($schedules as $device=>$schedule) {
+                    $schedules->$device->runtime = new stdClass();
+                }
+                $this->redis->set("demandshaper:schedules",json_encode($schedules));
             } else {
                 $schedules = new stdClass();
             }

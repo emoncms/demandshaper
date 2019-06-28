@@ -56,7 +56,7 @@ function load_device(device_id, device_name, device_type)
         // Runtime change often and are saved only to redis
         runtime: {
             periods: [],
-            timeleft:0,
+            timeleft:3*3600,
             last_update_from_device:0
         }
     };
@@ -118,8 +118,6 @@ function load_device(device_id, device_name, device_type)
                 
                 schedule.settings.device = device_name;
                 schedule.settings.device_type = device_type;
-                
-                console.log(schedule)
                 
                 // Load SOC
                 if (schedule.settings.device_type=="openevse") {
@@ -203,11 +201,23 @@ function load_device(device_id, device_name, device_type)
         if (js_calc) {
             schedule.runtime.periods = schedule_smart(forecast,schedule.settings.period*3600,schedule.settings.end,schedule.settings.interruptible)
             draw_schedule_output(schedule);
-            console.log(schedule)
 
             $.ajax({ url: emoncmspath+"demandshaper/submit?schedule="+JSON.stringify(schedule)+"&save=0",dataType: 'json', async: true, success: function(result) {
                 if (JSON.stringify(result.schedule.runtime.periods)==JSON.stringify(schedule.runtime.periods)) { console.log(imatch+" MATCH"); imatch++ } else { console.log("MATCH ERROR"); }
             }});
+            
+            last_submit = (new Date()).getTime();
+            setTimeout(function(){
+                if (((new Date()).getTime()-last_submit)>1900) {
+                   console.log("save");
+                   submit_schedule(1);
+
+                   //if (schedule.device_type=="smartplug" || schedule.device_type=="hpmon") {
+                       clearTimeout(get_device_state_timeout)
+                       get_device_state_timeout = setTimeout(function(){ get_device_state(); },1000);
+                   //}
+                }
+            },2000);
             
         } else {
         
@@ -233,11 +243,11 @@ function load_device(device_id, device_name, device_type)
             dataType: 'json',
             async: true,
             success: function(result) {
-                schedule = (result==null || result.schedule==null) ? {} : result.schedule;
-                success = !(result.hasOwnProperty('success') && result.success === false);
-                if (success){
-                    draw_schedule_output(schedule);
-                }
+                //schedule = (result==null || result.schedule==null) ? {} : result.schedule;
+                //success = !(result.hasOwnProperty('success') && result.success === false);
+                //if (success){
+                //    draw_schedule_output(schedule);
+                //}
             }
         });
     }
