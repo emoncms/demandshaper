@@ -208,7 +208,7 @@ function get_forecast($redis,$signal) {
 // -------------------------------------------------------------------------------------------------------
 
 function schedule_smart($forecast,$timeleft,$end,$interruptible)
-{   
+{
     $debug = 0;
     
     $resolution = 1800;
@@ -225,7 +225,7 @@ function schedule_smart($forecast,$timeleft,$end,$interruptible)
     $start_timestamp = $timestamp;
     $date = new DateTime();
     $date->setTimezone(new DateTimeZone("Europe/London"));
-
+    
     $date->setTimestamp($timestamp);
     $h = 1*$date->format('H');
     $m = 1*$date->format('i')/60;

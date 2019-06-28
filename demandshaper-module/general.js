@@ -26,7 +26,10 @@ function load_device(device_id, device_name, device_type)
         $(".heatpumpmonitor").show();
     }
     
+    var forecast = {}
     var profile = {}
+
+    var imatch = 1
 
     // -------------------------------------------------------------------------
     // Defaults
@@ -119,7 +122,17 @@ function load_device(device_id, device_name, device_type)
                     }
                 }
             }
-            calc_schedule();
+            
+            $.ajax({ url: emoncmspath+"demandshaper/forecast?signal="+schedule.signal,
+            dataType: 'json',
+            async: true,
+            success: function(result) {
+                forecast = result;
+                profile = forecast.profile
+                calc_schedule();
+            }});
+            
+
         }});
     }
 
@@ -374,19 +387,33 @@ function load_device(device_id, device_name, device_type)
     // --------------------------------------------------------------------------------------------
     function calc_schedule() {
         draw_schedule();
-        submit_schedule(0);
-        last_submit = (new Date()).getTime();
-        setTimeout(function(){
-            if (((new Date()).getTime()-last_submit)>1900) {
-               console.log("save");
-               submit_schedule(1);
+        
+        let js_calc = true;
+        
+        if (js_calc) {
+            schedule.periods = schedule_smart(forecast,schedule.period*3600,schedule.end,schedule.interruptible)
+            draw_schedule_output(schedule);
 
-               //if (schedule.device_type=="smartplug" || schedule.device_type=="hpmon") {
-                   clearTimeout(get_device_state_timeout)
-                   get_device_state_timeout = setTimeout(function(){ get_device_state(); },1000);
-               //}
-            }
-        },2000);
+            $.ajax({ url: emoncmspath+"demandshaper/submit?schedule="+JSON.stringify(schedule)+"&save=0",dataType: 'json', async: true, success: function(result) {
+                if (JSON.stringify(result.schedule.periods)==JSON.stringify(schedule.periods)) { console.log(imatch+" MATCH"); imatch++ } else { console.log("MATCH ERROR"); }
+            }});
+            
+        } else {
+        
+            submit_schedule(0);
+            last_submit = (new Date()).getTime();
+            setTimeout(function(){
+                if (((new Date()).getTime()-last_submit)>1900) {
+                   console.log("save");
+                   submit_schedule(1);
+
+                   //if (schedule.device_type=="smartplug" || schedule.device_type=="hpmon") {
+                       clearTimeout(get_device_state_timeout)
+                       get_device_state_timeout = setTimeout(function(){ get_device_state(); },1000);
+                   //}
+                }
+            },2000);
+        }  
     }
 
     function submit_schedule(save) {
@@ -403,7 +430,8 @@ function load_device(device_id, device_name, device_type)
                     dataType: 'json',
                     async: true,
                     success: function(result) {
-                        profile = result.profile
+                        forecast = result;
+                        profile = forecast.profile
                         draw_schedule_output(schedule);
                     }});
                     
@@ -564,8 +592,6 @@ function load_device(device_id, device_name, device_type)
         var active = 0;
         available = [];
         unavailable = [];
-        
-        console.log(periods)
         
         for (var z in profile) {
             var time = profile[z][0];
