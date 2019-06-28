@@ -62,16 +62,18 @@ function demandshaper_controller()
                     
                     $schedule = json_decode($_GET['schedule']);
                     
-                    if (!isset($schedule->device)) return array("content"=>"Missing device parameter in schedule object");
-                    if (!isset($schedule->end)) return array("content"=>"Missing end parameter in schedule object");
-                    if (!isset($schedule->period)) return array("content"=>"Missing period parameter in schedule object");
-                    if (!isset($schedule->interruptible)) return array("content"=>"Missing interruptible parameter in schedule object");
-                    if (!isset($schedule->runonce)) return array("content"=>"Missing runonce parameter in schedule object");
-                    if ($schedule->runonce) $schedule->runonce = time();
-                    $device = $schedule->device;
+                    if (!isset($schedule->settings->device)) return array("content"=>"Missing device parameter in schedule object");
+                    if (!isset($schedule->settings->end)) return array("content"=>"Missing end parameter in schedule object");
+                    if (!isset($schedule->settings->period)) return array("content"=>"Missing period parameter in schedule object");
+                    if (!isset($schedule->settings->interruptible)) return array("content"=>"Missing interruptible parameter in schedule object");
+                    if (!isset($schedule->settings->runonce)) return array("content"=>"Missing runonce parameter in schedule object");
+                    if ($schedule->settings->runonce) $schedule->settings->runonce = time();
+                    $device = $schedule->settings->device;
                     
                     $schedules = $demandshaper->get($session["userid"]);
-                    $last_schedule = $schedules->$device;
+                    
+                    $last_schedule = false;
+                    if (isset($schedules->$device)) $last_schedule = $schedules->$device;
 
                     // -------------------------------------------------
                     // Calculate time left
@@ -82,30 +84,29 @@ function demandshaper_controller()
                     $date->setTimestamp($now);
                     $date->modify("midnight");
                     
-                    $end_time = floor($schedule->end / 0.5) * 0.5;
+                    $end_time = floor($schedule->settings->end / 0.5) * 0.5;
                     $end_timestamp = $date->getTimestamp() + $end_time*3600;
                     if ($end_timestamp<$now) $end_timestamp+=3600*24;
                     
-                    if ($schedule->end!=$last_schedule->end || $schedule->period!=$last_schedule->period) {
-                        $schedule->timeleft = $schedule->period * 3600;
+                    if (!$last_schedule || $schedule->settings->end!=$last_schedule->settings->end || $schedule->settings->period!=$last_schedule->settings->period) {
+                        $schedule->runtime->timeleft = $schedule->settings->period * 3600;
                     } else {
-                        $schedule->timeleft = $last_schedule->timeleft;
+                        $schedule->runtime->timeleft = $last_schedule->runtime->timeleft;
                     }
                     
                     $timeleft = $end_timestamp - $now;
-                    if ($schedule->timeleft>$timeleft) $schedule->timeleft = $timeleft;
+                    if ($schedule->runtime->timeleft>$timeleft) $schedule->runtime->timeleft = $timeleft;
                     
-                    if (isset($schedule->probability)) unset($schedule->probability);
-                    if (isset($schedule->profile)) unset($schedule->profile);
-                    // -------------------------------------------------
-                    
-                    if ($schedule->ctrlmode=="smart") {
-                        $forecast = get_forecast($redis,$schedule->signal);
-                        $schedule->periods = schedule_smart($forecast,$schedule->timeleft,$schedule->end,$schedule->interruptible);
+                    if ($schedule->settings->ctrlmode=="smart") {
+                        $forecast = get_forecast($redis,$schedule->settings->signal);
+                        $schedule->runtime->periods = schedule_smart($forecast,$schedule->runtime->timeleft,$schedule->settings->end,$schedule->settings->interruptible);
                         
                     } else if ($schedule->ctrlmode=="timer") {
-                        $forecast = get_forecast($redis,$schedule->signal);
-                        $schedule->periods = schedule_timer($forecast, $schedule->timer_start1,$schedule->timer_stop1,$schedule->timer_start2,$schedule->timer_stop2);
+                        $forecast = get_forecast($redis,$schedule->settings->signal);
+                        $schedule->runtime->periods = schedule_timer(
+                            $forecast, 
+                            $schedule->settings->timer_start1,$schedule->settings->timer_stop1,$schedule->settings->timer_start2,$schedule->settings->timer_stop2
+                        );
                     } 
                     
                     if ($save) {
@@ -129,9 +130,7 @@ function demandshaper_controller()
                     $device = $_GET['device'];
                     if (isset($schedules->$device)) $schedule = $schedules->$device;
                     else {
-                        // Calculate an empty schedule to show in graph view
-                        include "$linked_modules_dir/demandshaper/scheduler.php";
-                        $schedule = schedule($redis,'carbonintensity'.'off', 0,0,0, 0,0,0,0);
+                        $schedule = new stdClass();
                     }
                     return array("schedule"=>$schedule);
                 }
@@ -190,7 +189,7 @@ function demandshaper_controller()
                     include "Modules/demandshaper/MQTTRequest.php";
                     $mqtt_request = new MQTTRequest($mqtt_server);
                     
-                    if ($schedules->$device->device_type=="hpmon" || $schedules->$device->device_type=="smartplug") {
+                    if ($schedules->$device->settings->device_type=="hpmon" || $schedules->$device->settings->device_type=="smartplug") {
                         
                         if ($result = json_decode($mqtt_request->request("emon/$device/in/state","","emon/$device/out/state"))) {
                             $state->ctrl_mode = $result->ctrlmode;
@@ -205,7 +204,7 @@ function demandshaper_controller()
                             return false;
                         }
                             
-                    } else if ($schedules->$device->device_type=="openevse") {
+                    } else if ($schedules->$device->settings->device_type=="openevse") {
                         
                         $valid = true;
                         
