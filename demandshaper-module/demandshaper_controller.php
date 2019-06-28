@@ -85,8 +85,9 @@ function demandshaper_controller()
                     $date->modify("midnight");
                     
                     $end_time = floor($schedule->settings->end / 0.5) * 0.5;
-                    $end_timestamp = $date->getTimestamp() + $end_time*3600;
-                    if ($end_timestamp<$now) $end_timestamp+=3600*24;
+                    $schedule->settings->end_timestamp = $date->getTimestamp() + $end_time*3600;
+                    
+                    if ($schedule->settings->end_timestamp<$now) $schedule->settings->end_timestamp+=3600*24;
                     
                     if (!$last_schedule || $schedule->settings->end!=$last_schedule->settings->end || $schedule->settings->period!=$last_schedule->settings->period) {
                         $schedule->runtime->timeleft = $schedule->settings->period * 3600;
@@ -94,7 +95,7 @@ function demandshaper_controller()
                         $schedule->runtime->timeleft = $last_schedule->runtime->timeleft;
                     }
                     
-                    $timeleft = $end_timestamp - $now;
+                    $timeleft = $schedule->settings->end_timestamp - $now;
                     if ($schedule->runtime->timeleft>$timeleft) $schedule->runtime->timeleft = $timeleft;
                     
                     if ($schedule->settings->ctrlmode=="smart") {
