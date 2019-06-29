@@ -5,6 +5,8 @@
 
 function schedule_smart(forecast,timeleft,end,interruptible)
 {       
+
+    console.log(forecast)
     var MIN = 0
     var MAX = 1
 
@@ -90,12 +92,14 @@ function schedule_smart(forecast,timeleft,end,interruptible)
         let tend = tstart
         
         for (let i=0; i<period*(divisions/24); i++) {
-            profile[pos+i][3] = 1
-            end_hour+=resolution/3600
-            tend+=resolution
-            if (end_hour>=24) end_hour -= 24
-            // dont allow to run past end time
-            if (end_hour==end) break
+            if (profile[pos+i]!=undefined) {
+                profile[pos+i][3] = 1
+                end_hour+=resolution/3600
+                tend+=resolution
+                if (end_hour>=24) end_hour -= 24
+                // dont allow to run past end time
+                if (end_hour==end) break
+            }
         }
         
         let periods = []
