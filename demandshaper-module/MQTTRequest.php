@@ -70,6 +70,8 @@ class MQTTRequest
                 }
                 
                 if ($this->state==3) break;
+                
+                usleep(50000);
             }
             
             if ($this->result->payload) {
