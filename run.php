@@ -279,7 +279,7 @@ while(true)
                     // -----------------------------------------------------------------------
                     if ($now>$schedule->settings->end_timestamp) {
                         $log->info("  SET timeleft to schedule period");
-                        $schedule->runtime->timeleft = $schedule->period * 3600;
+                        $schedule->runtime->timeleft = $schedule->settings->period * 3600;
                         unset($schedule->runtime->started);
                     }
                     
