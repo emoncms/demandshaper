@@ -61,10 +61,10 @@ function load_device(device_id, device_name, device_type)
         }
     };
     var schedule = default_schedule;
-    var forecast = {}
-    var profile = {}
-    var imatch = 1
-    var options = {}
+    var forecast = false;
+    var profile = false;
+    var imatch = 1;
+    var options = {};
     
     update_device();    
     
@@ -142,7 +142,7 @@ function load_device(device_id, device_name, device_type)
         async: true,
         success: function(result) {
             forecast = result;
-            profile = forecast.profile
+            profile = forecast.profile;
             callback();
         }});    
     }
@@ -153,33 +153,35 @@ function load_device(device_id, device_name, device_type)
     // After 1.9s of inactivity the schedule is autosaved.
     // --------------------------------------------------------------------------------------------
     function calc_schedule() {
-        draw_schedule();
-        
-        let js_calc = true;
-        
-        if (js_calc) {
-            schedule.runtime.periods = schedule_smart(forecast,schedule.settings.period*3600,schedule.settings.end,schedule.settings.interruptible)
-            draw_schedule_output(schedule);
-        }
-        
-        /*submit_schedule(0,function(result){
+        if (forecast && forecast.profile!=undefined) {
+            draw_schedule();
+            
+            let js_calc = true;
+            
             if (js_calc) {
-                if (JSON.stringify(result.schedule.runtime.periods)==JSON.stringify(schedule.runtime.periods)) { console.log(imatch+" MATCH"); imatch++ } else { console.log("MATCH ERROR"); }
-            } else {
-                schedule.runtime.periods = result.schedule.runtime.periods
+                schedule.runtime.periods = schedule_smart(forecast,schedule.settings.period*3600,schedule.settings.end,schedule.settings.interruptible)
+                draw_schedule_output(schedule);
             }
-        });*/
-         
-        last_submit = (new Date()).getTime();
-        setTimeout(function(){
-            if (((new Date()).getTime()-last_submit)>1900) {
-                submit_schedule(1,function(result){
-                    console.log("saved");
-                    clearTimeout(get_device_state_timeout)
-                    get_device_state_timeout = setTimeout(function(){ get_device_state(); },1000);
-                });
-            }
-        },2000);
+            
+            /*submit_schedule(0,function(result){
+                if (js_calc) {
+                    if (JSON.stringify(result.schedule.runtime.periods)==JSON.stringify(schedule.runtime.periods)) { console.log(imatch+" MATCH"); imatch++ } else { console.log("MATCH ERROR"); }
+                } else {
+                    schedule.runtime.periods = result.schedule.runtime.periods
+                }
+            });*/
+             
+            last_submit = (new Date()).getTime();
+            setTimeout(function(){
+                if (((new Date()).getTime()-last_submit)>1900) {
+                    submit_schedule(1,function(result){
+                        console.log("saved");
+                        clearTimeout(get_device_state_timeout)
+                        get_device_state_timeout = setTimeout(function(){ get_device_state(); },1000);
+                    });
+                }
+            },2000);
+        }
     }
 
     function submit_schedule(save,submit_callback) {
