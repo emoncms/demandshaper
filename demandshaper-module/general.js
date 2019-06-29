@@ -146,50 +146,7 @@ function load_device(device_id, device_name, device_type)
             callback();
         }});    
     }
-    
-    // --------------------------------------------------------------------------------------------
-    // Populates UI with schedule params        
-    // --------------------------------------------------------------------------------------------
-    function draw_schedule() {
-        $("#mode button[mode="+schedule.settings.ctrlmode+"]").addClass('active').siblings().removeClass('active');
-        if (schedule.settings.ctrlmode=="timer") { $(".smart").hide(); $(".timer").show(); $(".repeat").show(); }
-        if (schedule.settings.ctrlmode=="smart") { $(".smart").show(); $(".timer").hide(); $(".repeat").show(); }
-        if (schedule.settings.ctrlmode=="on") { $(".smart").hide(); $(".timer").hide(); $(".repeat").hide(); }
-        if (schedule.settings.ctrlmode=="off") { $(".smart").hide(); $(".timer").hide(); $(".repeat").hide(); }
         
-        // var elapsed = Math.round((new Date()).getTime()*0.001 - schedule.settings.last_update_from_device);
-        // $("#last_update_from_device").html(elapsed+"s ago");
-        if (schedule.settings.ip!="") $("#ip_address").html("IP Address: <a href='http://"+schedule.settings.ip+"'>"+schedule.settings.ip+"</a>");
-        
-        $("#period input[type=time]").val(timestr(schedule.settings.period,false));
-        $("#end input[type=time]").val(timestr(schedule.settings.end,false));
-
-        $("#timer_start1 input[type=time]").val(timestr(schedule.settings.timer_start1,false));
-        $("#timer_stop1 input[type=time]").val(timestr(schedule.settings.timer_stop1,false));
-        $("#timer_start2 input[type=time]").val(timestr(schedule.settings.timer_start2,false));
-        $("#timer_stop2 input[type=time]").val(timestr(schedule.settings.timer_stop2,false));
-
-        if (schedule.settings.flowT!=undefined) {
-            $("#flowT input[type=text]").val(schedule.settings.flowT.toFixed(1)+"C");
-        }
-        
-        for (var i=0; i<7; i++) {
-            $(".weekly-scheduler[day="+i+"]").attr("val",schedule.settings.repeat[i]);
-        }
-        
-        $(".scheduler-checkbox[name='interruptible']").attr("state",schedule.settings.interruptible);
-        
-        $(".scheduler-select[name='signal']").val(schedule.settings.signal);
-                    
-        if (schedule.settings.device_type=="openevse") {   
-            $(".input[name=batterycapacity").val(schedule.settings.batterycapacity);
-            $(".input[name=chargerate").val(schedule.settings.chargerate);
-            $(".input[name=vehicleid").val(schedule.settings.ovms_vehicleid);
-            $(".input[name=carpass").val(schedule.settings.ovms_carpass);
-            battery.draw();
-        }
-    }
-    
     // --------------------------------------------------------------------------------------------
     // Submits schedule for calculation
     // The schedule is submited without saving to start with assuming user is still changing schedule
@@ -239,72 +196,51 @@ function load_device(device_id, device_name, device_type)
     }
 
     // --------------------------------------------------------------------------------------------
-    // Fetches the device state via http request
-    // used to provide user feedback to confirm that schedule has been transfered to device
-    // --------------------------------------------------------------------------------------------   
-    function get_device_state() {
-        $.ajax({ url: emoncmspath+"demandshaper/get-state?device="+device_name+apikeystr,
-            dataType: 'json',
-            async: true,
-            success: function(result) {
-            
-                if (result==false) {
-                    console.log("Unresponsive");
-                    $("#device-state-message").html("Unresponsive");
-                    $(".node-scheduler-title").css("background-color","#bbb");
-                    $(".node-scheduler").css("background-color","#bbb");
+    // Populates UI with schedule params        
+    // --------------------------------------------------------------------------------------------
+    function draw_schedule() {
+        $("#mode button[mode="+schedule.settings.ctrlmode+"]").addClass('active').siblings().removeClass('active');
+        if (schedule.settings.ctrlmode=="timer") { $(".smart").hide(); $(".timer").show(); $(".repeat").show(); }
+        if (schedule.settings.ctrlmode=="smart") { $(".smart").show(); $(".timer").hide(); $(".repeat").show(); }
+        if (schedule.settings.ctrlmode=="on") { $(".smart").hide(); $(".timer").hide(); $(".repeat").hide(); }
+        if (schedule.settings.ctrlmode=="off") { $(".smart").hide(); $(".timer").hide(); $(".repeat").hide(); }
+        
+        // var elapsed = Math.round((new Date()).getTime()*0.001 - schedule.settings.last_update_from_device);
+        // $("#last_update_from_device").html(elapsed+"s ago");
+        if (schedule.settings.ip!="") $("#ip_address").html("IP Address: <a href='http://"+schedule.settings.ip+"'>"+schedule.settings.ip+"</a>");
+        
+        $("#period input[type=time]").val(timestr(schedule.settings.period,false));
+        $("#end input[type=time]").val(timestr(schedule.settings.end,false));
+
+        $("#timer_start1 input[type=time]").val(timestr(schedule.settings.timer_start1,false));
+        $("#timer_stop1 input[type=time]").val(timestr(schedule.settings.timer_stop1,false));
+        $("#timer_start2 input[type=time]").val(timestr(schedule.settings.timer_start2,false));
+        $("#timer_stop2 input[type=time]").val(timestr(schedule.settings.timer_stop2,false));
+
+        if (schedule.settings.flowT!=undefined) {
+            $("#flowT input[type=text]").val(schedule.settings.flowT.toFixed(1)+"C");
+        }
+        
+        for (var i=0; i<7; i++) {
+            $(".weekly-scheduler[day="+i+"]").attr("val",schedule.settings.repeat[i]);
+        }
+        
+        $(".scheduler-checkbox[name='interruptible']").attr("state",schedule.settings.interruptible);
+        
+        $(".scheduler-select[name='signal']").val(schedule.settings.signal);
                     
-                    clearTimeout(get_device_state_timeout)
-                    get_device_state_timeout = setTimeout(function(){ get_device_state(); },5000);
-                } else {
-                    state_matched = true;
-                    
-                    device_ctrl_mode = result.ctrl_mode.toLowerCase();
-                    if (schedule.settings.ctrlmode!=device_ctrl_mode) state_matched = false;
-                    if (schedule.settings.ctrlmode=="smart" && device_ctrl_mode=="timer") state_matched = true;
-                    if (!state_matched) console.log(schedule.settings.ctrlmode+"!="+device_ctrl_mode)
-                    
-                    if (schedule.runtime.periods==undefined) schedule.runtime.periods = []
-                    
-                    if (schedule.runtime.periods.length>0) {
-                        if (schedule.runtime.periods[0].start[1] != result.timer_start1) { 
-                            state_matched = false; 
-                            console.log(schedule.runtime.periods[0].start[1]+"!="+result.timer_start1); 
-                        }
-                        if (schedule.runtime.periods[0].end[1] != result.timer_stop1) { 
-                            state_matched = false; 
-                            console.log(schedule.runtime.periods[0].end[1]+"!="+result.timer_stop1); 
-                        }
-                    }
-                    //if (schedule.settings.timer_start2 != result.timer_start2) { state_matched = false; console.log(schedule.settings.timer_start2+"!="+result.timer_start2); }
-                    //if (schedule.settings.timer_stop2 != result.timer_stop2) { state_matched = false; console.log(schedule.settings.timer_stop2+"!="+result.timer_stop2); }
-                    
-                    if (schedule.settings.device_type=="hpmon") {
-                        schedule_voltage_output = Math.round((schedule.settings.flowT - 7.14)/0.0371);
-                        if (schedule_voltage_output != result.voltage_output) state_matched = false;
-                    }
-                    
-                    if (state_matched) {
-                        console.log("State matched");
-                        $("#device-state-message").html("Saved");
-                        setTimeout(function(){
-                            $("#device-state-message").html("");
-                        },2000);
-                        $(".node-scheduler-title").css("background-color","#ea510e");
-                        $(".node-scheduler").css("background-color","#ea510e");
-                    } else {
-                        console.log("Settings Mismatch");
-                        $(".node-scheduler-title").css("background-color","#bbb");
-                        $(".node-scheduler").css("background-color","#bbb");
-                        $("#device-state-message").html("Settings Mismatch");
-                        clearTimeout(get_device_state_timeout)
-                        get_device_state_timeout = setTimeout(function(){ get_device_state(); },5000);
-                    }
-                }
-            }
-        });        
+        if (schedule.settings.device_type=="openevse") {   
+            $(".input[name=batterycapacity").val(schedule.settings.batterycapacity);
+            $(".input[name=chargerate").val(schedule.settings.chargerate);
+            $(".input[name=vehicleid").val(schedule.settings.ovms_vehicleid);
+            $(".input[name=carpass").val(schedule.settings.ovms_carpass);
+            battery.draw();
+        }
     }
 
+    // --------------------------------------------------------------------------------------------
+    // Draw scheduler graph and period info 
+    // --------------------------------------------------------------------------------------------    
     function draw_schedule_output(schedule)
     {  
         options = {
@@ -333,13 +269,15 @@ function load_device(device_id, device_name, device_type)
         // --------------------------------------------------------------------------------------------
         // Schedule summaries
         // --------------------------------------------------------------------------------------------
+        var date = new Date();
+            
         if (schedule.runtime.periods==undefined) schedule.runtime.periods = []
         
+        /*
         if (schedule.runtime.periods && schedule.runtime.periods.length) {
-            var now = new Date();
-            var now_hours = (now.getHours() + (now.getMinutes()/60));
-            var period_start = (schedule.runtime.periods[0].start[1]);
             
+            var now_hours = (date.getHours() + (date.getMinutes()/60));
+            var period_start = (schedule.runtime.periods[0].start[1]);
             var startsin = 0;
             if (now_hours>period_start) {
                startsin = (24 - now_hours) + period_start
@@ -354,12 +292,21 @@ function load_device(device_id, device_name, device_type)
             if (hour>=23 && mins>=30) text = "On";
             //if (controls["active"].value==0) text = "Off"; 
             $(".startsin").html(text);
-        }
+        }*/
         
         // Output schedule periods
         var periods = [];
         for (var z in schedule.runtime.periods) {
-            periods.push(timestr(1*schedule.runtime.periods[z].start[1],true)+" to "+timestr(1*schedule.runtime.periods[z].end[1],true));
+        
+            date = (new Date(schedule.runtime.periods[z].start[0]*1000));
+            let h1 = date.getHours();
+            let m1 = date.getMinutes()/60;
+
+            date = (new Date(schedule.runtime.periods[z].end[0]*1000));
+            let h2 = date.getHours();
+            let m2 = date.getMinutes()/60;
+                    
+            periods.push(timestr(h1+m1,true)+" to "+timestr(h2+m2,true));
         }
         var out = ""; 
         if (periods.length) {
@@ -370,10 +317,10 @@ function load_device(device_id, device_name, device_type)
 
         if (out=="") {
             $("#schedule-output").hide();
-             $("#timeleft").hide();
+            $("#timeleft").hide();
         } else {
             $("#schedule-output").show();
-             $("#timeleft").show();
+            $("#timeleft").show();
         }
         
         // --------------------------------------------------------------------------------------------
@@ -383,15 +330,20 @@ function load_device(device_id, device_name, device_type)
         
         var interval = 1800;
         interval = (profile[1][0]-profile[0][0])*0.001;
+
+        // Calculate end timestamp
+        let end_hour = Math.floor(schedule.settings.end);
+        let end_minutes = (schedule.settings.end - end_hour)*60;
         
-        var hh = 0;
-        for (var z in profile) {
-            if (1*profile[z][2]==schedule.settings.end) hh = z;
-        }
+        date = new Date();
+        now = date.getTime();
+        date.setHours(end_hour,end_minutes,0,0);
+        let end_timestamp = date.getTime();
+        if (end_timestamp<now) end_timestamp+=3600*24*1000
 
         // Shade out time after end of schedule
         var markings = [];
-        if (hh>0 && periods.length) markings.push({ color: "rgba(0,0,0,0.1)", xaxis: { from: profile[hh][0] } });
+        if (periods.length) markings.push({ color: "rgba(0,0,0,0.1)", xaxis: { from: end_timestamp } });
         options.grid.markings = markings;
         
         // Show bars if interval is 1800s
@@ -475,6 +427,73 @@ function load_device(device_id, device_name, device_type)
             $("#placeholder").width(width);
             $.plot($('#placeholder'), [{data:available,color:"#ea510e",fill:1.0},{data:unavailable,color:"#888"}], options);
         }
+    }
+
+    // --------------------------------------------------------------------------------------------
+    // Fetches the device state via http request
+    // used to provide user feedback to confirm that schedule has been transfered to device
+    // --------------------------------------------------------------------------------------------   
+    function get_device_state() {
+        $.ajax({ url: emoncmspath+"demandshaper/get-state?device="+device_name+apikeystr,
+            dataType: 'json',
+            async: true,
+            success: function(result) {
+            
+                if (result==false) {
+                    console.log("Unresponsive");
+                    $("#device-state-message").html("Unresponsive");
+                    $(".node-scheduler-title").css("background-color","#bbb");
+                    $(".node-scheduler").css("background-color","#bbb");
+                    
+                    clearTimeout(get_device_state_timeout)
+                    get_device_state_timeout = setTimeout(function(){ get_device_state(); },5000);
+                } else {
+                    state_matched = true;
+                    
+                    device_ctrl_mode = result.ctrl_mode.toLowerCase();
+                    if (schedule.settings.ctrlmode!=device_ctrl_mode) state_matched = false;
+                    if (schedule.settings.ctrlmode=="smart" && device_ctrl_mode=="timer") state_matched = true;
+                    if (!state_matched) console.log(schedule.settings.ctrlmode+"!="+device_ctrl_mode)
+                    
+                    if (schedule.runtime.periods==undefined) schedule.runtime.periods = []
+                    
+                    if (schedule.runtime.periods.length>0) {
+                        if (schedule.runtime.periods[0].start[1] != result.timer_start1) { 
+                            state_matched = false; 
+                            console.log(schedule.runtime.periods[0].start[1]+"!="+result.timer_start1); 
+                        }
+                        if (schedule.runtime.periods[0].end[1] != result.timer_stop1) { 
+                            state_matched = false; 
+                            console.log(schedule.runtime.periods[0].end[1]+"!="+result.timer_stop1); 
+                        }
+                    }
+                    //if (schedule.settings.timer_start2 != result.timer_start2) { state_matched = false; console.log(schedule.settings.timer_start2+"!="+result.timer_start2); }
+                    //if (schedule.settings.timer_stop2 != result.timer_stop2) { state_matched = false; console.log(schedule.settings.timer_stop2+"!="+result.timer_stop2); }
+                    
+                    if (schedule.settings.device_type=="hpmon") {
+                        schedule_voltage_output = Math.round((schedule.settings.flowT - 7.14)/0.0371);
+                        if (schedule_voltage_output != result.voltage_output) state_matched = false;
+                    }
+                    
+                    if (state_matched) {
+                        console.log("State matched");
+                        $("#device-state-message").html("Saved");
+                        setTimeout(function(){
+                            $("#device-state-message").html("");
+                        },2000);
+                        $(".node-scheduler-title").css("background-color","#ea510e");
+                        $(".node-scheduler").css("background-color","#ea510e");
+                    } else {
+                        console.log("Settings Mismatch");
+                        $(".node-scheduler-title").css("background-color","#bbb");
+                        $(".node-scheduler").css("background-color","#bbb");
+                        $("#device-state-message").html("Settings Mismatch");
+                        clearTimeout(get_device_state_timeout)
+                        get_device_state_timeout = setTimeout(function(){ get_device_state(); },5000);
+                    }
+                }
+            }
+        });        
     }
 
     // -------------------------------------------------------------------------
