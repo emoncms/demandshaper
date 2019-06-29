@@ -17,7 +17,7 @@ defined('EMONCMS_EXEC') or die('Restricted access');
 
 function demandshaper_controller()
 {
-    global $mysqli, $redis, $session, $route, $mqtt_server, $linked_modules_dir;
+    global $mysqli, $redis, $session, $route, $mqtt_server, $linked_modules_dir, $user;
     $result = false;
 
     $route->format = "json";
@@ -30,13 +30,14 @@ function demandshaper_controller()
     
     require_once "Modules/device/device_model.php";
     $device = new Device($mysqli,$redis);
-    
+        
     switch ($route->action)
     {  
         case "":
             $route->format = "html";
             if ($session["write"]) {
-                return view("Modules/demandshaper/view.php", array("remoteaccess"=>$remoteaccess));
+                $apikey = $user->get_apikey_write($session["userid"]);
+                return view("Modules/demandshaper/view.php", array("remoteaccess"=>$remoteaccess, "apikey"=>$apikey));
             } else {
                 // redirect to login
                 return "";
@@ -54,13 +55,13 @@ function demandshaper_controller()
             if (!$remoteaccess && $session["write"]) {
                 $route->format = "json";
                 
-                if (isset($_GET['schedule'])) {
+                if (isset($_POST['schedule'])) {
                     include "$linked_modules_dir/demandshaper/scheduler.php";
                     
                     $save = 1;
                     if (isset($_GET['save']) && $_GET['save']==0) $save = 0;
                     
-                    $schedule = json_decode($_GET['schedule']);
+                    $schedule = json_decode($_POST['schedule']);
                     
                     if (!isset($schedule->settings->device)) return array("content"=>"Missing device parameter in schedule object");
                     if (!isset($schedule->settings->end)) return array("content"=>"Missing end parameter in schedule object");
@@ -212,10 +213,14 @@ function demandshaper_controller()
                         // Get OpenEVSE timer state
                         if ($result = $mqtt_request->request("emon/$device/rapi/in/\$GD","","emon/$device/rapi/out")) {
                             $ret = explode(" ",substr($result,4,11));
-                            $state->timer_start1 = $ret[0]+($ret[1]/60);
-                            $state->timer_stop1 = $ret[2]+($ret[3]/60);
-                            $state->timer_start2 = 0;
-                            $state->timer_stop2 = 0;
+                            if (count($ret)==4) {
+                                $state->timer_start1 = $ret[0]+($ret[1]/60);
+                                $state->timer_stop1 = $ret[2]+($ret[3]/60);
+                                $state->timer_start2 = 0;
+                                $state->timer_stop2 = 0;
+                            } else {
+                                $valid = false;
+                            }
                         } else {
                             $valid = false;
                         }

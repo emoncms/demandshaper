@@ -67,10 +67,12 @@ class DemandShaper
         
         if (json_encode($schedules_to_disk)!=json_encode($last_schedules_to_disk)) {
         
+            $schedules_to_disk = json_encode($schedules_to_disk);
+        
             $result = $this->mysqli->query("SELECT `userid` FROM demandshaper WHERE `userid`='$userid'");
             if ($result->num_rows) {
                 $stmt = $this->mysqli->prepare("UPDATE demandshaper SET `schedules`=? WHERE `userid`=?");
-                $stmt->bind_param("si",json_encode($schedules_to_disk),$userid);
+                $stmt->bind_param("si",$schedules_to_disk,$userid);
                 if (!$stmt->execute()) {
                     return array('success'=>false, 'message'=>"Error saving demandshaper settings");
                 }
@@ -79,7 +81,7 @@ class DemandShaper
                 
             } else {
                 $stmt = $this->mysqli->prepare("INSERT INTO demandshaper (`userid`,`schedules`) VALUES (?,?)");
-                $stmt->bind_param("is", $userid,json_encode($schedules_to_disk));
+                $stmt->bind_param("is", $userid,$schedules_to_disk);
                 if (!$stmt->execute()) {
                     return array('success'=>false, 'message'=>"Error saving demandshaper settings");
                 }

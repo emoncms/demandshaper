@@ -29,10 +29,8 @@ var emoncmspath = "<?php echo $emoncmspath; ?>";
 var device_name = "<?php echo $device; ?>";
 var devices = {};
 
-var apikeystr = "";
-if (window.session!=undefined) {
-    apikeystr = "&apikey="+session["apikey_write"];
-}
+var apikeystr = "&apikey=<?php echo $apikey; ?>";
+
 </script>
 <style>
     #icon-list svg {
@@ -102,7 +100,7 @@ if (window.session!=undefined) {
   update_sidebar();
   setInterval(update_sidebar,10000);
   function update_sidebar() {
-      $.ajax({ url: emoncmspath+"demandshaper/list", dataType: 'json', async: true, success: function(result) {
+      $.ajax({ url: emoncmspath+"demandshaper/list"+apikeystr, dataType: 'json', async: true, success: function(result) {
           devices = result;
           
           // Build menu
@@ -142,7 +140,7 @@ var emoncmspath = "<?php echo $emoncmspath; ?>";
 // -------------------------------------------------------------------------------------------------------
 var auth_check_interval = false;
 function auth_check(){
-    $.ajax({ url: emoncmspath+"device/authcheck.json", dataType: 'json', async: true, success: function(data) {
+    $.ajax({ url: emoncmspath+"device/authcheck.json"+apikeystr, dataType: 'json', async: true, success: function(data) {
         if (typeof data.ip !== "undefined") {
             $("#auth-check-ip").html(data.ip);
             $("#auth-check").show();
@@ -158,7 +156,7 @@ function auth_check(){
 
 $(".auth-check-allow").click(function(){
     var ip = $("#auth-check-ip").html();
-    $.ajax({ url: emoncmspath+"device/authallow.json?ip="+ip, dataType: 'json', async: true, success: function(data) {
+    $.ajax({ url: emoncmspath+"device/authallow.json?ip="+ip+apikeystr, dataType: 'json', async: true, success: function(data) {
         $("#auth-check").hide();
         $("#no-devices-found-checking").html("Please wait for device to connect");
     }});

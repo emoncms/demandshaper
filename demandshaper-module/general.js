@@ -66,7 +66,6 @@ function load_device(device_id, device_name, device_type)
     var imatch = 1
     var options = {}
     
-    
     update_device();    
     
     if (schedule.settings.device_type=="openevse" || schedule.settings.device_type=="hpmon") {
@@ -124,7 +123,7 @@ function load_device(device_id, device_name, device_type)
                     battery.capacity = schedule.settings.batterycapacity;
                     battery.charge_rate = schedule.settings.chargerate;
                     if (schedule.settings.ovms_vehicleid!='' && schedule.settings.ovms_carpass!='') {
-                        $.ajax({ url: emoncmspath+"demandshaper/ovms?vehicleid="+schedule.settings.ovms_vehicleid+"&carpass="+schedule.settings.ovms_carpass, dataType: 'json', async: true, success: function(result) {
+                        $.ajax({ url: emoncmspath+"demandshaper/ovms?vehicleid="+schedule.settings.ovms_vehicleid+"&carpass="+schedule.settings.ovms_carpass+apikeystr, dataType: 'json', async: true, success: function(result) {
                             schedule.settings.ev_soc = result.soc*0.01;
                             battery.soc = schedule.settings.ev_soc;
                             battery.draw();
@@ -138,7 +137,7 @@ function load_device(device_id, device_name, device_type)
     }
     
     function get_forecast(signal,callback) {
-        $.ajax({ url: emoncmspath+"demandshaper/forecast?signal="+signal,
+        $.ajax({ url: emoncmspath+"demandshaper/forecast?signal="+signal+apikeystr,
         dataType: 'json',
         async: true,
         success: function(result) {
@@ -204,53 +203,37 @@ function load_device(device_id, device_name, device_type)
         if (js_calc) {
             schedule.runtime.periods = schedule_smart(forecast,schedule.settings.period*3600,schedule.settings.end,schedule.settings.interruptible)
             draw_schedule_output(schedule);
-
-            $.ajax({ url: emoncmspath+"demandshaper/submit?schedule="+JSON.stringify(schedule)+"&save=0",dataType: 'json', async: true, success: function(result) {
-                if (JSON.stringify(result.schedule.runtime.periods)==JSON.stringify(schedule.runtime.periods)) { console.log(imatch+" MATCH"); imatch++ } else { console.log("MATCH ERROR"); }
-            }});
-            
-            last_submit = (new Date()).getTime();
-            setTimeout(function(){
-                if (((new Date()).getTime()-last_submit)>1900) {
-                   console.log("save");
-                   submit_schedule(1);
-
-                   //if (schedule.device_type=="smartplug" || schedule.device_type=="hpmon") {
-                       clearTimeout(get_device_state_timeout)
-                       get_device_state_timeout = setTimeout(function(){ get_device_state(); },1000);
-                   //}
-                }
-            },2000);
-            
-        } else {
+        }
         
-            submit_schedule(0);
-            last_submit = (new Date()).getTime();
-            setTimeout(function(){
-                if (((new Date()).getTime()-last_submit)>1900) {
-                   console.log("save");
-                   submit_schedule(1);
-
-                   //if (schedule.device_type=="smartplug" || schedule.device_type=="hpmon") {
-                       clearTimeout(get_device_state_timeout)
-                       get_device_state_timeout = setTimeout(function(){ get_device_state(); },1000);
-                   //}
-                }
-            },2000);
-        }  
+        /*submit_schedule(0,function(result){
+            if (js_calc) {
+                if (JSON.stringify(result.schedule.runtime.periods)==JSON.stringify(schedule.runtime.periods)) { console.log(imatch+" MATCH"); imatch++ } else { console.log("MATCH ERROR"); }
+            } else {
+                schedule.runtime.periods = result.schedule.runtime.periods
+            }
+        });*/
+         
+        last_submit = (new Date()).getTime();
+        setTimeout(function(){
+            if (((new Date()).getTime()-last_submit)>1900) {
+                submit_schedule(1,function(result){
+                    console.log("saved");
+                    clearTimeout(get_device_state_timeout)
+                    get_device_state_timeout = setTimeout(function(){ get_device_state(); },1000);
+                });
+            }
+        },2000);
     }
 
-    function submit_schedule(save) {
-
-        $.ajax({ url: emoncmspath+"demandshaper/submit?schedule="+JSON.stringify(schedule)+"&save="+save+apikeystr,
+    function submit_schedule(save,submit_callback) {
+        $.ajax({ 
+            method: 'POST',
+            url: emoncmspath+"demandshaper/submit",
+            data: "schedule="+JSON.stringify(schedule)+"&save="+save+apikeystr,
             dataType: 'json',
             async: true,
             success: function(result) {
-                //schedule = (result==null || result.schedule==null) ? {} : result.schedule;
-                //success = !(result.hasOwnProperty('success') && result.success === false);
-                //if (success){
-                //    draw_schedule_output(schedule);
-                //}
+                submit_callback(result);
             }
         });
     }
@@ -260,7 +243,7 @@ function load_device(device_id, device_name, device_type)
     // used to provide user feedback to confirm that schedule has been transfered to device
     // --------------------------------------------------------------------------------------------   
     function get_device_state() {
-        $.ajax({ url: emoncmspath+"demandshaper/get-state?device="+device_name,
+        $.ajax({ url: emoncmspath+"demandshaper/get-state?device="+device_name+apikeystr,
             dataType: 'json',
             async: true,
             success: function(result) {
@@ -274,8 +257,6 @@ function load_device(device_id, device_name, device_type)
                     clearTimeout(get_device_state_timeout)
                     get_device_state_timeout = setTimeout(function(){ get_device_state(); },5000);
                 } else {
-                    //console.log(schedule)
-                    //console.log(result)
                     state_matched = true;
                     
                     device_ctrl_mode = result.ctrl_mode.toLowerCase();
@@ -689,11 +670,11 @@ function load_device(device_id, device_name, device_type)
         schedule.settings.ctrlmode = "off";
         calc_schedule();
         // 1. Delete demandshaper schedule entry
-        $.ajax({ url: path+"demandshaper/delete?device="+schedule.settings.device, async: true, success: function(data) {
+        $.ajax({ url: path+"demandshaper/delete?device="+schedule.settings.device+apikeystr, async: true, success: function(data) {
             // 2. Delete device
-            $.ajax({ url: path+"device/delete.json", data: "id="+device_id, async: true, success: function(data) {
+            $.ajax({ url: path+"device/delete.json", data: "id="+device_id+apikeystr, async: true, success: function(data) {
                 // 3. Delete device inputs
-                $.ajax({ url: path+"input/list.json", async: true, success: function(data) {
+                $.ajax({ url: path+"input/list.json"+apikeystr, async: true, success: function(data) {
                     // get list of device inputs
                     var device_inputs = [];
                     for (var z in data) {
@@ -703,7 +684,7 @@ function load_device(device_id, device_name, device_type)
                     }
                     console.log("Deleting inputs:");
                     console.log(device_inputs);
-                    $.ajax({ url: path+"input/delete.json", data: "inputids="+JSON.stringify(device_inputs), async: true, success: function(data){
+                    $.ajax({ url: path+"input/delete.json"+apikeystr, data: "inputids="+JSON.stringify(device_inputs), async: true, success: function(data){
                         location.href = emoncmspath+"demandshaper";
                     }});
                 }});
