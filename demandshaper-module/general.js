@@ -133,16 +133,19 @@ function load_device(device_id, device_name, device_type)
                 }
             }
             
-            $.ajax({ url: emoncmspath+"demandshaper/forecast?signal="+schedule.settings.signal,
-            dataType: 'json',
-            async: true,
-            success: function(result) {
-                forecast = result;
-                profile = forecast.profile
-                
-                calc_schedule();
-            }});
+            get_forecast(schedule.settings.signal,calc_schedule);
         }});
+    }
+    
+    function get_forecast(signal,callback) {
+        $.ajax({ url: emoncmspath+"demandshaper/forecast?signal="+signal,
+        dataType: 'json',
+        async: true,
+        success: function(result) {
+            forecast = result;
+            profile = forecast.profile
+            callback();
+        }});    
     }
     
     // --------------------------------------------------------------------------------------------
@@ -639,7 +642,12 @@ function load_device(device_id, device_name, device_type)
     $(".scheduler-select").change(function(){
         var name = $(this).attr('name');
         schedule.settings[name] = $(this).val();
-        calc_schedule();
+        
+        if (name=="signal") {
+            get_forecast(schedule.settings.signal,calc_schedule);
+        } else {
+            calc_schedule();
+        }
     });
 
     $(".delete-device").click(function(){

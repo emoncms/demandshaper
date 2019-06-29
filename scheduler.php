@@ -28,7 +28,7 @@ function get_forecast($redis,$signal) {
     $now = time();
     $timestamp = floor($now/$resolution)*$resolution;
     $start_timestamp = $timestamp;
-
+    
     // -----------------------------------------------------------------------------   
     $profile = array();
     $available = 1;
@@ -46,6 +46,7 @@ function get_forecast($redis,$signal) {
         
             $datetimestr = $result->data[0]->from;
             $date = new DateTime($datetimestr);
+            $date->setTimezone(new DateTimeZone("Europe/London"));
             $start = $date->getTimestamp();
             
             $datetimestr = $result->data[count($result->data)-1]->from;
@@ -102,6 +103,7 @@ function get_forecast($redis,$signal) {
             $octopus = array();
             foreach ($result->results as $row) {
                 $date = new DateTime($row->valid_from);
+                $date->setTimezone(new DateTimeZone("Europe/London"));
                 $octopus[$date->getTimestamp()] = $row->value_inc_vat;
             }
             
@@ -136,7 +138,10 @@ function get_forecast($redis,$signal) {
         
         // Validate demand shaper
         if  ($result!=null && isset($result->DATA)) {
-       
+            
+            $date = new DateTime();
+            $date->setTimezone(new DateTimeZone("Europe/London"));
+            
             $EL_signal = $result->DATA[0];
             array_shift($EL_signal);
             $len = count($EL_signal);
@@ -172,6 +177,10 @@ function get_forecast($redis,$signal) {
     // Economy 7 
     // ----------------------------------------------------------------------------- 
     } else if ($signal=="economy7") {
+    
+        $date = new DateTime();
+        $date->setTimezone(new DateTimeZone("Europe/London"));
+        
         $optimise = MIN;
         for ($i=0; $i<$divisions; $i++) {
 
