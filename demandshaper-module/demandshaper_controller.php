@@ -55,14 +55,16 @@ function demandshaper_controller()
             if (!$remoteaccess && $session["write"]) {
                 $route->format = "json";
                 
-                if (isset($_POST['schedule'])) {
+                if (isset($_POST['schedule']) || isset($_GET['schedule'])) {
                     include "$linked_modules_dir/demandshaper/scheduler.php";
                     
                     $save = 1;
                     if (isset($_GET['save']) && $_GET['save']==0) $save = 0;
+                    if (isset($_POST['save']) && $_POST['save']==0) $save = 0;
+                                    
+                    $schedule = json_decode(prop('schedule'));
                     
-                    $schedule = json_decode($_POST['schedule']);
-                    
+                    if (!isset($schedule->settings->ctrlmode)) return array("content"=>"Missing ctrlmode parameter in schedule object");
                     if (!isset($schedule->settings->device)) return array("content"=>"Missing device parameter in schedule object");
                     if (!isset($schedule->settings->end)) return array("content"=>"Missing end parameter in schedule object");
                     if (!isset($schedule->settings->period)) return array("content"=>"Missing period parameter in schedule object");
@@ -103,7 +105,7 @@ function demandshaper_controller()
                         $forecast = get_forecast($redis,$schedule->settings->signal);
                         $schedule->runtime->periods = schedule_smart($forecast,$schedule->runtime->timeleft,$schedule->settings->end,$schedule->settings->interruptible);
                         
-                    } else if ($schedule->ctrlmode=="timer") {
+                    } else if ($schedule->settings->ctrlmode=="timer") {
                         $forecast = get_forecast($redis,$schedule->settings->signal);
                         $schedule->runtime->periods = schedule_timer(
                             $forecast, 
