@@ -76,7 +76,7 @@ class DemandShaper
                 if (!$stmt->execute()) {
                     return array('success'=>false, 'message'=>"Error saving demandshaper settings");
                 }
-                $this->log->info("Saved to disk");
+                $this->log->error("Saved to disk");
                 return array('success'=>true, 'message'=>"Saved to disk");
                 
             } else {
@@ -85,7 +85,7 @@ class DemandShaper
                 if (!$stmt->execute()) {
                     return array('success'=>false, 'message'=>"Error saving demandshaper settings");
                 }
-                $this->log->info("Saved to disk");
+                $this->log->error("Saved to disk");
                 return array('success'=>true, 'message'=>"Saved to disk");
             }
         }

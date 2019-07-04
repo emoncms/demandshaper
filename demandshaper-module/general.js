@@ -459,14 +459,16 @@ function load_device(device_id, device_name, device_type)
                     
                     if (schedule.runtime.periods==undefined) schedule.runtime.periods = []
                     
-                    if (schedule.runtime.periods.length>0) {
-                        if (schedule.runtime.periods[0].start[1] != result.timer_start1) { 
-                            state_matched = false; 
-                            console.log(schedule.runtime.periods[0].start[1]+"!="+result.timer_start1); 
-                        }
-                        if (schedule.runtime.periods[0].end[1] != result.timer_stop1) { 
-                            state_matched = false; 
-                            console.log(schedule.runtime.periods[0].end[1]+"!="+result.timer_stop1); 
+                    if (schedule.settings.ctrlmode=="smart" || schedule.settings.ctrlmode=="timer") {
+                        if (schedule.runtime.periods.length>0) {
+                            if (schedule.runtime.periods[0].start[1] != result.timer_start1) { 
+                                state_matched = false; 
+                                console.log(schedule.runtime.periods[0].start[1]+"!="+result.timer_start1); 
+                            }
+                            if (schedule.runtime.periods[0].end[1] != result.timer_stop1) { 
+                                state_matched = false; 
+                                console.log(schedule.runtime.periods[0].end[1]+"!="+result.timer_stop1); 
+                            }
                         }
                     }
                     //if (schedule.settings.timer_start2 != result.timer_start2) { state_matched = false; console.log(schedule.settings.timer_start2+"!="+result.timer_start2); }
