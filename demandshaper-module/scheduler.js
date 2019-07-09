@@ -68,6 +68,8 @@ function schedule_smart(forecast,timeleft,end,interruptible)
                  if (profile[td+i]!=undefined) {
                      if (profile[td+i][0]*0.001>=end_timestamp) valid_block = 0
                      sum += profile[td+i][1]
+                 } else {
+                     valid_block = 0
                  }
              }
              
@@ -98,7 +100,7 @@ function schedule_smart(forecast,timeleft,end,interruptible)
                 tend+=resolution
                 if (end_hour>=24) end_hour -= 24
                 // dont allow to run past end time
-                if (end_hour==end) break
+                if (tend==end_timestamp) break
             }
         }
         

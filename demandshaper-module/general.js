@@ -209,6 +209,7 @@ function load_device(device_id, device_name, device_type)
         
         // var elapsed = Math.round((new Date()).getTime()*0.001 - schedule.settings.last_update_from_device);
         // $("#last_update_from_device").html(elapsed+"s ago");
+        
         if (schedule.settings.ip!="") $("#ip_address").html("IP Address: <a href='http://"+schedule.settings.ip+"'>"+schedule.settings.ip+"</a>");
         
         $("#period input[type=time]").val(timestr(schedule.settings.period,false));
