@@ -34,6 +34,9 @@ set_error_handler('exceptions_error_handler');
 $log = new EmonLogger(__FILE__);
 $log->info("Starting demandshaper service");
 
+
+$schedule_log = @fopen("/var/log/emoncms/demandshaper.log","a");
+
 // -------------------------------------------------------------------------
 // MQTT Connect
 // -------------------------------------------------------------------------
@@ -228,6 +231,7 @@ while(true)
                                     $log->info("  emon/$device/$api"." $timer[$device]");
                                     $mqtt_client->publish("emon/$device/$api",$timer[$device],0);
                                     
+                                    logwrite($schedule_log,$device." ".$api." ".$timer[$device]);
                                     // Log temporarily
                                     // $fh = fopen("/home/pi/$device.log","a");
                                     // fwrite($fh,date("Y-m-d H:i:s",time())." emon/$device/$api ".$timer[$device]."\n");
@@ -423,4 +427,15 @@ function exceptions_error_handler($severity, $message, $filename, $lineno) {
     if (error_reporting() & $severity) {
         throw new ErrorException($message, 0, $severity, $filename, $lineno);
     }
+}
+
+function logwrite($fh,$message){
+    if ($fh) {
+        $now = microtime(true);
+        $micro = sprintf("%03d",($now - ($now >> 0)) * 1000);
+        $now = DateTime::createFromFormat('U', (int)$now); // Only use UTC for logs
+        $now = $now->format("Y-m-d H:i:s").".$micro";
+        
+        @fwrite($fh,$now." | ".$message."\n");
+    }     
 }
