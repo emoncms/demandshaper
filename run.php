@@ -290,9 +290,14 @@ while(true)
                     // Recalculate schedule
                     // -----------------------------------------------------------------------
                     if ($now>$schedule->settings->end_timestamp) {
-                        $log->info("  SET timeleft to schedule period");
+
+                        $date->setTimestamp($schedule->settings->end_timestamp);
+                        $date->modify("+1 day");
+                        $schedule->settings->end_timestamp = $date->getTimestamp();
+                        
                         $schedule->runtime->timeleft = $schedule->settings->period * 3600;
                         unset($schedule->runtime->started);
+                        
                         logwrite($schedule_log,"$device end time reached, recalculating");
                     }
                     
