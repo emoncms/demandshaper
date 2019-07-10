@@ -1,16 +1,11 @@
-
 // -------------------------------------------------------------------------------------------------------
-// SCHEDULE
+// SMART SCHEDULE
 // -------------------------------------------------------------------------------------------------------
-
-function schedule_smart(forecast,timeleft,end,interruptible)
-{       
-
-    console.log(forecast)
+function schedule_smart(forecast,timeleft,end,interruptible,resolution)
+{
     var MIN = 0
     var MAX = 1
-
-    var resolution = 1800
+    
     var resolution_h = resolution/3600
     var divisions = Math.round(24*3600/resolution)
     
@@ -37,6 +32,29 @@ function schedule_smart(forecast,timeleft,end,interruptible)
     if (end_timestamp<now) end_timestamp+=3600*24
     
     var profile = forecast.profile
+
+    // --------------------------------------------------------------------------------
+    // Upsample profile
+    // -------------------------------------------------------------------------------
+    let upsampled = [];            
+    
+    let profile_start = profile[0][0]*0.001;
+    let profile_end = profile[profile.length-1][0]*0.001;
+
+    for (let timestamp=profile_start; timestamp<profile_end; timestamp+=resolution) {
+        let i = Math.floor((timestamp - profile_start)/1800);
+        if (profile[i]!=undefined) {
+            let value = profile[i][1]
+            
+            let date = new Date(timestamp*1000);
+            let h = date.getHours();
+            let m = date.getMinutes()/60;
+            let hour = h + m;
+            upsampled.push([timestamp*1000,value,hour]);
+        }
+    }            
+    profile = upsampled
+    // --------------------------------------------------------------------------------
     
     // No half hours allocated yet
     for (let td=0; td<profile.length; td++) {
@@ -186,43 +204,38 @@ function schedule_smart(forecast,timeleft,end,interruptible)
     }
 }
 
-function schedule_timer(forecast,start1,stop1,start2,stop2) {
+// -------------------------------------------------------------------------------------------------------
+// BASIC TIMER SCHEDULE
+// -------------------------------------------------------------------------------------------------------
+function schedule_timer(forecast,start1,stop1,start2,stop2,resolution) {
 
-    var tstart1 = 0; var tstop1 = 0;
-    var tstart2 = 0; var tstop2 = 0;
+    /*
+    let h = Math.floor(start1);
+    let m = Math.round((start1 - h) * 60);
+    date.setHours(h,m,0,0);
+    let tstart1 = date.getTime()*0.001;
+    ...
+    */
     
-    for (let td=0; td<forecast.profile.length; td++) {
-        forecast.profile[td][3] = 0
-    }
-                  
-    // For each time division in profile
-    for (let td=0; td<forecast.profile.length; td++) {
+    tstart1 = 0; tstop1 = 0;
+    tstart2 = 0; tstop2 = 0;
+    
+    let profile_start = forecast.profile[0][0]*0.001;
+    let profile_end = forecast.profile[forecast.profile.length-1][0]*0.001;
 
-        if (start1>stop1 && (forecast.profile[td][2]<stop1 || forecast.profile[td][2]>start1)) {
-            forecast.profile[td][3] = 1;
-        }
-        
-        if (start1>stop2 && (forecast.profile[td][2]<stop2 || forecast.profile[td][2]>start2)) {
-            forecast.profile[td][3] = 1
-        }
-                 
-        if (start1<stop1 && forecast.profile[td][2]>=start1 && forecast.profile[td][2]<stop1) {
-            forecast.profile[td][3] = 1
-        }
-
-        if (start2<stop2 && forecast.profile[td][2]>=start2 && forecast.profile[td][2]<stop2) {
-            forecast.profile[td][3] = 1
-        }         
-        
-        if (forecast.profile[td][2]==start1) tstart1 = forecast.profile[td][0]*0.001
-        if (forecast.profile[td][2]==stop1) tstop1 = forecast.profile[td][0]*0.001
-        if (forecast.profile[td][2]==start2) tstart2 = forecast.profile[td][0]*0.001
-        if (forecast.profile[td][2]==stop2) tstop2 = forecast.profile[td][0]*0.001
+    let date = new Date();
+    for (let td=profile_start; td<profile_end; td+=resolution) {
+        date.setTime(td*1000);
+        let hour = date.getHours()+(date.getMinutes()/60)
+        if (hour==start1) tstart1 = td
+        if (hour==stop1) tstop1 = td
+        if (hour==start2) tstart2 = td
+        if (hour==stop2) tstop2 = td
     }
 
-    if (tstart1>tstop1) tstart1 -= 3600*24
-    if (tstart2>tstop2) tstart2 -= 3600*24
-           
+    if (tstart1>tstop1) tstart1 -= 3600*24;
+    if (tstart2>tstop2) tstart2 -= 3600*24;
+               
     var periods = []
     periods.push({start:[tstart1,start1], end:[tstop1,stop1]})
     periods.push({start:[tstart2,start2], end:[tstop2,stop2]})

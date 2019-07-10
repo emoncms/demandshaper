@@ -103,13 +103,14 @@ function demandshaper_controller()
                     
                     if ($schedule->settings->ctrlmode=="smart") {
                         $forecast = get_forecast($redis,$schedule->settings->signal);
-                        $schedule->runtime->periods = schedule_smart($forecast,$schedule->runtime->timeleft,$schedule->settings->end,$schedule->settings->interruptible);
+                        $schedule->runtime->periods = schedule_smart($forecast,$schedule->runtime->timeleft,$schedule->settings->end,$schedule->settings->interruptible,900);
                         
                     } else if ($schedule->settings->ctrlmode=="timer") {
                         $forecast = get_forecast($redis,$schedule->settings->signal);
                         $schedule->runtime->periods = schedule_timer(
                             $forecast, 
-                            $schedule->settings->timer_start1,$schedule->settings->timer_stop1,$schedule->settings->timer_start2,$schedule->settings->timer_stop2
+                            $schedule->settings->timer_start1,$schedule->settings->timer_stop1,$schedule->settings->timer_start2,$schedule->settings->timer_stop2,
+                            900
                         );
                     } 
                     

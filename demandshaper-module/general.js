@@ -51,6 +51,7 @@ function load_device(device_id, device_name, device_type)
             ovms_vehicleid: '',
             ovms_carpass: '',
             ev_soc: 0.2,
+            ev_target_soc: 0.8,
             ip: ''
         },
         // Runtime change often and are saved only to redis
@@ -65,6 +66,9 @@ function load_device(device_id, device_name, device_type)
     var profile = false;
     var imatch = 1;
     var options = {};
+    
+    var resolution = 900;
+    var resolution_hours = resolution / 3600;
     
     update_device();    
     
@@ -122,6 +126,7 @@ function load_device(device_id, device_name, device_type)
                 if (schedule.settings.device_type=="openevse") {
                     battery.capacity = schedule.settings.batterycapacity;
                     battery.charge_rate = schedule.settings.chargerate;
+                    battery.end_soc = schedule.settings.ev_target_soc;
                     if (schedule.settings.ovms_vehicleid!='' && schedule.settings.ovms_carpass!='') {
                         $.ajax({ url: emoncmspath+"demandshaper/ovms?vehicleid="+schedule.settings.ovms_vehicleid+"&carpass="+schedule.settings.ovms_carpass+apikeystr, dataType: 'json', async: true, success: function(result) {
                             schedule.settings.ev_soc = result.soc*0.01;
@@ -159,23 +164,35 @@ function load_device(device_id, device_name, device_type)
             let js_calc = true;
             
             if (js_calc) {
-                schedule.runtime.periods = schedule_smart(forecast,schedule.settings.period*3600,schedule.settings.end,schedule.settings.interruptible)
+                if (schedule.settings.ctrlmode=="smart") {
+                    schedule.runtime.periods = schedule_smart(forecast,schedule.settings.period*3600,schedule.settings.end,schedule.settings.interruptible,resolution)
+                } else if (schedule.settings.ctrlmode=="timer") {
+                    schedule.runtime.periods = schedule_timer(forecast,schedule.settings.timer_start1,schedule.settings.timer_stop1,schedule.settings.timer_start2,schedule.settings.timer_stop2,resolution)
+                } else {
+                    schedule.runtime.periods = []
+                }
                 draw_schedule_output(schedule);
             }
             
-            /*submit_schedule(0,function(result){
-                if (js_calc) {
-                    if (JSON.stringify(result.schedule.runtime.periods)==JSON.stringify(schedule.runtime.periods)) { console.log(imatch+" MATCH"); imatch++ } else { console.log("MATCH ERROR"); }
-                } else {
-                    schedule.runtime.periods = result.schedule.runtime.periods
-                }
-            });*/
-             
             last_submit = (new Date()).getTime();
             setTimeout(function(){
                 if (((new Date()).getTime()-last_submit)>1900) {
                     submit_schedule(1,function(result){
                         console.log("saved");
+                        
+                        // Check result
+                        if (js_calc) {
+                            if (JSON.stringify(result.schedule.runtime.periods)==JSON.stringify(schedule.runtime.periods)) { 
+                                console.log("MATCH"); 
+                            } else { 
+                                console.log("MATCH ERROR")
+                                console.log("php: "+JSON.stringify(result.schedule.runtime.periods))
+                                console.log("js:  "+JSON.stringify(schedule.runtime.periods))
+                            }
+                        } else {
+                            schedule.runtime.periods = result.schedule.runtime.periods
+                        }
+                        
                         clearTimeout(get_device_state_timeout)
                         get_device_state_timeout = setTimeout(function(){ get_device_state(); },1000);
                     });
@@ -345,9 +362,11 @@ function load_device(device_id, device_name, device_type)
         if (end_timestamp<now) end_timestamp+=3600*24*1000
 
         // Shade out time after end of schedule
-        var markings = [];
-        if (periods.length) markings.push({ color: "rgba(0,0,0,0.1)", xaxis: { from: end_timestamp } });
-        options.grid.markings = markings;
+        if (schedule.settings.ctrlmode!="timer") {
+            var markings = [];
+            if (periods.length) markings.push({ color: "rgba(0,0,0,0.1)", xaxis: { from: end_timestamp } });
+            options.grid.markings = markings;
+        }
         
         // Show bars if interval is 1800s
         var bars = true;
@@ -377,6 +396,8 @@ function load_device(device_id, device_name, device_type)
             for (var p in periods) {
                 if (time>=periods[p].start[0]*1000 && time<periods[p].end[0]*1000) active = true;
             }
+            
+            if (schedule.settings.ctrlmode=="on") active = true;
                 
             if (active) { 
                 available.push([time,value]); 
@@ -511,7 +532,7 @@ function load_device(device_id, device_name, device_type)
     function timestr(hour,type){
         
         var h = Math.floor(hour);
-        var m = (hour - h) * 60;
+        var m = Math.round((hour - h) * 60);
         if (h<10) h = "0"+h;
         if (m<10) m = "0"+m;
         var str = h+":"+m;
@@ -545,13 +566,10 @@ function load_device(device_id, device_name, device_type)
             // if (schedule.settings.period==0) schedule.settings.period = last_period;
             // var now = new Date();
             // var now_hours = (now.getHours() + (now.getMinutes()/60));
-            // schedule.settings.end = Math.round((now_hours+schedule.settings.period)/0.5)*0.5;
+            // schedule.settings.end = Math.round((now_hours+schedule.settings.period)/resolution_hours)*resolution_hours;
             $(this).addClass("green").siblings().removeClass('red').removeClass('green');
             break;
           case "off":
-            // last_period = schedule.settings.period;
-            schedule.settings.period = 0;
-            schedule.settings.end = 0;
             $(this).addClass("red").siblings().removeClass('red').removeClass('green');
             break;
           case "timer":
@@ -574,11 +592,11 @@ function load_device(device_id, device_name, device_type)
         var type = $(this).html();
         
         if (type=="+") {
-            schedule.settings[name] += 0.5;
-            if (schedule.settings[name]>23.5) schedule.settings[name] = 0.0;    
+            schedule.settings[name] += resolution_hours;
+            if (schedule.settings[name]>(24.0-resolution_hours)) schedule.settings[name] = 0.0;    
         } else if (type=="-") {
-            schedule.settings[name] -= 0.5;
-            if (schedule.settings[name]<0.0) schedule.settings[name] = 23.5;
+            schedule.settings[name] -= resolution_hours;
+            if (schedule.settings[name]<0.0) schedule.settings[name] = 24.0-resolution_hours;
         }
         calc_schedule();
     });
@@ -588,10 +606,12 @@ function load_device(device_id, device_name, device_type)
         //$("#mode button[mode=smart]").addClass('active').siblings().removeClass('active');
         
         var name = $(this).parent().attr("id");
-        var timestr = $(this).val();
+        var timestring = $(this).val();
+        var parts = timestring.split(":");
+        var hour = parseInt(parts[0])+(parseInt(parts[1])/60.0)
+        hour = Math.round(hour/resolution_hours)*resolution_hours
         
-        var parts = timestr.split(":");
-        schedule.settings[name] = parseInt(parts[0])+(parseInt(parts[1])/60.0)
+        schedule.settings[name] = hour
         calc_schedule(); 
     });
 
@@ -634,12 +654,15 @@ function load_device(device_id, device_name, device_type)
     });
 
     $("#battery").on("bchange",function() { 
-        schedule.settings.period = battery.period;
+        battery.period = Math.round(battery.period/resolution_hours)*resolution_hours
+        schedule.settings.period = battery.period
+        schedule.settings.ev_target_soc = battery.end_soc
+        schedule.runtime.timeleft = schedule.settings.period * 3600
         
         if (mode=="on") {
             var now = new Date();
             var now_hours = (now.getHours() + (now.getMinutes()/60));
-            schedule.settings.end = Math.round((now_hours+schedule.settings.period)/0.5)*0.5;
+            schedule.settings.end = Math.round((now_hours+schedule.settings.period)/resolution_hours)*resolution_hours;
         }
         calc_schedule();
     });

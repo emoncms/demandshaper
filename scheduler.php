@@ -216,11 +216,10 @@ function get_forecast($redis,$signal) {
 // SCHEDULE
 // -------------------------------------------------------------------------------------------------------
 
-function schedule_smart($forecast,$timeleft,$end,$interruptible)
+function schedule_smart($forecast,$timeleft,$end,$interruptible,$resolution)
 {
     $debug = 0;
     
-    $resolution = 1800;
     $resolution_h = $resolution/3600;
     $divisions = round(24*3600/$resolution);
     
@@ -247,6 +246,29 @@ function schedule_smart($forecast,$timeleft,$end,$interruptible)
     if ($end_timestamp<$now) $end_timestamp+=3600*24;
 
     $profile = $forecast->profile;
+
+    // --------------------------------------------------------------------------------
+    // Upsample profile
+    // -------------------------------------------------------------------------------
+    $upsampled = array();            
+    
+    $profile_start = $profile[0][0]*0.001;
+    $profile_end = $profile[count($profile)-1][0]*0.001;
+
+    for ($timestamp=$profile_start; $timestamp<$profile_end; $timestamp+=$resolution) {
+        $i = floor(($timestamp - $profile_start)/1800);
+        if (isset($profile[$i])) {
+            $value = $profile[$i][1];
+            
+            $date->setTimestamp($timestamp);
+            $h = 1*$date->format('H');
+            $m = 1*$date->format('i')/60;
+            $hour = $h + $m;
+            $upsampled[] = array($timestamp*1000,$value,$hour);
+        }
+    }            
+    $profile = $upsampled;
+    // --------------------------------------------------------------------------------
     
     // No half hours allocated yet
     for ($td=0; $td<count($profile); $td++) {
@@ -393,39 +415,36 @@ function schedule_smart($forecast,$timeleft,$end,$interruptible)
     }
 }
 
-function schedule_timer($forecast,$start1,$stop1,$start2,$stop2) {
-
+function schedule_timer($forecast,$start1,$stop1,$start2,$stop2,$resolution) {
+    
     $tstart1 = 0; $tstop1 = 0;
     $tstart2 = 0; $tstop2 = 0;
+
+    $profile_start = $forecast->profile[0][0]*0.001;
+    $profile_end = $forecast->profile[count($forecast->profile)-1][0]*0.001;
+
+    $date = new DateTime();
+    $date->setTimezone(new DateTimeZone("Europe/London"));
     
-    for ($td=0; $td<count($forecast->profile); $td++) {
-        $forecast->profile[$td][3] = 0;
+    for ($td=$profile_start; $td<$profile_end; $td+=$resolution) {
+        $date->setTimestamp($td);
+        $h = 1*$date->format('H');
+        $m = 1*$date->format('i')/60;
+        $hour = $h + $m;
+       
+        if ($hour==$start1) $tstart1 = $td;
+        if ($hour==$stop1) $tstop1 = $td;
+        if ($hour==$start2) $tstart2 = $td;
+        if ($hour==$stop2) $tstop2 = $td;
     }
                   
     // For each time division in profile
-    for ($td=0; $td<count($forecast->profile); $td++) {
-
-        if ($start1>$stop1 && ($forecast->profile[$td][2]<$stop1 || $forecast->profile[$td][2]>$start1)) {
-            $forecast->profile[$td][3] = 1;
-        }
-        
-        if ($start1>$stop2 && ($forecast->profile[$td][2]<$stop2 || $forecast->profile[$td][2]>$start2)) {
-            $forecast->profile[$td][3] = 1;
-        }
-                 
-        if ($start1<$stop1 && $forecast->profile[$td][2]>=$start1 && $forecast->profile[$td][2]<$stop1) {
-            $forecast->profile[$td][3] = 1;
-        }
-
-        if ($start2<$stop2 && $forecast->profile[$td][2]>=$start2 && $forecast->profile[$td][2]<$stop2) {
-            $forecast->profile[$td][3] = 1;
-        }         
-        
+    /*for ($td=0; $td<count($forecast->profile); $td++) {
         if ($forecast->profile[$td][2]==$start1) $tstart1 = $forecast->profile[$td][0]*0.001;
         if ($forecast->profile[$td][2]==$stop1) $tstop1 = $forecast->profile[$td][0]*0.001;
         if ($forecast->profile[$td][2]==$start2) $tstart2 = $forecast->profile[$td][0]*0.001;
         if ($forecast->profile[$td][2]==$stop2) $tstop2 = $forecast->profile[$td][0]*0.001;
-    }
+    }*/
 
     if ($tstart1>$tstop1) $tstart1 -= 3600*24;
     if ($tstart2>$tstop2) $tstart2 -= 3600*24;

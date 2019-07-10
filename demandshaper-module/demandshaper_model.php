@@ -54,7 +54,7 @@ class DemandShaper
         $this->redis->set("demandshaper:schedules",json_encode($schedules));
         
         // remove runtime settings
-        $schedules_to_disk = $schedules;
+        $schedules_to_disk = json_decode(json_encode($schedules));
         foreach ($schedules_to_disk as $device=>$schedule) {
             unset($schedules_to_disk->$device->runtime);
         }

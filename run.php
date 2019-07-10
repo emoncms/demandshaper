@@ -287,7 +287,7 @@ while(true)
                         
                         if ($schedule->settings->ctrlmode=="smart") {
                             $forecast = get_forecast($redis,$schedule->settings->signal);
-                            $schedule->runtime->periods = schedule_smart($forecast,$schedule->runtime->timeleft,$schedule->settings->end,$schedule->settings->interruptible);
+                            $schedule->runtime->periods = schedule_smart($forecast,$schedule->runtime->timeleft,$schedule->settings->end,$schedule->settings->interruptible,900);
                             
                         }
                         $schedule = json_decode(json_encode($schedule));
