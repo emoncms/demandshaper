@@ -252,14 +252,21 @@ while(true)
                             
                             if ($device_type=="smartplug" || $device_type=="hpmon") {
                                 $mqtt_client->publish("emon/$device/in/ctrlmode",$ctrlmode_status,0);
+                                logwrite($schedule_log,"Setting $device ctrlmode=$ctrlmode_status");
                             }
 
                             if ($device_type=="openevse") {
                                 if ($ctrlmode=="on" || $ctrlmode=="off") {
                                     $mqtt_client->publish("emon/$device/rapi/in/\$ST","00 00 00 00",0);
                                 }
-                                if ($ctrlmode=="on") $mqtt_client->publish("emon/$device/rapi/in/\$FE","",0);
-                                if ($ctrlmode=="off") $mqtt_client->publish("emon/$device/rapi/in/\$FS","",0);
+                                if ($ctrlmode=="on") {
+                                    $mqtt_client->publish("emon/$device/rapi/in/\$FE","",0);
+                                    logwrite($schedule_log,"Turning $device ON");
+                                }
+                                if ($ctrlmode=="off") {
+                                    $mqtt_client->publish("emon/$device/rapi/in/\$FS","",0);
+                                    logwrite($schedule_log,"Turning $device OFF");
+                                }
                             }
                         }
                         $last_ctrlmode[$device] = $ctrlmode;
@@ -272,6 +279,7 @@ while(true)
                                     $vout = round(($schedule->settings->flowT-7.14)/0.0371);
                                     $log->info("emon/$device/vout ".$vout);
                                     $mqtt_client->publish("emon/$device/in/vout",$vout,0);
+                                    logwrite($schedule_log,"Setting $device vout=$vout");
                                 }
                             }
                             $last_flowT[$device] = $schedule->settings->flowT;
@@ -285,6 +293,7 @@ while(true)
                         $log->info("  SET timeleft to schedule period");
                         $schedule->runtime->timeleft = $schedule->settings->period * 3600;
                         unset($schedule->runtime->started);
+                        logwrite($schedule_log,"$device end time reached, recalculating");
                     }
                     
                     if (!isset($schedule->runtime->started) || $schedule->settings->interruptible) {
@@ -293,7 +302,14 @@ while(true)
                             $forecast = get_forecast($redis,$schedule->settings->signal);
                             $schedule->runtime->periods = schedule_smart($forecast,$schedule->runtime->timeleft,$schedule->settings->end,$schedule->settings->interruptible,900);
                             
-                        }
+                        } else if ($schedule->settings->ctrlmode=="timer") {
+                            $forecast = get_forecast($redis,$schedule->settings->signal);
+                            $schedule->runtime->periods = schedule_timer(
+                                $forecast, 
+                                $schedule->settings->timer_start1,$schedule->settings->timer_stop1,$schedule->settings->timer_start2,$schedule->settings->timer_stop2,
+                                900
+                            );
+                        } 
                         $schedule = json_decode(json_encode($schedule));
                         $log->info("  reschedule ".json_encode($schedule->runtime->periods));
                     }
