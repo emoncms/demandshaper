@@ -176,4 +176,4 @@ Add the cron entry:
 Already, MQTT control requires a password, this provides a basic level of security..
 To minimise additional risk, be sure to create an admin username and password in emonESP, this will limit access to the device.
 
-!(./images/admin_pass.png)
+![admin_user_pass.png](images/admin_pass.png)
