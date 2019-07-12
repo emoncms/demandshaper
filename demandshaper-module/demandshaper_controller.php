@@ -101,9 +101,12 @@ function demandshaper_controller()
                     $timeleft = $schedule->settings->end_timestamp - $now;
                     if ($schedule->runtime->timeleft>$timeleft) $schedule->runtime->timeleft = $timeleft;
                     
+                    $schedule_log_output = "";
+                    
                     if ($schedule->settings->ctrlmode=="smart") {
                         $forecast = get_forecast($redis,$schedule->settings->signal);
                         $schedule->runtime->periods = schedule_smart($forecast,$schedule->runtime->timeleft,$schedule->settings->end,$schedule->settings->interruptible,900);
+                        $schedule_log_output = "smart ".($schedule->runtime->timeleft/3600)." ".$schedule->settings->end;
                         
                     } else if ($schedule->settings->ctrlmode=="timer") {
                         $forecast = get_forecast($redis,$schedule->settings->signal);
@@ -112,13 +115,14 @@ function demandshaper_controller()
                             $schedule->settings->timer_start1,$schedule->settings->timer_stop1,$schedule->settings->timer_start2,$schedule->settings->timer_stop2,
                             900
                         );
+                        $schedule_log_output = "timer ".$schedule->settings->timer_start1." ".$schedule->settings->timer_stop1." ".$schedule->settings->timer_start2." ".$schedule->settings->timer_stop2;
                     } 
                     
                     if ($save) {
                         $schedules->$device = $schedule;
                         $demandshaper->set($session["userid"],$schedules);
                         $redis->set("demandshaper:trigger",1);
-                        schedule_log("$device schedule started");
+                        schedule_log("$device schedule started ".$schedule_log_type);
                     }
                     
                     return array("schedule"=>$schedule);
