@@ -34,9 +34,6 @@ set_error_handler('exceptions_error_handler');
 $log = new EmonLogger(__FILE__);
 $log->info("Starting demandshaper service");
 
-
-$schedule_log = @fopen("/var/log/emoncms/demandshaper.log","a");
-
 // -------------------------------------------------------------------------
 // MQTT Connect
 // -------------------------------------------------------------------------
@@ -231,7 +228,7 @@ while(true)
                                     $log->info("  emon/$device/$api"." $timer[$device]");
                                     $mqtt_client->publish("emon/$device/$api",$timer[$device],0);
                                     
-                                    logwrite($schedule_log,$device." ".$api." ".$timer[$device]);
+                                    schedule_log($device." set timer ".$timer[$device]);
                                     // Log temporarily
                                     // $fh = fopen("/home/pi/$device.log","a");
                                     // fwrite($fh,date("Y-m-d H:i:s",time())." emon/$device/$api ".$timer[$device]."\n");
@@ -252,7 +249,7 @@ while(true)
                             
                             if ($device_type=="smartplug" || $device_type=="hpmon") {
                                 $mqtt_client->publish("emon/$device/in/ctrlmode",$ctrlmode_status,0);
-                                logwrite($schedule_log,"Setting $device ctrlmode=$ctrlmode_status");
+                                schedule_log("$device set ctrlmode $ctrlmode_status");
                             }
 
                             if ($device_type=="openevse") {
@@ -261,11 +258,11 @@ while(true)
                                 }
                                 if ($ctrlmode=="on") {
                                     $mqtt_client->publish("emon/$device/rapi/in/\$FE","",0);
-                                    logwrite($schedule_log,"Turning $device ON");
+                                    schedule_log("$device turning ON");
                                 }
                                 if ($ctrlmode=="off") {
                                     $mqtt_client->publish("emon/$device/rapi/in/\$FS","",0);
-                                    logwrite($schedule_log,"Turning $device OFF");
+                                    schedule_log("$device turning OFF");
                                 }
                             }
                         }
@@ -279,7 +276,7 @@ while(true)
                                     $vout = round(($schedule->settings->flowT-7.14)/0.0371);
                                     $log->info("emon/$device/vout ".$vout);
                                     $mqtt_client->publish("emon/$device/in/vout",$vout,0);
-                                    logwrite($schedule_log,"Setting $device vout=$vout");
+                                    schedule_log("$device set vout $vout");
                                 }
                             }
                             $last_flowT[$device] = $schedule->settings->flowT;
@@ -298,7 +295,7 @@ while(true)
                         $schedule->runtime->timeleft = $schedule->settings->period * 3600;
                         unset($schedule->runtime->started);
                         
-                        logwrite($schedule_log,"$device end time reached, recalculating");
+                        schedule_log("$device schedule complete");
                     }
                     
                     if (!isset($schedule->runtime->started) || $schedule->settings->interruptible) {
@@ -450,13 +447,13 @@ function exceptions_error_handler($severity, $message, $filename, $lineno) {
     }
 }
 
-function logwrite($fh,$message){
-    if ($fh) {
+function schedule_log($message){
+    if ($fh = @fopen("/var/log/emoncms/demandshaper.log","a")) {
         $now = microtime(true);
         $micro = sprintf("%03d",($now - ($now >> 0)) * 1000);
         $now = DateTime::createFromFormat('U', (int)$now); // Only use UTC for logs
         $now = $now->format("Y-m-d H:i:s").".$micro";
-        
         @fwrite($fh,$now." | ".$message."\n");
-    }     
+        @fclose($fh);
+    }
 }

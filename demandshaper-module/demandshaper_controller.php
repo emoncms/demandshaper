@@ -118,6 +118,7 @@ function demandshaper_controller()
                         $schedules->$device = $schedule;
                         $demandshaper->set($session["userid"],$schedules);
                         $redis->set("demandshaper:trigger",1);
+                        schedule_log("$device schedule started");
                     }
                     
                     return array("schedule"=>$schedule);
@@ -298,4 +299,15 @@ function conv_time($time) {
     $h = floor($time*0.01);
     $m = (($time*0.01) - $h)/0.6;
     return $h+$m;
+}
+
+function schedule_log($message){
+    if ($fh = @fopen("/var/log/emoncms/demandshaper.log","a")) {
+        $now = microtime(true);
+        $micro = sprintf("%03d",($now - ($now >> 0)) * 1000);
+        $now = DateTime::createFromFormat('U', (int)$now); // Only use UTC for logs
+        $now = $now->format("Y-m-d H:i:s").".$micro";
+        @fwrite($fh,$now." | ".$message."\n");
+        @fclose($fh);
+    }
 }
