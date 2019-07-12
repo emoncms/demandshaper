@@ -294,7 +294,36 @@ function demandshaper_controller()
             }
         
             break;
-    }
+
+        case "log":
+            if (!$remoteaccess && $session["write"]) {
+                $route->format = "text";
+                
+                $filter = false;
+                if (isset($_GET['filter'])) $filter = $_GET['filter'];
+                if ($filter=="") $filter = false;
+                
+                $last_schedule = false;
+                if (isset($_GET['last'])) $last_schedule = true;
+                                
+                if ($out = file_get_contents("/var/log/emoncms/demandshaper.log")) {
+                    
+                    $lines = explode("\n",$out);
+                    $lines_out = "";
+                    foreach ($lines as $line) {
+                    
+                        if ($filter===false) { 
+                            $lines_out .= $line."\n";
+                        } else if (strpos($line,$filter)!==false) {
+                            if (strpos($line,"schedule started")!==false) $lines_out = "";
+                            $lines_out .= $line."\n";
+                        } 
+                    }
+                    return $lines_out;
+                }
+            }
+            break;   
+    }   
     
     return array('content'=>'#UNDEFINED#');
 }
