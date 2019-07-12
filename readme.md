@@ -20,16 +20,16 @@ Developed as part of the CydYnni EnergyLocal project, see:
 
 ---
 
-## Installation 
+## Installation
 
 Download or git clone the demandshaper repository to your home folder:
 
     cd
     git clone https://github.com/emoncms/demandshaper.git
-    
+
 Link the 'demandshaper-module' into the emoncms Modules folder:
 
-    ln -s /home/pi/demandshaper/demandshaper-module /var/www/emoncms/Modules/demandshaper 
+    ln -s /home/pi/demandshaper/demandshaper-module /var/www/emoncms/Modules/demandshaper
 
 Update emoncms database
 
@@ -170,3 +170,10 @@ To install and use the cache on your own server. Symlink emoncms-remote module t
 Add the cron entry:
 
     0 * * * * php /home/username/demandshaper/emoncms_remote_cache.php >> /var/log/demandshaper-cache.log
+
+## Security
+
+Already, MQTT control requires a password, this provides a basic level of security..
+To minimise additional risk, be sure to create an admin username and password in emonESP, this will limit access to the device.
+
+![admin_user_pass.png](images/admin_pass.png)
