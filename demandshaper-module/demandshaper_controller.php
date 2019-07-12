@@ -122,7 +122,7 @@ function demandshaper_controller()
                         $schedules->$device = $schedule;
                         $demandshaper->set($session["userid"],$schedules);
                         $redis->set("demandshaper:trigger",1);
-                        schedule_log("$device schedule started ".$schedule_log_type);
+                        schedule_log("$device schedule started ".$schedule_log_output);
                     }
                     
                     return array("schedule"=>$schedule);
