@@ -315,7 +315,7 @@ function demandshaper_controller()
                         if ($filter===false) { 
                             $lines_out .= $line."\n";
                         } else if (strpos($line,$filter)!==false) {
-                            if (strpos($line,"schedule started")!==false) $lines_out = "";
+                            if ($last_schedule && strpos($line,"schedule started")!==false) $lines_out = "";
                             $lines_out .= $line."\n";
                         } 
                     }
