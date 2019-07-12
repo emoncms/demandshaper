@@ -206,6 +206,18 @@ while(true)
                                 $sh = floor($s1); $sm = round(($s1-$sh)*60);
                                 $eh = floor($e1); $em = round(($e1-$eh)*60);
                                 
+                                // Apply timezone correction to UTC for smartplug and hpmon
+                                // Ideally need to change EmonESP firmware to use browser timezone
+                                if ($device_type=="smartplug" || $device_type=="hpmon") {
+                                    $date = new DateTime();
+                                    $date->setTimezone(new DateTimeZone("UTC"));
+                                    $date->setTimestamp($schedule->runtime->periods[$active_period]->start[0]);
+                                    $sh = 1*$date->format('H');
+                                    $date->setTimestamp($schedule->runtime->periods[$active_period]->end[0]);
+                                    $eh = 1*$date->format('H');
+                                }
+                                // end of timezone fix
+                                
                                 if ($sh<10) $sh = "0".$sh;
                                 if ($sm<10) $sm = "0".$sm;
                                 if ($eh<10) $eh = "0".$eh;

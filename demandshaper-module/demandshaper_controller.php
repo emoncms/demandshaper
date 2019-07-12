@@ -204,10 +204,15 @@ function demandshaper_controller()
                         if ($result = json_decode($mqtt_request->request("emon/$device/in/state","","emon/$device/out/state"))) {
                             $state->ctrl_mode = $result->ctrlmode;
                             $timer_parts = explode(" ",$result->timer);
-                            $state->timer_start1 = conv_time($timer_parts[0]);
-                            $state->timer_stop1 = conv_time($timer_parts[1]);
-                            $state->timer_start2 = conv_time($timer_parts[2]);
-                            $state->timer_stop2 = conv_time($timer_parts[3]);
+                            
+                            $dateTimeZone = new DateTimeZone("Europe/London");
+                            $date = new DateTime("now", $dateTimeZone);
+                            $timeOffset = $dateTimeZone->getOffset($date) / 3600;
+                            
+                            $state->timer_start1 = conv_time($timer_parts[0]) + $timeOffset;
+                            $state->timer_stop1 = conv_time($timer_parts[1]) + $timeOffset;
+                            $state->timer_start2 = conv_time($timer_parts[2]) + $timeOffset;
+                            $state->timer_stop2 = conv_time($timer_parts[3]) + $timeOffset;
                             $state->voltage_output = $result->vout*1;
                             return $state;
                         } else {
