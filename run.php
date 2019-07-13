@@ -390,9 +390,19 @@ function message($message)
         $device = $topic_parts[1];
         
         if (isset($schedules->$device)) {
-            $p = $message->payload;
+            // timezone offset for smartplug and hpmon which use UTC time
+            $device_type = $schedules->$device->settings->device_type;
+            $timeOffset = 0;
+            if ($device_type=="smartplug" || $device_type=="hpmon") {
+                $dateTimeZone = new DateTimeZone("Europe/London");
+                $date = new DateTime("now", $dateTimeZone);
+                $timeOffset = $dateTimeZone->getOffset($date) / 3600;
+            }
             
+            $p = $message->payload;
+                 
             if ($message->topic=="emon/$device/out/state") {
+                
                 $p = json_decode($p);
                 
                 if (isset($p->ip)) {
@@ -400,9 +410,9 @@ function message($message)
                 }
             
                 if (isset($p->ctrlmode)) {
-                    if ($p->settings->ctrlmode=="On") $schedules->$device->settings->ctrlmode = "on";
-                    if ($p->settings->ctrlmode=="Off") $schedules->$device->settings->ctrlmode = "off";
-                    if ($p->settings->ctrlmode=="Timer" && $schedules->$device->settings->ctrlmode!="smart") $schedules->$device->settings->ctrlmode = "timer";
+                    if ($p->ctrlmode=="On") $schedules->$device->settings->ctrlmode = "on";
+                    if ($p->ctrlmode=="Off") $schedules->$device->settings->ctrlmode = "off";
+                    if ($p->ctrlmode=="Timer" && $schedules->$device->settings->ctrlmode!="smart") $schedules->$device->settings->ctrlmode = "timer";
                 }
   
                 if (isset($p->vout)) {
@@ -411,10 +421,10 @@ function message($message)
                 
                 if (isset($p->timer)) {
                     $timer = explode(" ",$p->timer);
-                    $schedules->$device->settings->timer_start1 = time_conv($timer[0]);
-                    $schedules->$device->settings->timer_stop1 = time_conv($timer[1]);
-                    $schedules->$device->settings->timer_start2 = time_conv($timer[2]);
-                    $schedules->$device->settings->timer_stop2 = time_conv($timer[3]);
+                    $schedules->$device->settings->timer_start1 = time_conv($timer[0]) + $timeOffset;
+                    $schedules->$device->settings->timer_stop1 = time_conv($timer[1]) + $timeOffset;
+                    $schedules->$device->settings->timer_start2 = time_conv($timer[2]) + $timeOffset;
+                    $schedules->$device->settings->timer_stop2 = time_conv($timer[3]) + $timeOffset;
                 }
                 
                 $schedules->$device->runtime->last_update_from_device = time();
@@ -435,10 +445,10 @@ function message($message)
             
             else if ($message->topic=="emon/$device/out/timer") {
                 $timer = explode(" ",$p);
-                $schedules->$device->settings->timer_start1 = time_conv($timer[0]);
-                $schedules->$device->settings->timer_stop1 = time_conv($timer[1]);
-                $schedules->$device->settings->timer_start2 = time_conv($timer[2]);
-                $schedules->$device->settings->timer_stop2 = time_conv($timer[3]);
+                $schedules->$device->settings->timer_start1 = time_conv($timer[0]) + $timeOffset;
+                $schedules->$device->settings->timer_stop1 = time_conv($timer[1]) + $timeOffset;
+                $schedules->$device->settings->timer_start2 = time_conv($timer[2]) + $timeOffset;
+                $schedules->$device->settings->timer_stop2 = time_conv($timer[3]) + $timeOffset;
                 $schedules->$device->settings->flowT = ($timer[4]*0.0371)+7.14;
                 $demandshaper->set($userid,$schedules);
             }
