@@ -197,55 +197,52 @@ while(true)
                     // Publish to MQTT
                     if ($connected) {
                         // SmartPlug and WIFI Relay
-
                         if ($device_type=="openevse" || $device_type=="smartplug" || $device_type=="hpmon") {
+                        
+                            // Timezone correction to UTC for smartplug and hpmon
+                            $timeOffset = 0;
+                            if ($device_type=="smartplug" || $device_type=="hpmon") {
+                                $dateTimeZone = new DateTimeZone("Europe/London");
+                                $date = new DateTime("now", $dateTimeZone);
+                                $timeOffset = $dateTimeZone->getOffset($date) / 3600;
+                            }
+
+                            // ----------------------------------------------------------------------------
+                            // Set Timer
+                            // ----------------------------------------------------------------------------
+                            $s1 = 0.0; $e1 = 0.0; $s2 = 0.0; $e2 = 0.0;
                             
-                            if (count($schedule->runtime->periods)) {
-                                $s1 = $schedule->runtime->periods[$active_period]->start[1];
-                                $e1 = $schedule->runtime->periods[$active_period]->end[1];
-                                $sh = floor($s1); $sm = round(($s1-$sh)*60);
-                                $eh = floor($e1); $em = round(($e1-$eh)*60);
-                                
-                                // Apply timezone correction to UTC for smartplug and hpmon
-                                // Ideally need to change EmonESP firmware to use browser timezone
-                                if ($device_type=="smartplug" || $device_type=="hpmon") {
-                                    $date = new DateTime();
-                                    $date->setTimezone(new DateTimeZone("UTC"));
-                                    $date->setTimestamp($schedule->runtime->periods[$active_period]->start[0]);
-                                    $sh = 1*$date->format('H');
-                                    $date->setTimestamp($schedule->runtime->periods[$active_period]->end[0]);
-                                    $eh = 1*$date->format('H');
+                            // Smart timer
+                            if ($schedule->settings->ctrlmode=="smart") {
+                                if (count($schedule->runtime->periods)) {
+                                    $s1 = $schedule->runtime->periods[$active_period]->start[1] - $timeOffset;
+                                    $e1 = $schedule->runtime->periods[$active_period]->end[1] - $timeOffset;
                                 }
-                                // end of timezone fix
-                                
-                                if ($sh<10) $sh = "0".$sh;
-                                if ($sm<10) $sm = "0".$sm;
-                                if ($eh<10) $eh = "0".$eh;
-                                if ($em<10) $em = "0".$em;
-                                
-                                if (!isset($timer[$device])) $timer[$device] = "";
-                                $last_timer[$device] = $timer[$device];
-                                
-                                // Slight difference in API format
-                                if ($device_type=="smartplug" || $device_type=="hpmon") {
-                                    $api = "in/timer";
-                                    $timer[$device] = $sh.$sm." ".$eh.$em;
-                                }
-                                if ($device_type=="openevse") {
-                                    $api = "rapi/in/\$ST";
-                                    $timer[$device] = "$sh $sm $eh $em";
-                                }
-                                
-                                if ($timer[$device]!=$last_timer[$device] && ("$sh $sm"!="$eh $em")) {
-                                    $log->info("  emon/$device/$api"." $timer[$device]");
-                                    $mqtt_client->publish("emon/$device/$api",$timer[$device],0);
+                            // Standard timer
+                            } else if ($schedule->settings->ctrlmode=="timer") {
+                                $s1 = $schedule->settings->timer_start1 - $timeOffset;
+                                $e1 = $schedule->settings->timer_stop1 - $timeOffset;
+                                $s2 = $schedule->settings->timer_start2 - $timeOffset;
+                                $e2 = $schedule->settings->timer_stop2 - $timeOffset;
+                            }
                                     
-                                    schedule_log($device." set timer ".$timer[$device]);
-                                    // Log temporarily
-                                    // $fh = fopen("/home/pi/$device.log","a");
-                                    // fwrite($fh,date("Y-m-d H:i:s",time())." emon/$device/$api ".$timer[$device]."\n");
-                                    // fclose($fh);
-                                }
+                            if (!isset($timer[$device])) $timer[$device] = "";
+                            $last_timer[$device] = $timer[$device];
+                            
+                            // Slight difference in API format
+                            if ($device_type=="smartplug" || $device_type=="hpmon") {
+                                $api = "in/timer";
+                                $timer[$device] = time_conv_dec_str($s1)." ".time_conv_dec_str($e1)." ".time_conv_dec_str($s2)." ".time_conv_dec_str($e2);
+                            }
+                            if ($device_type=="openevse") {
+                                $api = "rapi/in/\$ST";
+                                $timer[$device] = time_conv_dec_str($s1," ")." ".time_conv_dec_str($e1," ");
+                            }
+                            
+                            if ($timer[$device]!=$last_timer[$device]) {  //  && (time_conv_dec_str($s1)!=time_conv_dec_str($e1))
+                                $log->info("  emon/$device/$api"." $timer[$device]");
+                                $mqtt_client->publish("emon/$device/$api",$timer[$device],0);
+                                schedule_log($device." set timer ".$timer[$device]);
                             }
                         } else {
                             $mqtt_client->publish("emon/$device/status",$status,0);
@@ -458,6 +455,14 @@ function message($message)
 
 function time_conv($t){
     return floor($t*0.01) + ($t*0.01 - floor($t*0.01))/0.6;
+}
+
+function time_conv_dec_str($t,$div="") {
+    $h = floor($t); 
+    $m = round(($t-$h)*60);
+    if ($h<10) $h = "0".$h;
+    if ($m<10) $m = "0".$m;
+    return $h.$div.$m;
 }
 
 function exceptions_error_handler($severity, $message, $filename, $lineno) {
