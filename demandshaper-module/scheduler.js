@@ -1,443 +1,243 @@
-var device = "";
-var controls = {};
-var previousPoint = false;
-var available = [];
-var unavailable = [];
-var options = {};
-var schedule = {};
-var scheduler_html = $(".scheduler-template").html();
-$(".scheduler-template").html("");
+// -------------------------------------------------------------------------------------------------------
+// SMART SCHEDULE
+// -------------------------------------------------------------------------------------------------------
+function schedule_smart(forecast,timeleft,end,interruptible,resolution)
+{
+    var MIN = 0
+    var MAX = 1
+    
+    var resolution_h = resolution/3600
+    var divisions = Math.round(24*3600/resolution)
+    
+    // period is in hours
+    var period = timeleft / 3600
+    if (period<0) period = 0
+    
+    // Start time
+    var date = new Date()
+    var now = Math.round(date.getTime()*0.001)
+    var timestamp = Math.floor(now/resolution)*resolution
+    date.setTime(timestamp*1000)
+    var start_timestamp = timestamp
+        
+    var h = date.getHours()
+    var m = date.getMinutes()/60
+    var start_hour = h + m
+    
+    // End time
+    end = Math.floor(end / resolution_h) * resolution_h
+    
+    var midnight = timestamp - (start_hour*3600)
+    var end_timestamp = midnight + end*3600
+    if (end_timestamp<now) end_timestamp+=3600*24
+    
+    var profile = forecast.profile
 
-if (window.t==undefined) function t(){};
+    // --------------------------------------------------------------------------------
+    // Upsample profile
+    // -------------------------------------------------------------------------------
+    let upsampled = [];            
+    
+    let profile_start = profile[0][0]*0.001;
+    let profile_end = profile[profile.length-1][0]*0.001;
 
-function draw_scheduler(devicein) 
-{   
-    var apikeystr = "";
-    if (window.session!=undefined) {
-        apikeystr = "&apikey="+session["apikey_write"];
+    for (let timestamp=profile_start; timestamp<profile_end; timestamp+=resolution) {
+        let i = Math.floor((timestamp - profile_start)/1800);
+        if (profile[i]!=undefined) {
+            let value = profile[i][1]
+            
+            let date = new Date(timestamp*1000);
+            let h = date.getHours();
+            let m = date.getMinutes()/60;
+            let hour = h + m;
+            upsampled.push([timestamp*1000,value,hour]);
+        }
+    }            
+    profile = upsampled
+    // --------------------------------------------------------------------------------
+    
+    // No half hours allocated yet
+    for (let td=0; td<profile.length; td++) {
+        profile[td][3] = 0
     }
 
-    device = devicein;
-    $("#devicename").html(jsUcfirst(device));
-    $(".node-scheduler-title").html("<span class='icon-"+devices[device].type+"'></span>"+device);
-    $(".node-scheduler").attr("node",device);
-    
-    // 1. Load device template to get the control definition
-    $.ajax({ url: emoncmspath+"device/template/get.json?type="+devices[device].type+apikeystr, dataType: 'json', async: true, success: function(template) { 
-        controls = template.control;
+    if (!interruptible) 
+    {
+
+        // We are trying to find the start time that results in the maximum sum of the available power
+        // max is used to find the point in the forecast that results in the maximum sum..
+        let threshold = 0
+
+        // When max available power is found, start_time is set to this point
+        let pos = 0
+
+        // ---------------------------------------------------------------------------------
+        // Method 1: move fixed period of demand over probability function to find best time
+        // ---------------------------------------------------------------------------------
         
-        // 2. Fetch device settings stored in the demandshaper module
-        $.ajax({ url: emoncmspath+"demandshaper/get?device="+device+apikeystr, dataType: 'json', async: true, success: function(result) {
-            // Itterate through controls definition from template and copy over the settings that exist
-            for (var property in controls) {
-                if (result!=null && result.schedule!=null && result.schedule[property]!=undefined) {
-                    controls[property].value = result.schedule[property];
-                } else {
-                    controls[property].value = controls[property].default;
+        // For each time division in profile
+        for (let td=0; td<profile.length; td++) {
+
+             // Calculate sum of probability function values for block of demand covering hours in period
+             let sum = 0
+             let valid_block = 1
+             for (let i=0; i<period*(divisions/24); i++) {
+                 
+                 if (profile[td+i]!=undefined) {
+                     if (profile[td+i][0]*0.001>=end_timestamp) valid_block = 0
+                     sum += profile[td+i][1]
+                 } else {
+                     valid_block = 0
+                 }
+             }
+             
+             if (td==0) threshold = sum
+             
+             // Determine the start_time which gives the maximum sum of available power
+             if (valid_block) {
+                 if ((forecast.optimise==MIN && sum<threshold) || (forecast.optimise==MAX && sum>threshold)) {
+                     threshold = sum
+                     pos = td
+                 }
+             }
+        }
+        
+        let start_hour = 0
+        let tstart = 0
+        if (profile[pos]!=undefined) {
+            start_hour = profile[pos][2]
+            tstart = profile[pos][0]*0.001
+        }
+        let end_hour = start_hour
+        let tend = tstart
+        
+        for (let i=0; i<period*(divisions/24); i++) {
+            if (profile[pos+i]!=undefined) {
+                profile[pos+i][3] = 1
+                end_hour+=resolution/3600
+                tend+=resolution
+                if (end_hour>=24) end_hour -= 24
+                // dont allow to run past end time
+                if (tend==end_timestamp) break
+            }
+        }
+        
+        let periods = []
+        if (period>0) {
+            periods.push({start:[tstart,start_hour], end:[tend,end_hour]})
+        }
+        return periods
+
+    } else {
+        // ---------------------------------------------------------------------------------
+        // Method 2: Fill into times of most available power first
+        // ---------------------------------------------------------------------------------
+
+        // For each hour of demand
+        for (let p=0; p<period*(divisions/24); p++) {
+
+            if (forecast.optimise==MIN) threshold = forecast.max; else threshold = forecast.min;
+            let pos = -1
+            // for each hour in probability profile
+            for (let td=0; td<profile.length; td++) {
+                // Find the hour with the maximum amount of available power
+                // that has not yet been alloated to this load
+                // if available && !allocated && val>max
+                let val = profile[td][1]
+                
+                if (profile[td][0]*0.001<end_timestamp && !profile[td][3]) {
+                    if ((forecast.optimise==MIN && val<=threshold) || (forecast.optimise==MAX && val>=threshold)) {
+                        threshold = val
+                        pos = td
+                    }
                 }
             }
-            // Make schedule object global
-            schedule = result.schedule;
-            if (result==null || result.schedule==null) schedule = {};           
             
-            $(".node-scheduler[node='"+device+"']").html(scheduler_html);
-            $(".node-scheduler[node='"+device+"']").show();
-            
-            scheduler_update_ui();
-            draw_schedule_output(schedule);
-
-        }});
-    }});
-}
-
-// -------------------------------------------------------------------------
-
-$("#scheduler-outer").on("click",".scheduler-save",function(event) {
-    
-    var tosave = {};
-    for (var property in controls) {
-        tosave[property] = controls[property].default;
-    }
-    
-    for (var property in controls) {
-        if (controls[property].type=="text") 
-            tosave[property] = $("input[name='"+property+"']").val();
-        if (controls[property].type=="checkbox") 
-            tosave[property] = $(".scheduler-checkbox[name='"+property+"']").attr("state")*1;
-        if (controls[property].type=="time")
-            tosave[property] = (1*$("input[name='"+property+"-hour']").val()) + ($("input[name='"+property+"-minute']").val()/60);
-        if (controls[property].type=="select") 
-            tosave[property] = $("select[name='"+property+"']").val();
-        if (controls[property].type=="weekly-scheduler") {
-            tosave[property] = [];
-            for (var i=0; i<7; i++) {
-                tosave[property][i] = $(".weekly-scheduler[name='"+property+"'][day="+i+"]").attr("val")*1;
-                if (tosave[property][i]) tosave.runonce = false;
-            }
-            if (tosave.runonce) $(".scheduler-checkbox[name='runonce']").attr("state",1);
-        }
-    }
-    
-    scheduler_save(tosave,event);
-});
-
-$("#scheduler-outer").on("click",".scheduler-clear",function(event) {
-
-    for (var property in controls) {
-        if (controls[property].type=="text") 
-            $("input[name='"+property+"']").val(0);
-        if (controls[property].type=="checkbox") 
-            $(".scheduler-checkbox[name='"+property+"']").attr("state",0);
-        if (controls[property].type=="time")
-            $("input[name='"+property+"-hour']").val(0);
-            $("input[name='"+property+"-minute']").val(0);
-        if (controls[property].type=="select") 
-            $("select[name='"+property+"']").val("");
-        if (controls[property].type=="weekly-scheduler") {
-            for (var i=0; i<7; i++) {
-                $(".weekly-scheduler[name='"+property+"'][day="+i+"]").attr("val",1);
-            }
-            $(".scheduler-checkbox[name='runonce']").attr("state",0);
-        }
-    }
-
-    var tosave = {};
-    for (var property in controls) {
-        tosave[property] = controls[property].default;
-    }
-    
-    scheduler_save(tosave,event);
-    scheduler_update_ui();
-});
-
-$("#scheduler-outer").on("click",".schedule-output-heading",function(e) {
-    
-    var visible = $(".schedule-output-box").is(":visible");
-    
-    if (visible) {
-        $(".schedule-output-box").hide(); 
-    } else {
-        $(".schedule-output-box").show(); 
-        draw_schedule_output(schedule);
-    }
-    
-    $(this).find(".triangle-dropdown").toggle();
-    $(this).find(".triangle-pushup").toggle();
-});
-
-// -------------------------------------------------------------------------
-function scheduler_update_ui() {
-    for (var property in controls) {
-        if (controls[property].type=="checkbox") {
-            $(".scheduler-checkbox[name='"+property+"']").attr("state",controls[property].value);
-        }
-
-        if (controls[property].type=="select") {
-            $("select[name='"+property+"']").val(controls[property].value);
+            // Allocate hour with maximum amount of available power
+            if (pos!=-1) profile[pos][3] = 1
         }
                 
-        if (controls[property].type=="time") {
-            var time = controls[property].value;
-            var hour = Math.floor(time);
-            var mins = 60*(time-hour);
-            if (hour<10) hour = "0"+hour;
-            if (mins<10) mins = "0"+mins;
-            $("input[name='"+property+"-hour']").val(hour);
-            $("input[name='"+property+"-minute']").val(mins);
-        }
+        let periods = []
         
-        if (controls[property].type=="weekly-scheduler") {
-            for (var i=0; i<7; i++) {
-                $(".weekly-scheduler[name='"+property+"'][day="+i+"]").attr("val",controls[property].value[i]);
-            }
-        }
-    } 
-    
-    var runonce = true;
-    for (var i=0; i<7; i++) {
-        var dayval = $(".weekly-scheduler[name='repeat'][day="+i+"]").attr("val")*1;
-        if (dayval) runonce = false;
-    }
-    if (runonce) {
-        $(".scheduler-checkbox[name='runonce']").attr("state",1);
-    } else {
-        $(".scheduler-checkbox[name='runonce']").attr("state",0);
-    }   
-}
-
-
-function scheduler_save(data,event) { 
-
-    var apikeystr = "";
-    if (window.session!=undefined) {
-        apikeystr = "&apikey="+session["apikey_write"];
-    }   
-    // ----------------------------------------------------------------------------------------------------
-    // Scheduler
-    // ----------------------------------------------------------------------------------------------------
-    var event = typeof event != 'undefined' ? event : false;
-    var schedule = data;
-    schedule.device = device;
-    schedule.device_type = devices[device].type;
-    schedule.basic = 0;
-    //before ajax
-    let notification = document.getElementById('scheduler-notification');   
-    if (notification){
-        notification.classList.remove('fadeOut');//allow notification to be shown again.
-        notification.innerText = '';
-    }else{
-        notification = document.createElement('span');
-    }
-    //effect the clicked button
-    let button = event ? event.target: false;
-    if(button) button.classList.add('is-faded');
-    
-    $.ajax({ url: emoncmspath+"demandshaper/submit?schedule="+JSON.stringify(schedule)+apikeystr,
-        dataType: 'json',
-        async: true,
-        success: function(result) {
-            schedule = (result==null || result.schedule==null) ? {} : result.schedule;
-            success = !(result.hasOwnProperty('success') && result.success === false);
-            if (success){
-                draw_schedule_output(schedule);
-                if(result.schedule.end==0 && result.schedule.period==0){
-                    message = t('Cleared');
-                }else{
-                    message = t('Saved');
+        let start = null
+        let tstart = null
+        let tend = null
+        
+        let i = 0
+        let last = 0
+        
+        for (var td=0; td<profile.length; td++) {
+            let hour = profile[td][2]
+            let timestamp = profile[td][0]*0.001
+            let val = profile[td][3]
+        
+            if (i==0) {
+                if (val) {
+                    start = hour
+                    tstart = timestamp
                 }
-                notification.classList.remove('hide');//remove the default hide class
-                notification.innerText = message;
-                notification.classList.add('fadeOut','notification');//show notification and wait 3 seconds before fading out (using css class fadeOut
+                last = val
             }
-        }
-    })
-    .always(function(result){
-        //notify user of session timeout
-        success = !(result.hasOwnProperty('success') && result.success === false);
-        if(!success && result.message === 'Username or password empty'){
-            notification.classList.remove('hide');//remove the default hide class
-            notification.innerHTML = t('Session Timed out.') +
-                '<a href="/cydynni" class="btn">' +
-                t('Please login') + 
-                '</a>';
-            notification.classList.add('notification');//show notification and wait 3 seconds before fading out (using css class fadeOut
-        }
-        button.classList.remove('is-faded');//remove the faded effect from the clicked button once the ajax finishes
-    });
-}
-
-function draw_schedule_output(schedule)
-{
-    var out = jsUcfirst(device)+" scheduled to run: ";
-    
-    if (schedule.periods && schedule.periods.length) {
-        var now = new Date();
-        var now_hours = (now.getHours() + (now.getMinutes()/60));
-        var period_start = (schedule.periods[0].start[1]);
-        
-        var startsin = 0;
-        if (now_hours>period_start) {
-           startsin = (24 - now_hours) + period_start
-        } else {
-           startsin = period_start - now_hours
+            
+            if (last==0 && val==1) {
+                start = hour
+                tstart = timestamp
+            }
+            
+            if (last==1 && val==0) {
+                end = hour*1
+                tend = timestamp
+                periods.push({start:[tstart,start], end:[tend,end]})
+            }
+            
+            last = val
+            i++
         }
         
-        var hour = Math.floor(startsin);
-        var mins = Math.round(60*(startsin-hour));
-        var text = "Starts in "+mins+" mins";
-        if (hour>0) text = "Starts in "+hour+" hrs "+mins+" mins";
-        if (hour>=23 && mins>=30) text = "On";
-        if (controls["active"].value==0) text = "Off"; 
-        $(".startsin").html(text);
-    } 
-    
-
-    var periods = [];
-    for (var z in schedule.periods) {
-
-        var start = 1*schedule.periods[z].start[1];
-        var sh = Math.floor(start);
-        var sm = (start - sh) * 60;
-        if (sm<10) sm = "0"+sm;
-        var start_str = sh+":"+sm;
-        if (start==0) start_str = "Midnight";
-        else if (start==12) start_str = "Noon";
-        else if (sh>12) {
-            sh = sh - 12;
-            start_str = sh+":"+sm+" pm";
-        } else if (sh<12) {
-            start_str += "am";
+        if (last==1) {
+            end = hour+resolution/3600
+            tend = timestamp + resolution
+            periods.push({start:[tstart,start], end:[tend,end]})
         }
         
-        var end = 1*schedule.periods[z].end[1];
-        var eh = Math.floor(end);
-        var em = (end - eh) * 60;
-        if (em<10) em = "0"+em;
-        var end_str = eh+":"+em;
-        if (end==0) end_str = "Midnight";
-        else if (end==12) end_str = "Noon";
-        else if (eh>12) {
-            eh = eh - 12;
-            end_str = eh+":"+em+" pm";
-        } else if (eh<12) {
-            end_str += "am";
-        }
-        periods.push(start_str+" to "+end_str);
-    }
-
-    out += "<b>"+periods.join(", ")+"</b>";
-
-    $("#schedule-output").html(out);
-
-    if (schedule.probability!=undefined) {
-        var probability = schedule.probability;
-        
-        var interval = 1800;
-        interval = (probability[1][0]-probability[0][0])*0.001;
-        var bars = true;
-        //if (interval<1800) bars = false;
-
-        var hh = 0;
-        for (var z in probability) {
-            if (1*probability[z][2]==schedule.end) hh = z;
-        }
-
-        var markings = [];
-        // { color: "#000", lineWidth: 2, xaxis: { from: probability[hh][0], to: probability[hh][0] } },
-        if (hh>0) markings.push({ color: "rgba(0,0,0,0.1)", xaxis: { from: probability[hh][0] } });
-        
-        var flot_font_size = 12;
-        
-        options = {
-            xaxis: { mode: "time", timezone: "browser", font: {size:flot_font_size, color:"#666"},reserveSpace:false},
-            yaxis: { min: 0, font: {size:flot_font_size, color:"#666"},reserveSpace:false },
-            grid: {hoverable: true, clickable: true, markings: markings, borderWidth:0, color:"#aaa"},
-            selection: { mode: "x" },
-            touch: { pan: "x", scale: "x" }
-        }
-        
-        if (bars) {
-            options.bars = { show: true, barWidth:interval*1000*0.8, lineWidth:0 };
-        } else {
-            options.lines = {fill:true};
-        }
-
-        available = [];
-        unavailable = [];
-        for (var z in probability) {
-            var time = probability[z][0];
-            var value = probability[z][1];
-            var active = probability[z][4];
-            if (active) { 
-                available.push([time,value]); 
-                if (bars) value=null;
-            } 
-            unavailable.push([time,value]);
-        }
-
-        resize();
+        return periods
     }
 }
 
-function resize() {
-    var width = $("#placeholder_bound").width();
-    if (width>0) {
-        var height = width*0.6;
-        if (height>300) height = 300;
-        $("#placeholder").width(width);
-        $("#placeholder_bound").css("height",height);
-        $("#placeholder").height(height);
-        $.plot($('#placeholder'), [{data:available,color:"#ff0000"},{data:unavailable,color:"#888"}], options);
+// -------------------------------------------------------------------------------------------------------
+// BASIC TIMER SCHEDULE
+// -------------------------------------------------------------------------------------------------------
+function schedule_timer(forecast,start1,stop1,start2,stop2,resolution) {
+
+    /*
+    let h = Math.floor(start1);
+    let m = Math.round((start1 - h) * 60);
+    date.setHours(h,m,0,0);
+    let tstart1 = date.getTime()*0.001;
+    ...
+    */
+    
+    tstart1 = 0; tstop1 = 0;
+    tstart2 = 0; tstop2 = 0;
+    
+    let profile_start = forecast.profile[0][0]*0.001;
+    let profile_end = forecast.profile[forecast.profile.length-1][0]*0.001;
+
+    let date = new Date();
+    for (let td=profile_start; td<profile_end; td+=resolution) {
+        date.setTime(td*1000);
+        let hour = date.getHours()+(date.getMinutes()/60)
+        if (hour==start1) tstart1 = td
+        if (hour==stop1) tstop1 = td
+        if (hour==start2) tstart2 = td
+        if (hour==stop2) tstop2 = td
     }
+
+    if (tstart1>tstop1) tstart1 -= 3600*24;
+    if (tstart2>tstop2) tstart2 -= 3600*24;
+               
+    var periods = []
+    periods.push({start:[tstart1,start1], end:[tstop1,stop1]})
+    periods.push({start:[tstart2,start2], end:[tstop2,stop2]})
+    return periods
 }
-
-$("#scheduler-outer").on("change",".timepicker-minute",function(){
-    var val = $(this).val();
-    val = Math.floor(val/30)*30;
-    if (val<0) val = 0;
-    if (val>59) val = 30;
-    if (val<10) val = "0"+val;
-    $(this).val(val);
-});
-
-$("#scheduler-outer").on("change",".timepicker-hour",function(){
-    var val = $(this).val();
-    val = Math.round(val);
-    if (val<0) val = 0;
-    if (val>23) val = 23;
-    if (val<10) val = "0"+val;
-    $(this).val(val);
-});
-
-$("#scheduler-outer").on("click",".weekly-scheduler-day",function(){
-    var val = $(this).attr('val');
-    if (val==0) {
-        $(this).attr('val',1);
-    } else {
-        $(this).attr('val',0);
-    }
-    
-    var runonce = true;
-    for (var i=0; i<7; i++) {
-        var dayval = $(".weekly-scheduler[name='repeat'][day="+i+"]").attr("val")*1;
-        if (dayval) runonce = false;
-    }
-    if (runonce) {
-        $(".scheduler-checkbox[name='runonce']").attr("state",1);
-    } else {
-        $(".scheduler-checkbox[name='runonce']").attr("state",0);
-    }
-});
-
-$("#scheduler-outer").on("click",".scheduler-checkbox[name='runonce']",function(){
-    var state = $(this).attr('state')*1;
-    if (state) {
-        $(".weekly-scheduler[name='repeat']").attr("val",1);
-    } else {
-        $(".weekly-scheduler[name='repeat']").attr("val",0);
-    }
-});
-
-$("#scheduler-outer").on("click",".scheduler-checkbox",function(){
-    var name = $(this).attr('name');
-    var val = $(this).attr('state');
-    if (val==0) {
-        $(this).attr('state',1);
-        if (name=="active") $(".scheduler-inner").css("color","#ea510e");
-    } else {
-        $(this).attr('state',0);
-        if (name=="active") $(".scheduler-inner").css("color","#aaa");
-    }
-});
-
-$("#scheduler-outer").on("click",".weekly-scheduler-repeat",function(){
-    if ($(this)[0].checked) {
-
-    } else {
-    
-    }
-});
-
-$('#placeholder').bind("plothover", function (event, pos, item)
-{
-    if (item) {
-        if (previousPoint != item.datapoint) {
-            previousPoint = item.datapoint;
-
-            $("#tooltip").remove();
-            var itemTime = item.datapoint[0];
-            var itemVal = item.datapoint[1];
-            var datestr = (new Date(itemTime)).format("HH:MM ddd");//, mmm dS");
-            tooltip(item.pageX, item.pageY, datestr+"<br>val:"+itemVal.toFixed(1), "#DDDDDD");
-        }
-    } else {
-        $("#tooltip").remove();
-        previousPoint = null;
-    }
-});
-
-$(window).resize(function(){
-    resize();
-});
-
-function jsUcfirst(string) {return string.charAt(0).toUpperCase() + string.slice(1);}

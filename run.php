@@ -143,23 +143,23 @@ while(true)
             foreach ($schedules as $sid=>$schedule)
             {   
                 $device = false;
-                if (isset($schedule->device)) $device = $schedule->device;
+                if (isset($schedule->settings->device)) $device = $schedule->settings->device;
                 $device_type = false;
-                if (isset($schedule->device_type)) $device_type = $schedule->device_type;
+                if (isset($schedule->settings->device_type)) $device_type = $schedule->settings->device_type;
                 $ctrlmode = false;
-                if (isset($schedule->ctrlmode)) $ctrlmode = $schedule->ctrlmode;
+                if (isset($schedule->settings->ctrlmode)) $ctrlmode = $schedule->settings->ctrlmode;
                                 
                 if ($device_type && $ctrlmode)
                 {
-                    $log->info(date("Y-m-d H:i:s")." Schedule:$device ".$schedule->ctrlmode);
-                    $log->info("  end timestamp: ".$schedule->end_timestamp);
+                    $log->info(date("Y-m-d H:i:s")." Schedule:$device ".$schedule->settings->ctrlmode);
+                    $log->info("  end timestamp: ".$schedule->settings->end_timestamp);
                     // -----------------------------------------------------------------------
                     // Work out if schedule is running
                     // -----------------------------------------------------------------------  
                     $status = 0;
                     $active_period = 0;
-                    if ($schedule->timeleft>0 || $ctrlmode=="timer") {
-                        foreach ($schedule->periods as $pid=>$period) {
+                    if ($schedule->runtime->timeleft>0 || $ctrlmode=="timer") {
+                        foreach ($schedule->runtime->periods as $pid=>$period) {
                             $start = $period->start[0];
                             $end = $period->end[0];
                             if ($now>=$start && $now<$end) {
@@ -170,24 +170,24 @@ while(true)
                     }
                     
                     // If runonce is true, check if within 24h period
-                    if ($schedule->runonce!==false) {
-                        if (($now-$schedule->runonce)>(24*3600)) $status = 0;
+                    if ($schedule->settings->runonce!==false) {
+                        if (($now-$schedule->settings->runonce)>(24*3600)) $status = 0;
                     } else {
                         // Check if schedule should be ran on this day
-                        if (!$schedule->repeat[$date->format("N")-1]) $status = 0;
+                        if (!$schedule->settings->repeat[$date->format("N")-1]) $status = 0;
                     }
                     
-                    if ($schedule->ctrlmode=="on") $status = 1;
-                    if ($schedule->ctrlmode=="off") $status = 0;
+                    if ($schedule->settings->ctrlmode=="on") $status = 1;
+                    if ($schedule->settings->ctrlmode=="off") $status = 0;
 
                     if ($status) {
                         $log->info("  status: ON");
-                        $schedule->started = true;
+                        $schedule->runtime->started = true;
                         $time_elapsed = $now - $lasttime;
                         $log->info("  time elapsed: $time_elapsed");
-                        $schedule->timeleft -= $time_elapsed; // $update_interval;
-                        $log->info("  timeleft: ".$schedule->timeleft."s");
-                        if ($schedule->timeleft<0) $schedule->timeleft = 0;
+                        $schedule->runtime->timeleft -= $time_elapsed; // $update_interval;
+                        $log->info("  timeleft: ".$schedule->runtime->timeleft."s");
+                        if ($schedule->runtime->timeleft<0) $schedule->runtime->timeleft = 0;
                     } else {
                         $log->info("  status: OFF");
                     }
@@ -200,11 +200,23 @@ while(true)
 
                         if ($device_type=="openevse" || $device_type=="smartplug" || $device_type=="hpmon") {
                             
-                            if (count($schedule->periods)) {
-                                $s1 = $schedule->periods[$active_period]->start[1];
-                                $e1 = $schedule->periods[$active_period]->end[1];
+                            if (count($schedule->runtime->periods)) {
+                                $s1 = $schedule->runtime->periods[$active_period]->start[1];
+                                $e1 = $schedule->runtime->periods[$active_period]->end[1];
                                 $sh = floor($s1); $sm = round(($s1-$sh)*60);
                                 $eh = floor($e1); $em = round(($e1-$eh)*60);
+                                
+                                // Apply timezone correction to UTC for smartplug and hpmon
+                                // Ideally need to change EmonESP firmware to use browser timezone
+                                if ($device_type=="smartplug" || $device_type=="hpmon") {
+                                    $date = new DateTime();
+                                    $date->setTimezone(new DateTimeZone("UTC"));
+                                    $date->setTimestamp($schedule->runtime->periods[$active_period]->start[0]);
+                                    $sh = 1*$date->format('H');
+                                    $date->setTimestamp($schedule->runtime->periods[$active_period]->end[0]);
+                                    $eh = 1*$date->format('H');
+                                }
+                                // end of timezone fix
                                 
                                 if ($sh<10) $sh = "0".$sh;
                                 if ($sm<10) $sm = "0".$sm;
@@ -228,6 +240,7 @@ while(true)
                                     $log->info("  emon/$device/$api"." $timer[$device]");
                                     $mqtt_client->publish("emon/$device/$api",$timer[$device],0);
                                     
+                                    schedule_log($device." set timer ".$timer[$device]);
                                     // Log temporarily
                                     // $fh = fopen("/home/pi/$device.log","a");
                                     // fwrite($fh,date("Y-m-d H:i:s",time())." emon/$device/$api ".$timer[$device]."\n");
@@ -248,47 +261,71 @@ while(true)
                             
                             if ($device_type=="smartplug" || $device_type=="hpmon") {
                                 $mqtt_client->publish("emon/$device/in/ctrlmode",$ctrlmode_status,0);
+                                schedule_log("$device set ctrlmode $ctrlmode_status");
                             }
 
                             if ($device_type=="openevse") {
                                 if ($ctrlmode=="on" || $ctrlmode=="off") {
                                     $mqtt_client->publish("emon/$device/rapi/in/\$ST","00 00 00 00",0);
                                 }
-                                if ($ctrlmode=="on") $mqtt_client->publish("emon/$device/rapi/in/\$FE","",0);
-                                if ($ctrlmode=="off") $mqtt_client->publish("emon/$device/rapi/in/\$FS","",0);
+                                if ($ctrlmode=="on") {
+                                    $mqtt_client->publish("emon/$device/rapi/in/\$FE","",0);
+                                    schedule_log("$device turning ON");
+                                }
+                                if ($ctrlmode=="off") {
+                                    $mqtt_client->publish("emon/$device/rapi/in/\$FS","",0);
+                                    schedule_log("$device turning OFF");
+                                }
                             }
                         }
                         $last_ctrlmode[$device] = $ctrlmode;
                         
                         // Flow temperature target used with heatpump
-                        if (isset($schedule->flowT)) {
+                        if (isset($schedule->settings->flowT)) {
                             if (!isset($last_flowT[$device])) $last_flowT[$device] = false;
-                            if ($schedule->flowT!=$last_flowT[$device]) {
+                            if ($schedule->settings->flowT!=$last_flowT[$device]) {
                                 if ($device_type=="smartplug" || $device_type=="hpmon") {
-                                    $vout = round(($schedule->flowT-7.14)/0.0371);
+                                    $vout = round(($schedule->settings->flowT-7.14)/0.0371);
                                     $log->info("emon/$device/vout ".$vout);
                                     $mqtt_client->publish("emon/$device/in/vout",$vout,0);
+                                    schedule_log("$device set vout $vout");
                                 }
                             }
-                            $last_flowT[$device] = $schedule->flowT;
+                            $last_flowT[$device] = $schedule->settings->flowT;
                         }
                     }
                     
                     // -----------------------------------------------------------------------
                     // Recalculate schedule
                     // -----------------------------------------------------------------------
-                    if ($now>$schedule->end_timestamp) {
-                        $log->info("  SET timeleft to schedule period");
-                        $schedule->timeleft = $schedule->period * 3600;
-                        unset($schedule->started);
+                    if ($now>$schedule->settings->end_timestamp) {
+
+                        $date->setTimestamp($schedule->settings->end_timestamp);
+                        $date->modify("+1 day");
+                        $schedule->settings->end_timestamp = $date->getTimestamp();
+                        
+                        $schedule->runtime->timeleft = $schedule->settings->period * 3600;
+                        unset($schedule->runtime->started);
+                        
+                        schedule_log("$device schedule complete");
                     }
                     
-                    if (!isset($schedule->started) || $schedule->interruptible) {
-                        $r = schedule($redis,$schedule);
-                        $schedule->periods = $r["periods"];
-                        $schedule->probability = $r["probability"];
+                    if (!isset($schedule->runtime->started) || $schedule->settings->interruptible) {
+                        
+                        if ($schedule->settings->ctrlmode=="smart") {
+                            $forecast = get_forecast($redis,$schedule->settings->signal);
+                            $schedule->runtime->periods = schedule_smart($forecast,$schedule->runtime->timeleft,$schedule->settings->end,$schedule->settings->interruptible,900);
+                            
+                        } else if ($schedule->settings->ctrlmode=="timer") {
+                            $forecast = get_forecast($redis,$schedule->settings->signal);
+                            $schedule->runtime->periods = schedule_timer(
+                                $forecast, 
+                                $schedule->settings->timer_start1,$schedule->settings->timer_stop1,$schedule->settings->timer_start2,$schedule->settings->timer_stop2,
+                                900
+                            );
+                        } 
                         $schedule = json_decode(json_encode($schedule));
-                        $log->info("  reschedule ".json_encode($schedule->periods));
+                        $log->info("  reschedule ".json_encode($schedule->runtime->periods));
                     }
                 } // if active
                 $schedules->$sid = $schedule;
@@ -311,7 +348,7 @@ while(true)
         $last_state_check = time();
         foreach ($schedules as $schedule) {
             $device = false;
-            if (isset($schedule->device)) $device = $schedule->device;
+            if (isset($schedule->settings->device)) $device = $schedule->settings->device;
             $log->info("emon/$device/in/state");
             if ($device) $mqtt_client->publish("emon/$device/in/state","",0);
         }
@@ -353,41 +390,51 @@ function message($message)
         $device = $topic_parts[1];
         
         if (isset($schedules->$device)) {
-            $p = $message->payload;
+            // timezone offset for smartplug and hpmon which use UTC time
+            $device_type = $schedules->$device->settings->device_type;
+            $timeOffset = 0;
+            if ($device_type=="smartplug" || $device_type=="hpmon") {
+                $dateTimeZone = new DateTimeZone("Europe/London");
+                $date = new DateTime("now", $dateTimeZone);
+                $timeOffset = $dateTimeZone->getOffset($date) / 3600;
+            }
             
+            $p = $message->payload;
+                 
             if ($message->topic=="emon/$device/out/state") {
+                
                 $p = json_decode($p);
                 
                 if (isset($p->ip)) {
-                    $schedules->$device->ip = $p->ip;
+                    $schedules->$device->settings->ip = $p->ip;
                 }
             
                 if (isset($p->ctrlmode)) {
-                    if ($p->ctrlmode=="On") $schedules->$device->ctrlmode = "on";
-                    if ($p->ctrlmode=="Off") $schedules->$device->ctrlmode = "off";
-                    if ($p->ctrlmode=="Timer" && $schedules->$device->ctrlmode!="smart") $schedules->$device->ctrlmode = "timer";
+                    if ($p->ctrlmode=="On") $schedules->$device->settings->ctrlmode = "on";
+                    if ($p->ctrlmode=="Off") $schedules->$device->settings->ctrlmode = "off";
+                    if ($p->ctrlmode=="Timer" && $schedules->$device->settings->ctrlmode!="smart") $schedules->$device->settings->ctrlmode = "timer";
                 }
   
                 if (isset($p->vout)) {
-                    $schedules->$device->flowT = ($p->vout*0.0371)+7.14;
+                    $schedules->$device->settings->flowT = ($p->vout*0.0371)+7.14;
                 }
                 
                 if (isset($p->timer)) {
                     $timer = explode(" ",$p->timer);
-                    $schedules->$device->timer_start1 = time_conv($timer[0]);
-                    $schedules->$device->timer_stop1 = time_conv($timer[1]);
-                    $schedules->$device->timer_start2 = time_conv($timer[2]);
-                    $schedules->$device->timer_stop2 = time_conv($timer[3]);
+                    $schedules->$device->settings->timer_start1 = time_conv($timer[0]) + $timeOffset;
+                    $schedules->$device->settings->timer_stop1 = time_conv($timer[1]) + $timeOffset;
+                    $schedules->$device->settings->timer_start2 = time_conv($timer[2]) + $timeOffset;
+                    $schedules->$device->settings->timer_stop2 = time_conv($timer[3]) + $timeOffset;
                 }
                 
-                $schedules->$device->last_update_from_device = time();
+                $schedules->$device->runtime->last_update_from_device = time();
                 $demandshaper->set($userid,$schedules);
             }
             
             else if ($message->topic=="emon/$device/out/ctrlmode") {
-                if ($p=="On") $schedules->$device->ctrlmode = "on";
-                if ($p=="Off") $schedules->$device->ctrlmode = "off";
-                if ($p=="Timer" && $schedules->$device->ctrlmode!="smart") $schedules->$device->ctrlmode = "timer";
+                if ($p=="On") $schedules->$device->settings->ctrlmode = "on";
+                if ($p=="Off") $schedules->$device->settings->ctrlmode = "off";
+                if ($p=="Timer" && $schedules->$device->settings->ctrlmode!="smart") $schedules->$device->settings->ctrlmode = "timer";
                 $demandshaper->set($userid,$schedules);
             }
             
@@ -398,11 +445,11 @@ function message($message)
             
             else if ($message->topic=="emon/$device/out/timer") {
                 $timer = explode(" ",$p);
-                $schedules->$device->timer_start1 = time_conv($timer[0]);
-                $schedules->$device->timer_stop1 = time_conv($timer[1]);
-                $schedules->$device->timer_start2 = time_conv($timer[2]);
-                $schedules->$device->timer_stop2 = time_conv($timer[3]);
-                $schedules->$device->flowT = ($timer[4]*0.0371)+7.14;
+                $schedules->$device->settings->timer_start1 = time_conv($timer[0]) + $timeOffset;
+                $schedules->$device->settings->timer_stop1 = time_conv($timer[1]) + $timeOffset;
+                $schedules->$device->settings->timer_start2 = time_conv($timer[2]) + $timeOffset;
+                $schedules->$device->settings->timer_stop2 = time_conv($timer[3]) + $timeOffset;
+                $schedules->$device->settings->flowT = ($timer[4]*0.0371)+7.14;
                 $demandshaper->set($userid,$schedules);
             }
         }
@@ -419,5 +466,16 @@ function exceptions_error_handler($severity, $message, $filename, $lineno) {
     }
     if (error_reporting() & $severity) {
         throw new ErrorException($message, 0, $severity, $filename, $lineno);
+    }
+}
+
+function schedule_log($message){
+    if ($fh = @fopen("/var/log/emoncms/demandshaper.log","a")) {
+        $now = microtime(true);
+        $micro = sprintf("%03d",($now - ($now >> 0)) * 1000);
+        $now = DateTime::createFromFormat('U', (int)$now); // Only use UTC for logs
+        $now = $now->format("Y-m-d H:i:s").".$micro";
+        @fwrite($fh,$now." | ".$message."\n");
+        @fclose($fh);
     }
 }

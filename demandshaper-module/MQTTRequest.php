@@ -25,56 +25,62 @@ class MQTTRequest
     
     public function request($topic,$payload,$result_topic)
     {
-        $this->request = new stdClass();
-        $this->request->topic = $topic;
-        $this->request->payload = $payload;
-        
-        $this->result = new stdClass();
-        $this->result->topic = $result_topic;
-        $this->result->payload = false;
-        
-        $this->client = new Mosquitto\Client();
-        
-        $this->client->onConnect(function($r, $message){
-            $this->connect($r, $message);
-        });
-        $this->client->onDisconnect(function(){
-            $this->disconnect();
-        });
-        $this->client->onSubscribe(function(){
-            $this->subscribe();
-        });
-        $this->client->onMessage(function($message){
-            $this->message($message);
-        });
-                   
-        $this->state = 0; // 0: startfetch
-                    // 1: connected
-                    // 2: subscribed
-                    // 3: complete
+        try {
+            $this->request = new stdClass();
+            $this->request->topic = $topic;
+            $this->request->payload = $payload;
+            
+            $this->result = new stdClass();
+            $this->result->topic = $result_topic;
+            $this->result->payload = false;
+            
+            $this->client = new Mosquitto\Client();
+            
+            $this->client->onConnect(function($r, $message){
+                $this->connect($r, $message);
+            });
+            $this->client->onDisconnect(function(){
+                $this->disconnect();
+            });
+            $this->client->onSubscribe(function(){
+                $this->subscribe();
+            });
+            $this->client->onMessage(function($message){
+                $this->message($message);
+            });
+                       
+            $this->state = 0; // 0: startfetch
+                        // 1: connected
+                        // 2: subscribed
+                        // 3: complete
 
-        $this->client->setCredentials($this->username,$this->password);
-        $this->client->connect($this->host, $this->port, 5);
-               
-        $start = time();
-        while((time()-$start)<10.0) {
-            try { 
-                $this->client->loop(10); 
-            } catch (Exception $e) {
-                if ($this->state) return "error: ".$e;
+            $this->client->setCredentials($this->username,$this->password);
+            $this->client->connect($this->host, $this->port, 5);
+                   
+            $start = time();
+            while((time()-$start)<10.0) {
+                try { 
+                    $this->client->loop(10); 
+                } catch (Exception $e) {
+                    if ($this->state) return "error: ".$e;
+                }
+                
+                if ((time()-$start)>=3.0) {
+                    $this->client->disconnect();
+                }
+                
+                if ($this->state==3) break;
+                
+                usleep(50000);
             }
             
-            if ((time()-$start)>=3.0) {
-                $this->client->disconnect();
+            if ($this->result->payload) {
+                return $this->result->payload;
+            } else {
+                return "API Timeout";
             }
-            
-            if ($this->state==3) break;
-        }
-        
-        if ($this->result->payload) {
-            return $this->result->payload;
-        } else {
-            return "API Timeout";
+        } catch (Exception $e) {
+            return "Mosquitto error";
         }
     }
     
