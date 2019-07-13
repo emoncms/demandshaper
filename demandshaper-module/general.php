@@ -147,7 +147,7 @@
               </tr>
               <tr>
                 <td><span class="">OVMS Vehicle ID: </span></td><td><input class="input" name="vehicleid" type="text" style="width:150px"/></td>
-                <td><span class="">OVMS Car Password: </span></td><td><input class="input" name="carpass" type="password" style="width:150px"/></td>
+                <td><span class="">OVMS Car Password: </span></td><td><input class="input" name="carpass" type="text" style="width:150px"/></td>
               </tr>
               </table>
           </div>
