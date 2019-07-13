@@ -133,7 +133,7 @@ function get_forecast($redis,$signal) {
     // EnergyLocal demand shaper
     // -----------------------------------------------------------------------------  
     else if ($signal=="cydynni") {
-        $optimise = MAX;
+        $optimise = MIN;
         $result = json_decode($redis->get("demandshaper:bethesda"));
         
         // Validate demand shaper
@@ -157,20 +157,22 @@ function get_forecast($redis,$signal) {
             
             $tmp = array();
             $max = $max += -1*$min;
-            for ($i=0; $i<$len; $i++) $tmp[$i*0.5] = 1.0 - (($EL_signal[$i] + -1*$min) / $max);
+            for ($i=0; $i<$len; $i++) $tmp[$i*0.5] = (($EL_signal[$i] + -1*$min) / $max);
             $EL_signal = $tmp;
             
-            //------------------------
-            
-            for ($i=0; $i<count($EL_signal); $i++) {
+            $value = 0.5;
+            $timestamp = $start_timestamp;
+            for ($i=0; $i<$divisions; $i++) {
 
                 $date->setTimestamp($timestamp);
                 $h = 1*$date->format('H');
                 $m = 1*$date->format('i')/60;
                 $hour = $h + $m;
                 
-                $profile[] = array($timestamp*1000,$EL_signal[$hour],$hour);
-                $timestamp += 1800; 
+                if (isset($EL_signal[$hour])) $value = $EL_signal[$hour];
+                
+                $profile[] = array($timestamp*1000,$value,$hour);
+                $timestamp += $resolution; 
             }
         }
     // -----------------------------------------------------------------------------
