@@ -1,15 +1,15 @@
 <?php
 
 global $mysqli,$redis,$session;
-    
-$menu['tabs'][] = array(
-    'icon'=>'calendar',
-    'title'=> _("Demandshaper"),
-    'path'=> 'demandshaper',
-    'data'=> array('sidebar' => '#sidebar_demandshaper')
-);
 
-if ($session['read']) {
+if ($session['write']) {
+
+    $menu['tabs'][] = array(
+        'icon'=>'calendar',
+        'title'=> _("Demandshaper"),
+        'path'=> 'demandshaper',
+        'data'=> array('sidebar' => '#sidebar_demandshaper')
+    );
 
     require_once "Modules/demandshaper/demandshaper_model.php";
     $demandshaper = new DemandShaper($mysqli,$redis);
