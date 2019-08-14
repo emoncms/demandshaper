@@ -56,9 +56,10 @@ var apikeystr = "&apikey=<?php echo $apikey; ?>";
       <button class="btn btn-small auth-check-btn auth-check-allow">Allow</button>
   </div>
 
-  <div id="no-devices-found" class="hide">
-
-      <h2 id="no-devices-found-title">No Devices Found</h2>
+  <div id="wizard" class="hide">
+      
+      <h2>Demand Shaper Module</h2>
+      <p>Schedule your smart devices to run at the best time using cost, carbon<br>and local renewable power availability forecasts for the day ahead.</p>
       
       <h2 id="icon-list">
         <svg class="icon plus"><use xlink:href="#icon-smartplug"></use></svg>
@@ -68,18 +69,50 @@ var apikeystr = "&apikey=<?php echo $apikey; ?>";
       </h2>
       <div style="height:10px"></div>
 
-      <div id="no-devices-found-checking">
-          <p>Checking for pairing request</p><br>
-          <img src="<?php echo $path; ?>Modules/demandshaper/ajax-loader.gif">
-          <br><br>
+      <div class="wizard-option-l1" name="add-device"><svg class="icon"><use xlink:href="#icon-plus"></use></svg> Add Device</div>
+      <div class="wizard-group hide" name="add-device">
+          <div class="wizard-option-l2" name="smartplug"><svg class="icon"><use xlink:href="#icon-smartplug"></use></svg> SonOff Smart Plug</div>
+          <div class="wizard-option-l3 hide" name="smartplug">
+          <p>1. Plug your smart plug into an electrical socket. The light on the plug will show green for 3 seconds followed by a short off period and then a couple of very short flashes. This indicates that the plug is working and has created a WIFI Access Point.</p>
           
-          <div class="wizard-box-controls">
-            <div class="wizard-title">Smartplug Setup <span class="p-2" style="font-size:larger"></span></div>
-            <div class="wizard-next">Next</div>
-            <div class="wizard-back">Back</div>
+          <p>2. The WIFI Access Point will then appear in your laptop or phones available WIFI networks, the SSID will contain the name smartplug followed by a number e.g: 'smartplug1'. Connect to this network. Once connected click on the following link to open the smartplug configuration interface in a new window: <b><a href="http://192.168.4.1" target="_blank" style="color:#fff">http://192.168.4.1</a></b></p>
+    
+          <p>3. On the smartplug configuration interface select your home WIFI network, enter the passkey and click connect. The green light on the smartplug will now turn on again. If the connection is successful you will see 10 very fast consecutive flashes. The web interface will also show that the module has connected and its IP address.</p>
+    
+          <p><b>Failed Connection</b><br>If the smartplug fails to connect to the selected WIFI network the green LED will stay on with a slight pulsing rythym for 30 seconds before the plug automatically resets and tries again. To re-enter setup mode hold the button on the front of the smartplug down while the green LED is on.</p>
+    
+          <p>4. With the smartplug WIFI settings configured, connect back to you home network and keep this window open. After a couple of minutes a notice will appear asking whether to allow device at the given ip address to connect. Click allow and wait a couple of minutes for the smart plug to appear in the left hand menu. Click on the smart plug to start scheduling it.</p>
           </div>
-          <div class="wizard-box" step=0></div>
+          <div class="wizard-option-l2" name="emonevse"><svg class="icon"><use xlink:href="#icon-openevse"></use></svg> OpenEVSE Charging Station</div>
+          <div class="wizard-option-l3 hide" name="emonevse">
           
+          <p>See <b><a href="https://guide.openenergymonitor.org/integrations/evse-setup/" target="_blank" style="color:#fff">https://guide.openenergymonitor.org/integrations/evse-setup/</a></b> for main OpenEVSE setup guide.</p>
+          
+          <p>1. Once powered up the OpenEVSE will create a Wifi Access Point. Keeping this window open, add a new browser tab and then connect to the OpenEVSE WiFi Access Point with SSID OpenEVSE_xxxx and password openevse. You should get directed to a captive portal where you choose to join a local network. If the captive portal does not work, browse to <b><a href="http://192.168.4.1" target="_blank" style="color:#fff" >http://192.168.4.1</a></b></p>
+    
+          <p>2. Select your local WIFI network, enter the passkey and click connect.</p>
+          
+          <p>3. On the main OpenEVSE configuration interface select 'Services'. In the MQTT section, enter the IP address of the hub or its hostname e.g <i>emonpi</i> or <i>emonpi.local</i>. The username should be <i>emonpi</i>, password: <i>emonpimqtt2016</i> and base topic: <i>emon/openevse</i>. Click Save to complete.</p>          
+          
+          <p>4. Navigate to the emoncms inputs page where a set of OpenEVSE inputs will appear including charge current, energy used and charger state. Click on the Cog to the top-right of the inputs to bring up the 'Configure Device' window. Select the EVSE > OpenEVSE > Default device template and then click Initialize and Initialize again to confirm.</p>
+          
+          <p>5. Navigate back to this page, the OpenEVSE device should now appear in the left hand menu. Click on the OpenEVSE menu item to start scheduling it.</p>
+          </div> 
+          <div class="wizard-option-l2" name="hpmon"><svg class="icon"><use xlink:href="#icon-hpmon"></use></svg> Heat pump Controller</div>
+          <div class="wizard-option-l3 hide" name="hpmon">
+          </div>       
+          <div class="wizard-option-l2" name="emonth" style="border-bottom:1px solid #fff"><svg class="icon"><use xlink:href="#icon-emonth"></use></svg> EmonTH Temperature & Humidity node</div>
+          <div class="wizard-option-l3 hide" name="emonth"></div>       
+      </div>
+      
+      <div class="wizard-option-l1" name="troubleshooting" style="border-bottom:1px solid #fff"><svg class="icon"><use xlink:href="#icon-apps"></use></svg>Troubleshooting</div> 
+      <div class="wizard-group hide" name="troubleshooting">
+          <div class="wizard-option-l2" name="nopairingreq">No pairing request received</div>
+          <div class="wizard-option-l3 hide" name="nopairingreq"></div>       
+          <div class="wizard-option-l2" name="settingsmismatch">Settings mismatch</div>
+          <div class="wizard-option-l3 hide" name="settingsmismatch"></div>       
+          <div class="wizard-option-l2" name="unresponsive">Device unresponsive</div>
+          <div class="wizard-option-l3 hide" name="unresponsive"></div>
       </div>
   </div>
 
@@ -145,8 +178,8 @@ function auth_check(){
             $("#auth-check-ip").html(data.ip);
             $("#auth-check").show();
             $("#table").css("margin-top","0");
-            $("#no-devices-found-title").html("Device Found");
-            $("#no-devices-found-checking").html("Click Allow to pair device");
+            // $("#no-devices-found-title").html("Device Found");
+            // $("#no-devices-found-checking").html("Click Allow to pair device");
         } else {
             $("#table").css("margin-top","3rem");
             $("#auth-check").hide();
@@ -158,7 +191,7 @@ $(".auth-check-allow").click(function(){
     var ip = $("#auth-check-ip").html();
     $.ajax({ url: emoncmspath+"device/authallow.json?ip="+ip+apikeystr, dataType: 'json', async: true, success: function(data) {
         $("#auth-check").hide();
-        $("#no-devices-found-checking").html("Please wait for device to connect");
+        // $("#no-devices-found-checking").html("Please wait for device to connect");
     }});
 });
 
@@ -168,63 +201,25 @@ $("#add-device").click(function(event){
 });
 
 function show_device_finder() {
-    $("#no-devices-found").show();
     $("#scheduler-outer").hide();
+    $("#wizard").show();
     auth_check();
     clearInterval(auth_check_interval);
     auth_check_interval = setInterval(auth_check,5000);
 }
 
 function hide_device_finder() {
-    $("#no-devices-found").hide();
     clearInterval(auth_check_interval);
 }
 
-var step = 0;
-var steps = [
-
-    "Plug your smart plug into an electrical socket. The light on the plug will show green for 3 seconds followed by a short off period and then a couple of very short flashes. This indicates that the plug is working and has created a WIFI Access Point.",
-    
-    "The WIFI Access Point should appear in your laptop or phones available WIFI networks, the SSID will contain the name smartplug followed by a number e.g: 'smartplug1'.<br><br>Connect to this network, once connected click on the following link to open the smartplug configuration interface in a new window: <b>http://192.168.4.1</b>",
-    
-    "On the smartplug configuration interface select the WIFI network you wish to connect to, enter the passkey and click connect.<br><br>The green light on the smartplug will now turn on again. If the connection is successful you will see 10 very fast consecutive flashes.<br><br>The web interface will also show that the module has connected and its IP address.",
-    
-    "<b>Failed Connection</b><br>If the smartplug fails to connect to the selected WIFI network the green LED will stay on with a slight pulsing rythym for 30 seconds before the plug automatically resets and tries again. To re-enter setup mode hold the button on the front of the smartplug down while the green LED is on.",
-    
-    "With the smartplug WIFI settings configured connect back to you home network and keep this window open.<br><br>After a couple of minutes a notice will appear asking whether to allow device at the given ip address to connect.<br><br>Click allow and wait a couple of minutes for the device to appear."
-]
-
-$(".wizard-box").html(steps[step]);
-if (step==0) $(".wizard-back").hide();
-
-indicator = function(_step) {
-    let off = '○',
-        on = '●',
-        indicator = '';
-    steps.forEach(function(item,index) {
-        indicator += index < _step + 1 ? on: off;
-    })
-    return indicator
-}
-$(".wizard-title span").text(indicator(0));
-
-$(".wizard-next").click(function(){
-    end = steps.length-1
-    step++;
-    if (step>end) step=end;
-    $(".wizard-box").html(steps[step]);
-    $(".wizard-back").show();
-    if (step==end) $(".wizard-next").hide();
-    $(".wizard-title span").text(indicator(step));
+$(".wizard-option-l1").click(function(){
+   var name = $(this).attr("name");
+   $(".wizard-group[name="+name+"]").toggle();
 });
 
-$(".wizard-back").click(function(){
-    step--;
-    if (step<0) step=0;
-    $(".wizard-box").html(steps[step]);
-    $(".wizard-next").show();
-    if (step==0) $(".wizard-back").hide();
-    $(".wizard-title span").html(indicator(step));
+$(".wizard-option-l2").click(function(){
+   var name = $(this).attr("name");
+   $(".wizard-option-l3[name="+name+"]").toggle();
 });
 
 </script>
