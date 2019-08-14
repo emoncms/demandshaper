@@ -69,6 +69,7 @@ var apikeystr = "&apikey=<?php echo $apikey; ?>";
       </h2>
       <div style="height:10px"></div>
 
+      <div style="border-bottom:1px solid #fff">
       <div class="wizard-option-l1" name="add-device"><svg class="icon"><use xlink:href="#icon-plus"></use></svg> Add Device</div>
       <div class="wizard-group hide" name="add-device">
           <div class="wizard-option-l2" name="smartplug"><svg class="icon"><use xlink:href="#icon-smartplug"></use></svg> SonOff Smart Plug</div>
@@ -100,20 +101,45 @@ var apikeystr = "&apikey=<?php echo $apikey; ?>";
           </div> 
           <div class="wizard-option-l2" name="hpmon"><svg class="icon"><use xlink:href="#icon-hpmon"></use></svg> Heat pump Controller</div>
           <div class="wizard-option-l3 hide" name="hpmon">
+          <p><b>Requirements:</b> Heatpump Monitor running EmonESP timer branch, with modification to control Mitsubishi Ecodan heat pump with FTC2 flow temp controller.</p>
+          <p>1. Power up the heat pump monitor. The light on the Wifi module will show blue for 3 seconds followed by a short off period and then a couple of very short flashes. This indicates that the module is working and has created a WIFI Access Point.</p>
+          
+          <p>2. The WIFI Access Point will then appear in your laptop or phones available WIFI networks, the SSID will contain the name hpmon followed by a number e.g: 'hpmon5'. Connect to this network. Once connected click on the following link to open the heat pump monitor configuration interface in a new window: <b><a href="http://192.168.4.1" target="_blank" style="color:#fff">http://192.168.4.1</a></b></p>
+    
+          <p>3. On the heat pump monitor configuration interface select your home WIFI network, enter the passkey and click connect. The blue light on the heat pump monitor will now turn on again. If the connection is successful you will see 10 very fast consecutive flashes. The web interface will also show that the module has connected and its IP address.</p>
+    
+          <p><b>Failed Connection</b><br>If the heat pump monitor fails to connect to the selected WIFI network the green LED will stay on with a slight pulsing rythym for 30 seconds before the plug automatically resets and tries again. To re-enter setup mode hold the reset button on the front of the heat pump monitor WiFi module down while the blue LED is on.</p>
+    
+          <p>4. With the heat pump monitor WIFI settings configured, connect back to you home network and keep this window open. After a couple of minutes a notice will appear asking whether to allow device at the given ip address to connect. Click allow and wait a couple of minutes for the heat pump monitor to appear in the left hand menu. Click on the heat pump monitor to start scheduling it.</p>
+          </div>      
+          <div class="wizard-option-l2" name="emonth"><svg class="icon"><use xlink:href="#icon-emonth"></use></svg> EmonTH Temperature & Humidity node</div>
+          <div class="wizard-option-l3 hide" name="emonth">
+          <p>In addition to smart control the Demand Shaper interface is designed to show small pre-built dashboards for different monitoring devices. To see data from an EmonTH Temperature & Humidity node, simply insert batteries to power up and wait a couple of minutes for the EmonTH to appear in the left hand menu.</p>
           </div>       
-          <div class="wizard-option-l2" name="emonth" style="border-bottom:1px solid #fff"><svg class="icon"><use xlink:href="#icon-emonth"></use></svg> EmonTH Temperature & Humidity node</div>
-          <div class="wizard-option-l3 hide" name="emonth"></div>       
       </div>
       
-      <div class="wizard-option-l1" name="troubleshooting" style="border-bottom:1px solid #fff"><svg class="icon"><use xlink:href="#icon-apps"></use></svg>Troubleshooting</div> 
+      <div class="wizard-option-l1" name="troubleshooting"><svg class="icon"><use xlink:href="#icon-apps"></use></svg>Troubleshooting</div> 
       <div class="wizard-group hide" name="troubleshooting">
           <div class="wizard-option-l2" name="nopairingreq">No pairing request received</div>
-          <div class="wizard-option-l3 hide" name="nopairingreq"></div>       
+          <div class="wizard-option-l3 hide" name="nopairingreq">
+          <p>If no pairing request is received, this suggests a WiFi connectivity issue with the smart plug. Switch the smart plug off at the wall, wait 10s and switch it on again. If the smart plug connects successfully you should see 10 very fast consecutive flashes. If after a couple of minutes a pairing request is still not seen try a factory reset of the smart plug as described below.</p>          
+          </div>       
           <div class="wizard-option-l2" name="settingsmismatch">Settings mismatch</div>
-          <div class="wizard-option-l3 hide" name="settingsmismatch"></div>       
+          <div class="wizard-option-l3 hide" name="settingsmismatch">
+          <p>This notice appears if the schedule settings on the device differ to those on the hub, this can happen if the schedule settings did not transfer correctly due a WiFi or other connectivity issue. Try resending the command by clicking on/off or smart again or changing the timing. There is an ongoing issue where this notice sometimes appears when scheduling appliances at 15 minute intervals. Try changing the schedule period to see if the issue goes away.</p>
+          </div>       
           <div class="wizard-option-l2" name="unresponsive">Device unresponsive</div>
-          <div class="wizard-option-l3 hide" name="unresponsive"></div>
+          <div class="wizard-option-l3 hide" name="unresponsive">
+          <p>This notice appears if the hub cant contact the device, it may be switched off at the wall or outside of WiFi range. If it is neither of these try power cycling the device (e.g smart plug) to see if it becomes responsive again. Refresh the page or toggle on/off in the interface to attempt to control the device again.</p>
+          </div>
+          <div class="wizard-option-l2" name="factoryreset">Smartplug Factory Reset</div>
+          <div class="wizard-option-l3 hide" name="factoryreset">
+              <p>1. Turn the smart plug off and on at the wall, at the moment the green light appears, press the button on the front of the smart plug to enter WifiAP mode. You should now see 2 brief consecutive flashes to indicate that the smart plug is in WifiAP mode. </p>
+              <p>2. The WIFI Access Point will then appear in your laptop or phones available WIFI networks, the SSID will contain the name smartplug followed by a number e.g: 'smartplug1'. Connect to this network. Once connected click on the following link to open the smartplug configuration interface in a new window: <b><a href="http://192.168.4.1" target="_blank" style="color:#fff">http://192.168.4.1</a></b></p>
+              <p>3. Scroll down to the bottom of the configuration interface and click on Factory Reset under the system tab. Restart the smart plug setup process following the guide above.</p>
+          </div>
       </div>
+  </div>
   </div>
 
   <?php
@@ -214,12 +240,14 @@ function hide_device_finder() {
 
 $(".wizard-option-l1").click(function(){
    var name = $(this).attr("name");
-   $(".wizard-group[name="+name+"]").toggle();
+   $(".wizard-group[name="+name+"]").slideToggle();
+   $(".wizard-group[name!="+name+"]").slideUp();
 });
 
 $(".wizard-option-l2").click(function(){
    var name = $(this).attr("name");
-   $(".wizard-option-l3[name="+name+"]").toggle();
+   $(".wizard-option-l3[name="+name+"]").slideToggle();
+   $(".wizard-option-l3[name!="+name+"]").slideUp();
 });
 
 </script>

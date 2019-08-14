@@ -339,10 +339,11 @@ body {padding:0}
     cursor:pointer;
     text-align:left;
     font-size:22px;
+    background-color:rgba(255,255,255,0.1);
 }
 
 .wizard-option-l2:hover {
-    background-color:rgba(255,255,255,0.1);
+    background-color:rgba(255,255,255,0.2);
 }
 
 .wizard-option-l3 {
