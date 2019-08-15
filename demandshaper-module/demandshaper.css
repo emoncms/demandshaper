@@ -180,72 +180,44 @@ body {padding:0}
 .btn-group .red {background-color:#ff5d32;}
 
 #wizard {
-    margin-left:10px;
-    margin-right:10px;
-    padding:20px;
-    padding-top:100px;
-    min-height:300px;
+    padding: 1rem;
+    padding-top: 6rem;
     background-color: #ea510e;
     text-align:center;
     color:#fff;
     max-width:921px;
 }
-  
+body.demandshaper.collapsed #wizard {
+    margin-left: auto;
+    margin-right: auto;
+}
+#scheduler-top {
+    height:1rem;
+}
 @media (max-width: 767px) {
   
-  #scheduler-outer {
-    margin-left:5px;
-    margin-right:5px;
-  }
-  
-  #scheduler-top {
-    height:5px;
-  }
-  
   .scheduler-inner {
-    padding:10px;
     background-color:#f0f0f0;
   }
-  
   .scheduler-inner2 {
     padding:0px;
     background-color:none;
   }
-  
   .weekly-scheduler-day {
-    margin-right:0px;
     width:42px; 
     height:42px; 
     background-size:42px;
     font-size:12px;
   }
-  
   .weekly-scheduler-text {
       margin-top:12px;
   }
 
-  #wizard {
-      margin-left:5px;
-      margin-right:5px;
-  }
-}
-
-@media (min-width: 767px) {
-  
-  #scheduler-outer {
-    margin-left:10px;
-    margin-right:10px;
-  }
-  
-  #scheduler-top {
-    height:10px;
-  }
 }
 
 #auth-check {
     padding:10px;
     background-color:#dc9696;
-    margin:10px;
     margin-top:0px;
     font-weight:bold;
     border: 1px solid #de6464;

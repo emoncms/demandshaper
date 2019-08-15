@@ -61,13 +61,12 @@ var apikeystr = "&apikey=<?php echo $apikey; ?>";
       <h2>Demand Shaper Module</h2>
       <p>Schedule your smart devices to run at the best time using cost, carbon<br>and local renewable power availability forecasts for the day ahead.</p>
       
-      <h2 id="icon-list">
+      <h2 id="icon-list" style="margin-bottom: 2rem">
         <svg class="icon plus"><use xlink:href="#icon-smartplug"></use></svg>
         <svg class="icon plus"><use xlink:href="#icon-hpmon"></use></svg>
         <svg class="icon plus"><use xlink:href="#icon-openevse"></use></svg>
         <svg class="icon plus"><use xlink:href="#icon-emonth"></use></svg>
       </h2>
-      <div style="height:10px"></div>
 
       <div style="border-bottom:1px solid #fff">
       <div class="wizard-option-l1" name="add-device"><svg class="icon"><use xlink:href="#icon-plus"></use></svg> Add Device</div>
