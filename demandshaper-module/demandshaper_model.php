@@ -131,4 +131,28 @@ class DemandShaper
         
         return $schedules;
     }
+    
+    public function get_forecast_list() {
+        return array(
+            // General
+            "carbonintensity"=>array("category"=>"General","name"=>"Carbon Intensity"),
+            // Octopus Agile
+            "octopusagile_A"=>array("category"=>"Octopus Agile","name"=>"Eastern England"),
+            "octopusagile_B"=>array("category"=>"Octopus Agile","name"=>"East Midlands"),
+            "octopusagile_C"=>array("category"=>"Octopus Agile","name"=>"London"),
+            "octopusagile_D"=>array("category"=>"Octopus Agile","name"=>"Merseyside and Northern Wales"),
+            "octopusagile_E"=>array("category"=>"Octopus Agile","name"=>"West Midlands"),
+            "octopusagile_F"=>array("category"=>"Octopus Agile","name"=>"North Eastern England"),
+            "octopusagile_G"=>array("category"=>"Octopus Agile","name"=>"North Western England"),
+            "octopusagile_H"=>array("category"=>"Octopus Agile","name"=>"Southern England"),
+            "octopusagile_J"=>array("category"=>"Octopus Agile","name"=>"South Eastern England"),
+            "octopusagile_K"=>array("category"=>"Octopus Agile","name"=>"Southern Wales"),
+            "octopusagile_L"=>array("category"=>"Octopus Agile","name"=>"South Western England"),
+            "octopusagile_M"=>array("category"=>"Octopus Agile","name"=>"Yorkshire"),
+            "octopusagile_N"=>array("category"=>"Octopus Agile","name"=>"Southern Scotland"),
+            "octopusagile_P"=>array("category"=>"Octopus Agile","name"=>"Northern Scotland"),
+            // Energy Local bethesda
+            "energylocal_bethesda"=>array("category"=>"Energy Local","name"=>"Bethesda")
+        );
+    }
 }

@@ -30,6 +30,8 @@ function demandshaper_controller()
     
     require_once "Modules/device/device_model.php";
     $device = new Device($mysqli,$redis);
+    
+    $forecast_list = $demandshaper->get_forecast_list();
         
     switch ($route->action)
     {  
@@ -37,7 +39,7 @@ function demandshaper_controller()
             $route->format = "html";
             if ($session["write"]) {
                 $apikey = $user->get_apikey_write($session["userid"]);
-                return view("Modules/demandshaper/view.php", array("remoteaccess"=>$remoteaccess, "apikey"=>$apikey));
+                return view("Modules/demandshaper/view.php", array("remoteaccess"=>$remoteaccess, "apikey"=>$apikey, "forecast_list"=>$forecast_list));
             } else {
                 // redirect to login
                 return "";

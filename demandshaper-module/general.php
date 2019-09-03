@@ -128,16 +128,11 @@
           </div><br>
           <div id="schedule-co2" style="font-size:14px; color:#888;"></div>
 
-          
           <br>
           <span class="">Demand shaper signal: </span>
-          <select name="signal" class="input scheduler-select" style="margin-top:10px">
-              <option value="carbonintensity">UK Grid Carbon Intensity</option>
-              <option value="octopus">Octopus Agile (D)</option>
-              <option value="cydynni">Energy Local: Bethesda</option>
-              <option value="economy7">Economy 7</option>
-          </select>
-          
+          <select class="input forecast-category" style="margin-top:10px; width:150px"></select>
+          <select class="input forecast" style="margin-top:10px; width:180px"></select>
+                              
           <div class="openevse hide">
             <br>
             <table style="width:100%; text-align:left">

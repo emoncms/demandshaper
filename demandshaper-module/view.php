@@ -31,6 +31,8 @@ var devices = {};
 
 var apikeystr = "&apikey=<?php echo $apikey; ?>";
 
+var forecast_list = <?php echo json_encode($forecast_list); ?>;
+
 </script>
 <style>
     #icon-list svg {
@@ -249,5 +251,4 @@ $(".wizard-option-l2").click(function(){
    $(".wizard-option-l3[name="+name+"]").slideToggle();
    $(".wizard-option-l3[name!="+name+"]").slideUp();
 });
-
 </script>

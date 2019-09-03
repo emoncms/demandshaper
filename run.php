@@ -71,6 +71,7 @@ if (file_exists("$linked_modules_dir/demandshaper/scheduler.php")) {
 }
 require "Modules/demandshaper/demandshaper_model.php";
 $demandshaper = new DemandShaper($mysqli,$redis);
+$forecast_list = $demandshaper->get_forecast_list();
 
 // -------------------------------------------------------------------------
 // Control Loop
@@ -84,7 +85,7 @@ $last_flowtemp = array();
 $update_interval = 60;
 $last_state_check = 0;
 $schedules = array();
-
+$firstrun = true;
 $lasttime = time();
 
 while(true) 
@@ -97,35 +98,11 @@ while(true)
     }
     
     // ---------------------------------------------------------------------
-    // Load demand shaper and cache locally every hour
-    // ---------------------------------------------------------------------
-    if (($now-$last_30min)>=3600) {
-        $last_30min = $now;
-
-        // Energy Local Bethesda demand shaper
-        if ($result = http_request("GET","https://dashboard.energylocal.org.uk/cydynni/demandshaper",array())) {
-            $redis->set("demandshaper:bethesda",$result);
-            $log->info("load: demandshaper:bethesda (".strlen($result).")");
-        }
-        
-        // Uk Grid carbon intensity
-        if ($result = http_request("GET","https://emoncms.org/demandshaper/carbonintensity",array())) {
-            $redis->set("demandshaper:carbonintensity",$result);
-            $log->info("load: demandshaper:carbonintensity (".strlen($result).")");
-        }
-        
-        // Octopus agile
-        if ($result = http_request("GET","https://emoncms.org/demandshaper/octopus",array())) {
-            $redis->set("demandshaper:octopus",$result);
-            $log->info("load: demandshaper:octopus (".strlen($result).")");
-        }
-    }
-
-    // ---------------------------------------------------------------------
     // Control Loop
     // ---------------------------------------------------------------------
-    if ($now%$update_interval==0 || $trigger) {
-
+    if ($now%$update_interval==0 || $trigger || $firstrun) {
+        $firstrun = false;
+        
         $redis->set("demandshaper:trigger",0);
 
         // Get time of start of day
@@ -140,6 +117,48 @@ while(true)
         $schedules = $demandshaper->get($userid);
         if ($schedules!=null)
         {
+            // ---------------------------------------------------------------------
+            // Load demand shaper and cache locally every hour
+            // - load only relevant forecasts
+            // ---------------------------------------------------------------------
+            if (($now-$last_30min)>=3600) {
+                $last_30min = $now;
+                
+                $request_forecasts = array();
+
+                foreach ($schedules as $sid=>$schedule) {
+                    if (!in_array($schedule->settings->signal,$request_forecasts)) $request_forecasts[] = $schedule->settings->signal;
+                }
+                
+                // Clear old forecasts - ensures forecasts are reloaded properly if selected after an extended period in the UI
+                foreach ($forecast_list as $forecast_key=>$forecast) $redis->del("demandshaper:$forecast_key");
+                
+                // Load in only relevant forecasts
+                foreach ($request_forecasts as $forecast) {
+                    if (strpos($forecast,"energylocal_")!==false) {
+                        // Energy Local Bethesda demand shaper
+                        if ($result = http_request("GET","https://dashboard.energylocal.org.uk/cydynni/demandshaper",array())) {
+                            $redis->set("demandshaper:energylocal_bethesda",$result);
+                            $log->info("load: demandshaper:energylocal_bethesda (".strlen($result).")");
+                        }
+                    // Octopus agile
+                    } else if (strpos($forecast,"octopusagile_")!==false && strlen($forecast)==14) {
+                        // Agile region code options
+                        $gsp_id = "A"; if (in_array($forecast[13],array("A","B","C","D","E","F","G","H","J","K","L","M","N","P"))) $gsp_id = $forecast[13];
+                        if ($result = http_request("GET","https://emoncms.org/demandshaper/octopus?gsp=$gsp_id&time=".time(),array())) {
+                            $redis->set("demandshaper:octopusagile_$gsp_id",$result);
+                            $log->info("load: demandshaper:octopusagile_$gsp_id (".strlen($result).")");
+                        }
+                    } else if ($forecast=="carbonintensity") {
+                        // Uk Grid carbon intensity
+                        if ($result = http_request("GET","https://emoncms.org/demandshaper/carbonintensity",array())) {
+                            $redis->set("demandshaper:carbonintensity",$result);
+                            $log->info("load: demandshaper:carbonintensity (".strlen($result).")");
+                        }
+                    }
+                }
+            }
+        
             foreach ($schedules as $sid=>$schedule)
             {   
                 $device = false;

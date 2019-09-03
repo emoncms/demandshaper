@@ -71,13 +71,21 @@ function get_forecast($redis,$signal) {
     }
     
     // -----------------------------------------------------------------------------
-    // Octopus
-    // ----------------------------------------------------------------------------- 
-    if ($signal=="octopus") {
+    // Octopus Agile
+    // -----------------------------------------------------------------------------
+    else if (strpos($signal,"octopusagile_")!==false && strlen($signal)==14) {
+        $gsp_id = "A"; if (in_array($signal[13],array("A","B","C","D","E","F","G","H","J","K","L","M","N","P"))) $gsp_id = $signal[13];
+    
         $optimise = MIN;
         //$result = json_decode(file_get_contents("https://api.octopus.energy/v1/products/AGILE-18-02-21/electricity-tariffs/E-1R-AGILE-18-02-21-D/standard-unit-rates/"));
         // 1. Fetch Octopus forecast
-        $result = json_decode($redis->get("demandshaper:octopus"));
+        if (!$result = $redis->get("demandshaper:octopusagile_$gsp_id")) {
+            if ($result = http_request("GET","https://emoncms.org/demandshaper/octopus?gsp=$gsp_id&time=".time(),array())) {
+                $redis->set("demandshaper:octopusagile_$gsp_id",$result);
+                // $log->info("load: demandshaper:octopusagile_$gsp_id (".strlen($result).")");
+            }
+        }
+        $result = json_decode($result);
         $start = $timestamp; // current time
         $td = 0;
         
@@ -132,9 +140,9 @@ function get_forecast($redis,$signal) {
     // -----------------------------------------------------------------------------
     // EnergyLocal demand shaper
     // -----------------------------------------------------------------------------  
-    else if ($signal=="cydynni") {
+    else if ($signal=="energylocal_bethesda") {
         $optimise = MIN;
-        $result = json_decode($redis->get("demandshaper:bethesda"));
+        $result = json_decode($redis->get("demandshaper:energylocal_bethesda"));
         
         // Validate demand shaper
         if  ($result!=null && isset($result->DATA)) {
@@ -175,10 +183,11 @@ function get_forecast($redis,$signal) {
                 $timestamp += $resolution; 
             }
         }
+    }
     // -----------------------------------------------------------------------------
     // Economy 7 
     // ----------------------------------------------------------------------------- 
-    } else if ($signal=="economy7") {
+    else if ($signal=="economy7") {
     
         $date = new DateTime();
         $date->setTimezone(new DateTimeZone("Europe/London"));
