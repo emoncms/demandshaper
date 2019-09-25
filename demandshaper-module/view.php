@@ -24,7 +24,6 @@ if ($remoteaccess) $emoncmspath .= "remoteaccess/";
 ?>
 
 <script>
-var path = "<?php echo $path; ?>";
 var emoncmspath = "<?php echo $emoncmspath; ?>";
 var device_name = "<?php echo $device; ?>";
 var devices = {};
