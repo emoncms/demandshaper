@@ -44,8 +44,13 @@ $mqtt_client->onConnect('connect');
 $mqtt_client->onDisconnect('disconnect');
 $mqtt_client->onMessage('message');
 
-
-$mysqli = @new mysqli($server,$username,$password,$database,$port);
+$mysqli = @new mysqli(
+    $settings["sql"]["server"],
+    $settings["sql"]["username"],
+    $settings["sql"]["password"],
+    $settings["sql"]["database"],
+    $settings["sql"]["port"]
+);
 if ( $mysqli->connect_error ) {
     
     $log->error("Can't connect to database, please verify credentials/configuration in settings.php");
@@ -59,10 +64,10 @@ if ( $mysqli->connect_error ) {
 // Redis Connect
 // -------------------------------------------------------------------------
 $redis = new Redis();
-if (!$redis->connect($redis_server['host'], $redis_server['port'])) { $log->error("Can't connect to redis"); die; }
+if (!$redis->connect($settings['redis']['host'], $settings['redis']['port'])) { $log->error("Can't connect to redis"); die; }
 
-if (!empty($redis_server['prefix'])) $redis->setOption(Redis::OPT_PREFIX, $redis_server['prefix']);
-if (!empty($redis_server['auth']) && !$redis->auth($redis_server['auth'])) {
+if (!empty($settings['redis']['prefix'])) $redis->setOption(Redis::OPT_PREFIX, $settings['redis']['prefix']);
+if (!empty($settings['redis']['auth']) && !$redis->auth($settings['redis']['auth'])) {
     $log->error("Can't connect to redis, autentication failed"); die;
 }
 
@@ -374,8 +379,8 @@ while(true)
     if (!$connected && (time()-$last_retry)>5.0) {
         $last_retry = time();
         try {
-            $mqtt_client->setCredentials($mqtt_server['user'],$mqtt_server['password']);
-            $mqtt_client->connect($mqtt_server['host'], $mqtt_server['port'], 5);
+            $mqtt_client->setCredentials($settings['mqtt']['user'],$settings['mqtt']['password']);
+            $mqtt_client->connect($settings['mqtt']['host'], $settings['mqtt']['port'], 5);
         } catch (Exception $e) { }
     }
     try { $mqtt_client->loop(); } catch (Exception $e) { }

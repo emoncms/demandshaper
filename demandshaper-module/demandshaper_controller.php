@@ -17,7 +17,7 @@ defined('EMONCMS_EXEC') or die('Restricted access');
 
 function demandshaper_controller()
 {
-    global $mysqli, $redis, $session, $route, $mqtt_server, $linked_modules_dir, $user;
+    global $mysqli, $redis, $session, $route, $settings, $linked_modules_dir, $user;
     $result = false;
 
     $route->format = "json";
@@ -199,7 +199,7 @@ function demandshaper_controller()
                     $state = new stdClass;
                     
                     include "Modules/demandshaper/MQTTRequest.php";
-                    $mqtt_request = new MQTTRequest($mqtt_server);
+                    $mqtt_request = new MQTTRequest($settings['mqtt']);
                     
                     if ($schedules->$device->settings->device_type=="hpmon" || $schedules->$device->settings->device_type=="smartplug") {
                         
