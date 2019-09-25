@@ -38,10 +38,10 @@
 ###
 
 [Unit]
-Description=Emoncms MQTT Input Script
-Wants=mosquitto.service mysql.service redis.service
-After=mosquitto.service mysql.service redis.service
-Documentation=https://github.com/emoncms/demandshaper.git
+Description=Emoncms Demandshaper service
+Wants=mysql.service redis.service
+After=mysql.service redis.service
+Documentation=https://github.com/emoncms/demandshaper/blob/master/readme.md
 
 # Uncomment this line to use a dedicated log file for StdOut and StdErr.
 # NOTE: only works in systemd v236+
