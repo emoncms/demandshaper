@@ -50,7 +50,7 @@ Documentation=https://github.com/emoncms/demandshaper.git
 
 [Service]
 Type=idle
-ExecStart=/usr/bin/php /home/pi/demandshaper/run.php
+ExecStart=/usr/bin/php /home/pi/demandshaper/demandshaper_run.php
 User=pi
 
 # Restart script if stopped
