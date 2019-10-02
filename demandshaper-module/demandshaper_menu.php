@@ -6,7 +6,7 @@ if ($session['write']) {
 
     $menu['tabs'][] = array(
         'icon'=>'calendar',
-        'text'=> _("Devices"),
+        'text'=> _("DemandShaper"),
         'path'=> 'demandshaper',
         'data'=> array('sidebar' => '#sidebar_demandshaper')
     );
