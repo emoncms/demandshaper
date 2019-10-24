@@ -239,15 +239,15 @@ while(true)
                             // Smart timer
                             if ($schedule->settings->ctrlmode=="smart") {
                                 if (count($schedule->runtime->periods)) {
-                                    $s1 = $schedule->runtime->periods[$active_period]->start[1] - $timeOffset;
-                                    $e1 = $schedule->runtime->periods[$active_period]->end[1] - $timeOffset;
+                                    $s1 = time_offset($schedule->runtime->periods[$active_period]->start[1],-$timeOffset);
+                                    $e1 = time_offset($schedule->runtime->periods[$active_period]->end[1],-$timeOffset);
                                 }
                             // Standard timer
                             } else if ($schedule->settings->ctrlmode=="timer") {
-                                $s1 = $schedule->settings->timer_start1 - $timeOffset;
-                                $e1 = $schedule->settings->timer_stop1 - $timeOffset;
-                                $s2 = $schedule->settings->timer_start2 - $timeOffset;
-                                $e2 = $schedule->settings->timer_stop2 - $timeOffset;
+                                $s1 = time_offset($schedule->settings->timer_start1,-$timeOffset);
+                                $e1 = time_offset($schedule->settings->timer_stop1,-$timeOffset);
+                                $s2 = time_offset($schedule->settings->timer_start2,-$timeOffset);
+                                $e2 = time_offset($schedule->settings->timer_stop2,-$timeOffset);
                             }
                                     
                             if (!isset($timer[$device])) $timer[$device] = "";
@@ -442,10 +442,10 @@ function message($message)
                 
                 if (isset($p->timer)) {
                     $timer = explode(" ",$p->timer);
-                    $schedules->$device->settings->timer_start1 = time_conv($timer[0]) + $timeOffset;
-                    $schedules->$device->settings->timer_stop1 = time_conv($timer[1]) + $timeOffset;
-                    $schedules->$device->settings->timer_start2 = time_conv($timer[2]) + $timeOffset;
-                    $schedules->$device->settings->timer_stop2 = time_conv($timer[3]) + $timeOffset;
+                    $schedules->$device->settings->timer_start1 = time_conv($timer[0],$timeOffset);
+                    $schedules->$device->settings->timer_stop1 = time_conv($timer[1],$timeOffset);
+                    $schedules->$device->settings->timer_start2 = time_conv($timer[2],$timeOffset);
+                    $schedules->$device->settings->timer_stop2 = time_conv($timer[3],$timeOffset);
                 }
                 
                 $schedules->$device->runtime->last_update_from_device = time();
@@ -466,10 +466,11 @@ function message($message)
             
             else if ($message->topic=="emon/$device/out/timer") {
                 $timer = explode(" ",$p);
-                $schedules->$device->settings->timer_start1 = time_conv($timer[0]) + $timeOffset;
-                $schedules->$device->settings->timer_stop1 = time_conv($timer[1]) + $timeOffset;
-                $schedules->$device->settings->timer_start2 = time_conv($timer[2]) + $timeOffset;
-                $schedules->$device->settings->timer_stop2 = time_conv($timer[3]) + $timeOffset;
+                $schedules->$device->settings->timer_start1 = time_conv($timer[0],$timeOffset);
+                $schedules->$device->settings->timer_stop1 = time_conv($timer[1],$timeOffset);
+                $schedules->$device->settings->timer_start2 = time_conv($timer[2],$timeOffset);
+                $schedules->$device->settings->timer_stop2 = time_conv($timer[3],$timeOffset);
+            
                 $schedules->$device->settings->flowT = ($timer[4]*0.0371)+7.14;
                 $demandshaper->set($userid,$schedules);
             }
@@ -477,8 +478,19 @@ function message($message)
     }
 }
 
-function time_conv($t){
-    return floor($t*0.01) + ($t*0.01 - floor($t*0.01))/0.6;
+function time_offset($t,$timeOffset) {
+    $t += $timeOffset;
+    if ($t<0.0) $t += 24.0;
+    if ($t>=24.0) $t -= 24.0;
+    return $t;
+}
+
+function time_conv($t,$timeOffset){
+    $t = floor($t*0.01) + ($t*0.01 - floor($t*0.01))/0.6;
+    $t += $timeOffset;
+    if ($t<0.0) $t += 24.0;
+    if ($t>=24.0) $t -= 24.0;
+    return $t;
 }
 
 function time_conv_dec_str($t,$div="") {

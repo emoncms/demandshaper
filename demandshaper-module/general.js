@@ -6,7 +6,7 @@ function load_device(device_id, device_name, device_type)
     $("#scheduler-outer").show();
 
     $("#devicename").html(jsUcfirst(device_name));
-    $(".node-scheduler-title").html("<span class='icon-"+device_type+"'></span>"+device_name+" <span id='device-state-message'></span>");
+    $(".node-scheduler-title").html("<span class='icon-"+device_type+"'></span>"+device_name+" <span class='device-state-message'></span>");
     $(".node-scheduler").attr("node",device_name);
 
     if (device_type=="openevse") {
@@ -183,9 +183,9 @@ function load_device(device_id, device_name, device_type)
                         // Check result
                         if (js_calc) {
                             if (JSON.stringify(result.schedule.runtime.periods)==JSON.stringify(schedule.runtime.periods)) { 
-                                console.log("MATCH"); 
+                                console.log("php js schedule match"); 
                             } else { 
-                                console.log("MATCH ERROR")
+                                console.log("php js schedule match error")
                                 console.log("php: "+JSON.stringify(result.schedule.runtime.periods))
                                 console.log("js:  "+JSON.stringify(schedule.runtime.periods))
                             }
@@ -428,12 +428,12 @@ function load_device(device_id, device_name, device_type)
                 } else {
                     out += ", "+Math.round(100.0*(1.0-(mean/peak)))+"% reduction vs peak";
                 }
-            } else if (schedule.settings.signal=="octopus" || schedule.settings.signal=="economy7") {
+            } else if (schedule.settings.signal.indexOf("octopus")==0 || schedule.settings.signal=="economy7") {
 
                 if (device_type=="openevse") {
                     var p_per_mile = (mean / 4.0);
                     var prc = 100-(100*(p_per_mile / 10.0));
-                    out = "Cost: "+(p_per_mile).toFixed(1)+"p/mile"
+                    out = "Cost: "+(p_per_mile).toFixed(1)+"p/mile, "+Math.round(100.0*(1.0-(mean/peak)))+"% reduction vs peak"
                     
                 } else if (device_type=="hpmon") {
                     out = ", "+Math.round(mean/3.8)+" p/kWh Heat @ COP 3.8";
@@ -487,13 +487,13 @@ function load_device(device_id, device_name, device_type)
                     
                     if (schedule.settings.ctrlmode=="smart" || schedule.settings.ctrlmode=="timer") {
                         if (schedule.runtime.periods.length>0) {
-                            if (schedule.runtime.periods[0].start[1] != result.timer_start1) { 
+                            if (schedule.runtime.periods[0].start[1].toFixed(3) != result.timer_start1.toFixed(3)) { 
                                 state_matched = false; 
-                                console.log(schedule.runtime.periods[0].start[1]+"!="+result.timer_start1); 
+                                console.log(schedule.runtime.periods[0].start[1].toFixed(3)+"!="+result.timer_start1.toFixed(3)); 
                             }
-                            if (schedule.runtime.periods[0].end[1] != result.timer_stop1) { 
+                            if (schedule.runtime.periods[0].end[1].toFixed(3) != result.timer_stop1.toFixed(3)) { 
                                 state_matched = false; 
-                                console.log(schedule.runtime.periods[0].end[1]+"!="+result.timer_stop1); 
+                                console.log(schedule.runtime.periods[0].end[1].toFixed(3)+"!="+result.timer_stop1.toFixed(3)); 
                             }
                         }
                     }
@@ -506,18 +506,18 @@ function load_device(device_id, device_name, device_type)
                     }
                     
                     if (state_matched) {
-                        console.log("State matched");
-                        $("#device-state-message").html("Saved");
+                        console.log("device state matched");
+                        $(".device-state-message").html("Saved");
                         setTimeout(function(){
-                            $("#device-state-message").html("");
+                            $(".device-state-message").html("");
                         },2000);
                         $(".node-scheduler-title").css("background-color","#ea510e");
                         $(".node-scheduler").css("background-color","#ea510e");
                     } else {
-                        console.log("Settings Mismatch");
+                        console.log("device state mismatch");
                         $(".node-scheduler-title").css("background-color","#bbb");
                         $(".node-scheduler").css("background-color","#bbb");
-                        $("#device-state-message").html("Settings Mismatch");
+                        $(".device-state-message").html("Settings Mismatch");
                         clearTimeout(get_device_state_timeout)
                         get_device_state_timeout = setTimeout(function(){ get_device_state(); },5000);
                     }

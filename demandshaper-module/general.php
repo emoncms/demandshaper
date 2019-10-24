@@ -168,5 +168,5 @@
     </div>
 </div>
 
-<script type="text/javascript" src="<?php echo $path; ?>Modules/demandshaper/scheduler.js?v=<?php echo time(); ?>"></script>
-<script type="text/javascript" src="<?php echo $path; ?>Modules/demandshaper/general.js?v=<?php echo time(); ?>"></script>
+<script type="text/javascript" src="<?php echo $path; ?>Modules/demandshaper/scheduler.js?v=10"></script>
+<script type="text/javascript" src="<?php echo $path; ?>Modules/demandshaper/general.js?v=10"></script>
