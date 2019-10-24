@@ -229,8 +229,8 @@ function demandshaper_controller()
                         if ($result = $mqtt_request->request("emon/$device/rapi/in/\$GD","","emon/$device/rapi/out")) {
                             $ret = explode(" ",substr($result,4,11));
                             if (count($ret)==4) {
-                                $state->timer_start1 = $ret[0]+($ret[1]/60);
-                                $state->timer_stop1 = $ret[2]+($ret[3]/60);
+                                $state->timer_start1 = ((int)$ret[0])+((int)$ret[1]/60);
+                                $state->timer_stop1 = ((int)$ret[2])+((int)$ret[3]/60);
                                 $state->timer_start2 = 0;
                                 $state->timer_stop2 = 0;
                             } else {
