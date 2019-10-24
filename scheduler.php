@@ -38,10 +38,14 @@ function get_forecast($redis,$signal) {
     // ----------------------------------------------------------------------------- 
     if ($signal=="carbonintensity") {
         $optimise = MIN;
-        // $start = $date->format('Y-m-d\TH:i\Z');
-        // $result = json_decode(file_get_contents("https://api.carbonintensity.org.uk/intensity/$start/fw24h"));
-        $result = json_decode($redis->get("demandshaper:carbonintensity"));
         
+        if (!$result = $redis->get("demandshaper:carbonintensity")) {
+            if ($result = http_request("GET","https://emoncms.org/demandshaper/carbonintensity&time=".time(),array())) {
+                $redis->set("demandshaper:carbonintensity",$result);
+            }
+        }
+        $result = json_decode($result);
+         
         if ($result!=null && isset($result->data)) {
         
             $datetimestr = $result->data[0]->from;
@@ -82,7 +86,6 @@ function get_forecast($redis,$signal) {
         if (!$result = $redis->get("demandshaper:octopusagile_$gsp_id")) {
             if ($result = http_request("GET","https://emoncms.org/demandshaper/octopus?gsp=$gsp_id&time=".time(),array())) {
                 $redis->set("demandshaper:octopusagile_$gsp_id",$result);
-                // $log->info("load: demandshaper:octopusagile_$gsp_id (".strlen($result).")");
             }
         }
         $result = json_decode($result);
@@ -142,8 +145,12 @@ function get_forecast($redis,$signal) {
     // -----------------------------------------------------------------------------  
     else if ($signal=="energylocal_bethesda") {
         $optimise = MIN;
-        $result = json_decode($redis->get("demandshaper:energylocal_bethesda"));
-        
+        if (!$result = $redis->get("demandshaper:energylocal_bethesda")) {
+            if ($result = http_request("GET","https://dashboard.energylocal.org.uk/cydynni/demandshaper&time=".time(),array())) {
+                $redis->set("demandshaper:energylocal_bethesda",$result);
+            }
+        }
+        $result = json_decode($result);
         // Validate demand shaper
         if  ($result!=null && isset($result->DATA)) {
             

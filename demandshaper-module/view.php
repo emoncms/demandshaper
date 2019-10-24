@@ -180,6 +180,7 @@ var forecast_list = <?php echo json_encode($forecast_list); ?>;
                   device_id = devices[device_name].id;
                   device_type = devices[device_name].type;
                   
+                  $("#wizard").hide();
                   load_device(device_id, device_name, device_type);
               } else {
                   show_device_finder();

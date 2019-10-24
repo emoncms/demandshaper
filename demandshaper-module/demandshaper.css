@@ -276,7 +276,7 @@ body {padding:0}
     font-size:12px;
 }
 
-#device-state-message {
+.device-state-message {
     font-weight:normal;
 }
 
