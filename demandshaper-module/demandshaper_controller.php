@@ -101,7 +101,7 @@ function demandshaper_controller()
                     }
                     
                     $timeleft = $schedule->settings->end_timestamp - $now;
-                    if ($schedule->runtime->timeleft>$timeleft) $schedule->runtime->timeleft = $timeleft;
+                    // if ($schedule->runtime->timeleft>$timeleft) $schedule->runtime->timeleft = $timeleft;
                     
                     $schedule_log_output = "";
                     
