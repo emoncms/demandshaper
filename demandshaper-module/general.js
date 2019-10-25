@@ -469,7 +469,7 @@ function load_device(device_id, device_name, device_type)
             
                 if (result==false) {
                     console.log("Unresponsive");
-                    $("#device-state-message").html("Unresponsive");
+                    $(".device-state-message").html("Unresponsive");
                     $(".node-scheduler-title").css("background-color","#bbb");
                     $(".node-scheduler").css("background-color","#bbb");
                     
