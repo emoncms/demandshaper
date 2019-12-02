@@ -201,7 +201,7 @@ function demandshaper_controller()
                     include "Modules/demandshaper/MQTTRequest.php";
                     $mqtt_request = new MQTTRequest($settings['mqtt']);
                     
-                    if ($schedules->$device->settings->device_type=="hpmon" || $schedules->$device->settings->device_type=="smartplug") {
+                    if ($schedules->$device->settings->device_type=="hpmon" || $schedules->$device->settings->device_type=="smartplug" || $schedules->$device->settings->device_type=="wifirelay") {
                         
                         if ($result = json_decode($mqtt_request->request("emon/$device/in/state","","emon/$device/out/state"))) {
                             $state->ctrl_mode = $result->ctrlmode;
