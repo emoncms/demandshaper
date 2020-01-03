@@ -407,7 +407,7 @@ function load_device(device_id, device_name, device_type)
                 } else {
                     out += ", "+Math.round(100.0*(1.0-(mean/peak)))+"% reduction vs peak";
                 }
-            } else if (schedule.settings.signal.indexOf("octopus")==0 || schedule.settings.signal=="economy7" || schedule.settings.signal.indexOf("nordpool_")==0) {
+            } else if (schedule.settings.signal.indexOf("octopus")==0 || schedule.settings.signal=="economy7") {
 
                 if (device_type=="openevse") {
                     var p_per_mile = (mean / 4.0);
@@ -525,9 +525,9 @@ function load_device(device_id, device_name, device_type)
             else if (hour==12) str = "Noon";
             else if (h>12) {
                 h = h - 12;
-                str = h+":"+m+" pm";
+                str = h+":"+m+" p.m.";
             } else if (h<12) {
-                str += "am";
+                str += " a.m.";
             }
         }
         return str;
