@@ -296,28 +296,7 @@ function load_device(device_id, device_name, device_type)
         var date = new Date();
             
         if (schedule.runtime.periods==undefined) schedule.runtime.periods = []
-        
-        /*
-        if (schedule.runtime.periods && schedule.runtime.periods.length) {
-            
-            var now_hours = (date.getHours() + (date.getMinutes()/60));
-            var period_start = (schedule.runtime.periods[0].start[1]);
-            var startsin = 0;
-            if (now_hours>period_start) {
-               startsin = (24 - now_hours) + period_start
-            } else {
-               startsin = period_start - now_hours
-            }
-            
-            var hour = Math.floor(startsin);
-            var mins = Math.round(60*(startsin-hour));
-            var text = "Starts in "+mins+" mins";
-            if (hour>0) text = "Starts in "+hour+" hrs "+mins+" mins";
-            if (hour>=23 && mins>=30) text = "On";
-            //if (controls["active"].value==0) text = "Off"; 
-            $(".startsin").html(text);
-        }*/
-        
+                      
         // Output schedule periods
         var periods = [];
         for (var z in schedule.runtime.periods) {
@@ -352,7 +331,7 @@ function load_device(device_id, device_name, device_type)
         // --------------------------------------------------------------------------------------------
         var periods = schedule.runtime.periods;
         
-        var interval = 1800;
+        var interval = 3600;
         interval = (profile[1][0]-profile[0][0])*0.001;
 
         // Calculate end timestamp
@@ -428,7 +407,7 @@ function load_device(device_id, device_name, device_type)
                 } else {
                     out += ", "+Math.round(100.0*(1.0-(mean/peak)))+"% reduction vs peak";
                 }
-            } else if (schedule.settings.signal.indexOf("octopus")==0 || schedule.settings.signal=="economy7") {
+            } else if (schedule.settings.signal.indexOf("octopus")==0 || schedule.settings.signal=="economy7" || schedule.settings.signal.indexOf("nordpool_")==0) {
 
                 if (device_type=="openevse") {
                     var p_per_mile = (mean / 4.0);

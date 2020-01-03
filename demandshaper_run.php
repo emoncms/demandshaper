@@ -160,6 +160,12 @@ while(true)
                             $redis->set("demandshaper:carbonintensity",$result);
                             $log->info("load: demandshaper:carbonintensity (".strlen($result).")");
                         }
+                    } else if ($forecast=="nordpool_fi") {
+                        // Nordpool Spot demand shaper
+                        if ($result = http_request("GET","http://tuntihinta.fi/json/hinnat.json",array())) {
+                            $redis->set("demandshaper:nordpool_fi",$result);
+                            $log->info("load: demandshaper:nordpool_fi (".strlen($result).")");
+                        }
                     }
                 }
             }
