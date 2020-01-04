@@ -260,7 +260,7 @@ function get_forecast($redis,$signal,$resolution) {
 function schedule_smart($forecast,$timeleft,$end,$interruptible,$resolution,$device)
 {
     $debug = 0;
-    $forecast_length = count($forecast->profile) > 24 ? 24 : count($forecast->profile);
+    $forecast_length = 24;
 
     $resolution_h = $resolution/3600;
     $divisions = round($forecast_length*3600/$resolution);
@@ -432,15 +432,29 @@ function schedule_smart($forecast,$timeleft,$end,$interruptible,$resolution,$dev
         
             if ($i==0) {
                 if ($val) {
-                    $start = $hour;
                     $tstart = $timestamp;
+
+                    if($device === "openevse") {
+                        $localtime = localtime($tstart);            
+                        $start = $localtime[2] + $localtime[1]/60;
+                    }
+                    else {
+                        $start = $hour;
+                    }
                 }
                 $last = $val;
             }
             
-            if ($last==0 && $val==1) {
-                $start = $hour;
+            if ($last==0 && $val==1) {                
                 $tstart = $timestamp;
+
+                if($device === "openevse") {
+                    $localtime = localtime($tstart);            
+                    $start = $localtime[2] + $localtime[1]/60;
+                }
+                else {
+                    $start = $hour;
+                }
             }
             
             if ($last==1 && $val==0) {

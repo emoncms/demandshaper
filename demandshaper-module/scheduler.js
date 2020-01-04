@@ -5,7 +5,7 @@ function schedule_smart(forecast,timeleft,end,interruptible,resolution)
 {
     var MIN = 0
     var MAX = 1
-    var forecast_length = forecast.profile.length > 24 ? 24 : forecast.profile.length;
+    var forecast_length = 24;
     
     var resolution_h = resolution/3600
     var divisions = Math.round(forecast_length*3600/resolution)
