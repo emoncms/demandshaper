@@ -11,7 +11,7 @@
           <!-- CONTROLS -->
           <!---------------------------------------------------------------------------------------------------------------------------->                
           <div id="mode" class="btn-group">
-            <button mode="on">On</button><button mode="off">Off</button><button mode="smart" class="active">Smart</button><button mode="timer">Timer</button>
+            <button mode="on">On</button><button mode="off">Off</button><button mode="disabled" style="display:none">Disabled</button><button mode="smart" class="active">Smart</button><button mode="timer">Timer</button>
           </div><br><br>
           
           <div class="openevse hide">
