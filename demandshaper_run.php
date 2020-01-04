@@ -345,7 +345,7 @@ while(true)
                     if (!isset($schedule->runtime->started) || $schedule->settings->interruptible) {
                         
                         if ($schedule->settings->ctrlmode=="smart") {
-                            $forecast = get_forecast($redis,$schedule->settings->signal,$timezone);
+                            $forecast = get_forecast($redis,$schedule->settings->signal,$timezone,$forecast_list[$schedule->settings->signal]["resolution"]);
                             $schedule->runtime->periods = schedule_smart($forecast,$schedule->runtime->timeleft,$schedule->settings->end,$schedule->settings->interruptible,900,$timezone);
                             
                         } else if ($schedule->settings->ctrlmode=="timer") {
