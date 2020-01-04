@@ -256,6 +256,8 @@ function demandshaper_controller()
                                 } else {
                                     $state->ctrl_mode = "timer";
                                 }
+                            } else if ($ret[1]==255) {
+                                $state->ctrl_mode = "disabled";
                             }
                         } else {
                             $valid = false;

@@ -279,14 +279,15 @@ while(true)
                             if ($ctrlmode=="on") $ctrlmode_status = "On";
                             if ($ctrlmode=="smart") $ctrlmode_status = "Timer";
                             if ($ctrlmode=="timer") $ctrlmode_status = "Timer";
-                            
+                            if ($ctrlmode=="disabled") $ctrlmode_status = "Disabled";
+                                                        
                             if ($device_type=="smartplug" || $device_type=="hpmon" || $device_type=="wifirelay") {
                                 $mqtt_client->publish("emon/$device/in/ctrlmode",$ctrlmode_status,0);
                                 schedule_log("$device set ctrlmode $ctrlmode_status");
                             }
 
-                            if ($device_type=="openevse") {
-                                if ($ctrlmode=="on" || $ctrlmode=="off") {
+                            if ($device_type=="openevse") {                                
+                                if ($ctrlmode=="on" || $ctrlmode=="off" || $ctrlmode=="disabled") {
                                     $mqtt_client->publish("emon/$device/rapi/in/\$ST","00 00 00 00",0);
                                 }
                                 if ($ctrlmode=="on") {
@@ -296,7 +297,11 @@ while(true)
                                 if ($ctrlmode=="off") {
                                     $mqtt_client->publish("emon/$device/rapi/in/\$FS","",0);
                                     schedule_log("$device turning OFF");
-                                }
+                                }    
+                                if ($ctrlmode=="disabled") {
+                                    $mqtt_client->publish("emon/$device/rapi/in/\$FD","",0);
+                                    schedule_log("$device disabled");
+                                }                             
                             }
                         }
                         $last_ctrlmode[$device] = $ctrlmode;
@@ -433,6 +438,7 @@ function message($message)
                 if (isset($p->ctrlmode)) {
                     if ($p->ctrlmode=="On") $schedules->$device->settings->ctrlmode = "on";
                     if ($p->ctrlmode=="Off") $schedules->$device->settings->ctrlmode = "off";
+                    if ($p->ctrlmode=="Disabled") $schedules->$device->settings->ctrlmode = "disabled";
                     if ($p->ctrlmode=="Timer" && $schedules->$device->settings->ctrlmode!="smart") $schedules->$device->settings->ctrlmode = "timer";
                 }
   
@@ -455,6 +461,7 @@ function message($message)
             else if ($message->topic=="emon/$device/out/ctrlmode") {
                 if ($p=="On") $schedules->$device->settings->ctrlmode = "on";
                 if ($p=="Off") $schedules->$device->settings->ctrlmode = "off";
+                if ($p=="Disabled") $schedules->$device->settings->ctrlmode = "disabled";
                 if ($p=="Timer" && $schedules->$device->settings->ctrlmode!="smart") $schedules->$device->settings->ctrlmode = "timer";
                 $demandshaper->set($userid,$schedules);
             }
