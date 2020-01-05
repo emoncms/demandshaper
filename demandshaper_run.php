@@ -71,6 +71,11 @@ if (!empty($settings['redis']['auth']) && !$redis->auth($settings['redis']['auth
     $log->error("Can't connect to redis, autentication failed"); die;
 }
 
+// Load user module used to fetch user timezone
+require("Modules/user/user_model.php");
+$user = new User($mysqli,$redis);
+$timezone = $user->get_timezone($userid);
+
 if (file_exists("$linked_modules_dir/demandshaper/scheduler.php")) {
     require "$linked_modules_dir/demandshaper/scheduler.php";
 }
@@ -112,7 +117,7 @@ while(true)
 
         // Get time of start of day
         $date = new DateTime();
-        $date->setTimezone(new DateTimeZone("Europe/London"));
+        $date->setTimezone(new DateTimeZone($timezone));
         $date->setTimestamp($now);
         $date->modify("midnight");
         $daystart = $date->getTimestamp();
@@ -226,7 +231,7 @@ while(true)
                             // Timezone correction to UTC for smartplug and hpmon
                             $timeOffset = 0;
                             if ($device_type=="smartplug" || $device_type=="hpmon" || $device_type=="wifirelay") {
-                                $dateTimeZone = new DateTimeZone("Europe/London");
+                                $dateTimeZone = new DateTimeZone($timezone);
                                 $date = new DateTime("now", $dateTimeZone);
                                 $timeOffset = $dateTimeZone->getOffset($date) / 3600;
                             }
@@ -334,15 +339,15 @@ while(true)
                     if (!isset($schedule->runtime->started) || $schedule->settings->interruptible) {
                         
                         if ($schedule->settings->ctrlmode=="smart") {
-                            $forecast = get_forecast($redis,$schedule->settings->signal);
-                            $schedule->runtime->periods = schedule_smart($forecast,$schedule->runtime->timeleft,$schedule->settings->end,$schedule->settings->interruptible,900);
+                            $forecast = get_forecast($redis,$schedule->settings->signal,$timezone);
+                            $schedule->runtime->periods = schedule_smart($forecast,$schedule->runtime->timeleft,$schedule->settings->end,$schedule->settings->interruptible,900,$timezone);
                             
                         } else if ($schedule->settings->ctrlmode=="timer") {
-                            $forecast = get_forecast($redis,$schedule->settings->signal);
+                            $forecast = get_forecast($redis,$schedule->settings->signal,$timezone);
                             $schedule->runtime->periods = schedule_timer(
                                 $forecast, 
                                 $schedule->settings->timer_start1,$schedule->settings->timer_stop1,$schedule->settings->timer_start2,$schedule->settings->timer_stop2,
-                                900
+                                900,$timezone
                             );
                         } 
                         $schedule = json_decode(json_encode($schedule));
@@ -404,7 +409,7 @@ function disconnect() {
 // -------------------------------------------------------------------------
 function message($message) 
 {
-    global $demandshaper, $userid, $schedules, $log;
+    global $demandshaper, $userid, $schedules, $log, $timezone;
     
     $topic_parts = explode("/",$message->topic);
     if (isset($topic_parts[1])) {
@@ -415,7 +420,7 @@ function message($message)
             $device_type = $schedules->$device->settings->device_type;
             $timeOffset = 0;
             if ($device_type=="smartplug" || $device_type=="hpmon" || $device_type=="wifirelay") {
-                $dateTimeZone = new DateTimeZone("Europe/London");
+                $dateTimeZone = new DateTimeZone($timezone);
                 $date = new DateTime("now", $dateTimeZone);
                 $timeOffset = $dateTimeZone->getOffset($date) / 3600;
             }
