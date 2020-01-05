@@ -303,6 +303,25 @@ function demandshaper_controller()
         
             break;
 
+        case "get-soc-sql":
+            if ($session["write"] && isset($_GET["sqlsocquery"])) {
+                $route->format = "json";
+                $querystr = $_GET["sqlsocquery"];
+                $result = $mysqli->query($querystr);
+                $data = array("soc"=>20);
+                schedule_log("Sql Query: " & $querystr);
+                if ($result->num_rows > 0) {
+                    $row = $result->fetch_assoc();
+                    $data = array("soc"=>$row["soc"]);
+                }
+                schedule_log("Sql Query Returned: " & $row["soc"]);
+                $result->free_result();
+            }
+            return $data;
+
+        break;
+
+
         case "log":
             if (!$remoteaccess && $session["write"]) {
                 $route->format = "text";
