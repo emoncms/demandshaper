@@ -19,7 +19,7 @@ define("MIN",0);
 // FETCH AND PRE-PROCESS FORECASTS AS 24H FROM CURRENT TIME
 // -------------------------------------------------------------------------------------------------------
 
-function get_forecast($redis,$signal) {
+function get_forecast($redis,$signal,$timezone) {
 
     $resolution = 1800;
     $resolution_h = $resolution/3600;
@@ -51,7 +51,7 @@ function get_forecast($redis,$signal) {
         
             $datetimestr = $result->data[0]->from;
             $date = new DateTime($datetimestr);
-            $date->setTimezone(new DateTimeZone("Europe/London"));
+            $date->setTimezone(new DateTimeZone($timezone));
             $start = $date->getTimestamp();
             
             $datetimestr = $result->data[count($result->data)-1]->from;
@@ -115,7 +115,7 @@ function get_forecast($redis,$signal) {
             $octopus = array();
             foreach ($result->results as $row) {
                 $date = new DateTime($row->valid_from);
-                $date->setTimezone(new DateTimeZone("Europe/London"));
+                $date->setTimezone(new DateTimeZone($timezone));
                 $octopus[$date->getTimestamp()] = $row->value_inc_vat;
             }
             
@@ -156,7 +156,7 @@ function get_forecast($redis,$signal) {
         if  ($result!=null && isset($result->DATA)) {
             
             $date = new DateTime();
-            $date->setTimezone(new DateTimeZone("Europe/London"));
+            $date->setTimezone(new DateTimeZone($timezone));
             
             $EL_signal = $result->DATA[0];
             array_shift($EL_signal);
@@ -198,7 +198,7 @@ function get_forecast($redis,$signal) {
     else if ($signal=="economy7") {
     
         $date = new DateTime();
-        $date->setTimezone(new DateTimeZone("Europe/London"));
+        $date->setTimezone(new DateTimeZone($timezone));
         
         $optimise = MIN;
         for ($i=0; $i<$divisions; $i++) {
@@ -235,7 +235,7 @@ function get_forecast($redis,$signal) {
 // SCHEDULE
 // -------------------------------------------------------------------------------------------------------
 
-function schedule_smart($forecast,$timeleft,$end,$interruptible,$resolution)
+function schedule_smart($forecast,$timeleft,$end,$interruptible,$resolution,$timezone)
 {
     $debug = 0;
     
@@ -251,7 +251,7 @@ function schedule_smart($forecast,$timeleft,$end,$interruptible,$resolution)
     $timestamp = floor($now/$resolution)*$resolution;
     $start_timestamp = $timestamp;
     $date = new DateTime();
-    $date->setTimezone(new DateTimeZone("Europe/London"));
+    $date->setTimezone(new DateTimeZone($timezone));
     
     $date->setTimestamp($timestamp);
     $h = 1*$date->format('H');
@@ -434,7 +434,7 @@ function schedule_smart($forecast,$timeleft,$end,$interruptible,$resolution)
     }
 }
 
-function schedule_timer($forecast,$start1,$stop1,$start2,$stop2,$resolution) {
+function schedule_timer($forecast,$start1,$stop1,$start2,$stop2,$resolution,$timezone) {
     
     $tstart1 = 0; $tstop1 = 0;
     $tstart2 = 0; $tstop2 = 0;
@@ -443,7 +443,7 @@ function schedule_timer($forecast,$start1,$stop1,$start2,$stop2,$resolution) {
     $profile_end = $forecast->profile[count($forecast->profile)-1][0]*0.001;
 
     $date = new DateTime();
-    $date->setTimezone(new DateTimeZone("Europe/London"));
+    $date->setTimezone(new DateTimeZone($timezone));
     
     for ($td=$profile_start; $td<$profile_end; $td+=$resolution) {
         $date->setTimestamp($td);
