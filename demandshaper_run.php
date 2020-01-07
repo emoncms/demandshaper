@@ -87,7 +87,7 @@ $timer = array();
 $last_timer = array();
 $last_ctrlmode = array();
 $last_flowtemp = array();
-$update_interval = 60;
+$update_interval = 10;
 $last_state_check = 0;
 $schedules = array();
 $firstrun = true;
@@ -300,8 +300,12 @@ while(true)
                                 }    
                                 if ($ctrlmode=="disabled") {
                                     $mqtt_client->publish("emon/$device/rapi/in/\$FD","",0);
-                                    schedule_log("$device disabled");
-                                }                             
+                                    schedule_log("$device rutning DISABLED");
+                                }
+                                if ($ctrlmode=="smart" && $last_ctrlmode[$device]=="disabled") {
+                                    $mqtt_client->publish("emon/$device/rapi/in/\$FS","",0);
+                                    schedule_log("$device turning OFF when disabled->smart");
+                                }                                
                             }
                         }
                         $last_ctrlmode[$device] = $ctrlmode;
