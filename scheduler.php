@@ -257,7 +257,7 @@ function get_forecast($redis,$signal,$timezone,$resolution) {
 // SCHEDULE
 // -------------------------------------------------------------------------------------------------------
 
-function schedule_smart($forecast,$timeleft,$end,$interruptible,$resolution,$timezone)
+function schedule_smart($forecast,$timeleft,$end,$interruptible,$timezone,$resolution)
 {
     $debug = 0;
     $forecast_length = 24;
@@ -360,15 +360,8 @@ function schedule_smart($forecast,$timeleft,$end,$interruptible,$resolution,$tim
         $start_hour = 0;
         $tstart = 0;
         if (isset($profile[$pos])) {
+            $start_hour = $profile[$pos][2];
             $tstart = $profile[$pos][0]*0.001;
-            
-            if($device === "openevse") {
-                $localtime = localtime($tstart);            
-                $start_hour = $localtime[2] + $localtime[1]/60;
-            }
-            else{
-                $start_hour = $profile[$pos][2];
-            }
         }
         $end_hour = $start_hour;
         $tend = $tstart;
