@@ -31,6 +31,8 @@ function demandshaper_controller()
     require_once "Modules/device/device_model.php";
     $device = new Device($mysqli,$redis);
     
+    $timezone = $user->get_timezone($session['userid']);
+    
     $forecast_list = $demandshaper->get_forecast_list();
         
     switch ($route->action)
@@ -50,7 +52,7 @@ function demandshaper_controller()
             $signal = "carbonintensity";
             if (isset($_GET['signal'])) $signal = $_GET['signal'];
             include "$linked_modules_dir/demandshaper/scheduler.php";
-            return get_forecast($redis,$signal);
+            return get_forecast($redis,$signal,$timezone);
             break;
         
         case "submit":
@@ -85,7 +87,7 @@ function demandshaper_controller()
                     // -------------------------------------------------
                     $now = time();
                     $date = new DateTime();
-                    $date->setTimezone(new DateTimeZone("Europe/London"));
+                    $date->setTimezone(new DateTimeZone($timezone));
                     $date->setTimestamp($now);
                     $date->modify("midnight");
                     
@@ -106,16 +108,16 @@ function demandshaper_controller()
                     $schedule_log_output = "";
                     
                     if ($schedule->settings->ctrlmode=="smart") {
-                        $forecast = get_forecast($redis,$schedule->settings->signal);
-                        $schedule->runtime->periods = schedule_smart($forecast,$schedule->runtime->timeleft,$schedule->settings->end,$schedule->settings->interruptible,900);
+                        $forecast = get_forecast($redis,$schedule->settings->signal,$timezone);
+                        $schedule->runtime->periods = schedule_smart($forecast,$schedule->runtime->timeleft,$schedule->settings->end,$schedule->settings->interruptible,900,$timezone);
                         $schedule_log_output = "smart ".($schedule->runtime->timeleft/3600)." ".$schedule->settings->end;
                         
                     } else if ($schedule->settings->ctrlmode=="timer") {
-                        $forecast = get_forecast($redis,$schedule->settings->signal);
+                        $forecast = get_forecast($redis,$schedule->settings->signal,$timezone);
                         $schedule->runtime->periods = schedule_timer(
                             $forecast, 
                             $schedule->settings->timer_start1,$schedule->settings->timer_stop1,$schedule->settings->timer_start2,$schedule->settings->timer_stop2,
-                            900
+                            900,$timezone
                         );
                         $schedule_log_output = "timer ".$schedule->settings->timer_start1." ".$schedule->settings->timer_stop1." ".$schedule->settings->timer_start2." ".$schedule->settings->timer_stop2;
                     } 
@@ -207,7 +209,7 @@ function demandshaper_controller()
                             $state->ctrl_mode = $result->ctrlmode;
                             $timer_parts = explode(" ",$result->timer);
                             
-                            $dateTimeZone = new DateTimeZone("Europe/London");
+                            $dateTimeZone = new DateTimeZone($timezone);
                             $date = new DateTime("now", $dateTimeZone);
                             $timeOffset = $dateTimeZone->getOffset($date) / 3600;
                             
