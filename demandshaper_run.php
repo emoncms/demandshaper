@@ -300,7 +300,7 @@ while(true)
                                 }    
                                 if ($ctrlmode=="disabled") {
                                     $mqtt_client->publish("emon/$device/rapi/in/\$FD","",0);
-                                    schedule_log("$device rutning DISABLED");
+                                    schedule_log("$device turning DISABLED");
                                 }
                                 if ($ctrlmode=="smart" && $last_ctrlmode[$device]=="disabled") {
                                     $mqtt_client->publish("emon/$device/rapi/in/\$FS","",0);
