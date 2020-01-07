@@ -291,7 +291,7 @@ while(true)
                                 schedule_log("$device set ctrlmode $ctrlmode_status");
                             }
 
-                            if ($device_type=="openevse") {                                
+                            if ($device_type=="openevse") {
                                 if ($ctrlmode=="on" || $ctrlmode=="off" || $ctrlmode=="disabled") {
                                     $mqtt_client->publish("emon/$device/rapi/in/\$ST","00 00 00 00",0);
                                 }
