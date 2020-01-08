@@ -39,7 +39,9 @@ function schedule_smart(forecast,timeleft,end,interruptible,resolution)
     let upsampled = [];            
     
     let profile_start = profile[0][0]*0.001;
-    let profile_end = profile[profile.length-1][0]*0.001;
+
+    // overshoot upsample for one forecast cycle, in case there is less than 24h signal data
+    let profile_end = (profile[profile.length-1][0]+forecast.resolution*1000)*0.001;
 
     for (let timestamp=profile_start; timestamp<profile_end; timestamp+=resolution) {
         let i = Math.floor((timestamp - profile_start)/forecast.resolution);

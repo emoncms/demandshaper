@@ -295,7 +295,9 @@ function schedule_smart($forecast,$timeleft,$end,$interruptible,$resolution,$tim
     $upsampled = array();            
     
     $profile_start = $profile[0][0]*0.001;
-    $profile_end = $profile[count($profile)-1][0]*0.001;
+    
+    // overshoot upsample for one forecast cycle, in case there is less than 24h signal data
+    $profile_end = ($profile[count($profile)-1][0]+$forecast->resolution*1000)*0.001;
 
     for ($timestamp=$profile_start; $timestamp<$profile_end; $timestamp+=$resolution) {
         $i = floor(($timestamp - $profile_start)/$forecast->resolution);
