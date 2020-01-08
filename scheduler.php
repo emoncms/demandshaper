@@ -425,29 +425,15 @@ function schedule_smart($forecast,$timeleft,$end,$interruptible,$resolution,$tim
         
             if ($i==0) {
                 if ($val) {
+                    $start = $hour;
                     $tstart = $timestamp;
-
-                    if($device === "openevse") {
-                        $localtime = localtime($tstart);            
-                        $start = $localtime[2] + $localtime[1]/60;
-                    }
-                    else {
-                        $start = $hour;
-                    }
                 }
                 $last = $val;
             }
             
             if ($last==0 && $val==1) {                
+                $start = $hour;
                 $tstart = $timestamp;
-
-                if($device === "openevse") {
-                    $localtime = localtime($tstart);            
-                    $start = $localtime[2] + $localtime[1]/60;
-                }
-                else {
-                    $start = $hour;
-                }
             }
             
             if ($last==1 && $val==0) {
