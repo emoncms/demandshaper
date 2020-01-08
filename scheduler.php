@@ -257,7 +257,7 @@ function get_forecast($redis,$signal,$timezone,$resolution) {
 // SCHEDULE
 // -------------------------------------------------------------------------------------------------------
 
-function schedule_smart($forecast,$timeleft,$end,$interruptible,$timezone,$resolution)
+function schedule_smart($forecast,$timeleft,$end,$interruptible,$resolution,$timezone)
 {
     $debug = 0;
     $forecast_length = 24;
