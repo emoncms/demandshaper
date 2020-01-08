@@ -161,13 +161,15 @@ function schedule_smart(forecast,timeleft,end,interruptible,resolution)
         let start = null
         let tstart = null
         let tend = null
+        let hour = null
+        let timestamp = null
         
         let i = 0
         let last = 0
         
         for (var td=0; td<profile.length; td++) {
-            let hour = profile[td][2]
-            let timestamp = profile[td][0]*0.001
+            hour = profile[td][2]
+            timestamp = profile[td][0]*0.001
             let val = profile[td][3]
         
             if (i==0) {
