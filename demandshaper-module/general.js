@@ -276,7 +276,7 @@ function load_device(device_id, device_name, device_type)
             $(".input[name=carpass").val(schedule.settings.ovms_carpass);
             $(".input[name=sqlsocquery").val(decodeURIComponent(schedule.settings.sqlsocquery));
             $(".input[name=balpercentage").val(schedule.settings.balpercentage * 100);
-            $(".input[name=baltime").val(math.round(schedule.settings.baltime * 60));
+            $(".input[name=baltime").val(Math.round(schedule.settings.baltime * 60));
             battery.draw();
         }
     }
