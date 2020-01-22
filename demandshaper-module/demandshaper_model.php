@@ -32,7 +32,7 @@ class DemandShaper
         $devices = array();
         foreach ($devices_all as $d) {
             $name = $d["nodeid"];
-            if (in_array($d['type'],array("openevse","smartplug","hpmon")))
+            if (in_array($d['type'],array("openevse","smartplug","hpmon","wifirelay")))
                 $devices[$name] = array("id"=>$d["id"]*1,"type"=>$d["type"]);
         }
         foreach ($devices_all as $d) {

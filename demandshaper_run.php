@@ -71,6 +71,11 @@ if (!empty($settings['redis']['auth']) && !$redis->auth($settings['redis']['auth
     $log->error("Can't connect to redis, autentication failed"); die;
 }
 
+// Load user module used to fetch user timezone
+require("Modules/user/user_model.php");
+$user = new User($mysqli,$redis);
+$timezone = $user->get_timezone($userid);
+
 if (file_exists("$linked_modules_dir/demandshaper/scheduler.php")) {
     require "$linked_modules_dir/demandshaper/scheduler.php";
 }
@@ -112,7 +117,7 @@ while(true)
 
         // Get time of start of day
         $date = new DateTime();
-        $date->setTimezone(new DateTimeZone("Europe/London"));
+        $date->setTimezone(new DateTimeZone($timezone));
         $date->setTimestamp($now);
         $date->modify("midnight");
         $daystart = $date->getTimestamp();
@@ -221,12 +226,12 @@ while(true)
                     // Publish to MQTT
                     if ($connected) {
                         // SmartPlug and WIFI Relay
-                        if ($device_type=="openevse" || $device_type=="smartplug" || $device_type=="hpmon") {
+                        if ($device_type=="openevse" || $device_type=="smartplug" || $device_type=="hpmon" || $device_type=="wifirelay") {
                         
                             // Timezone correction to UTC for smartplug and hpmon
                             $timeOffset = 0;
-                            if ($device_type=="smartplug" || $device_type=="hpmon") {
-                                $dateTimeZone = new DateTimeZone("Europe/London");
+                            if ($device_type=="smartplug" || $device_type=="hpmon" || $device_type=="wifirelay") {
+                                $dateTimeZone = new DateTimeZone($timezone);
                                 $date = new DateTime("now", $dateTimeZone);
                                 $timeOffset = $dateTimeZone->getOffset($date) / 3600;
                             }
@@ -254,7 +259,7 @@ while(true)
                             $last_timer[$device] = $timer[$device];
                             
                             // Slight difference in API format
-                            if ($device_type=="smartplug" || $device_type=="hpmon") {
+                            if ($device_type=="smartplug" || $device_type=="hpmon" || $device_type=="wifirelay") {
                                 $api = "in/timer";
                                 $timer[$device] = time_conv_dec_str($s1)." ".time_conv_dec_str($e1)." ".time_conv_dec_str($s2)." ".time_conv_dec_str($e2);
                             }
@@ -280,7 +285,7 @@ while(true)
                             if ($ctrlmode=="smart") $ctrlmode_status = "Timer";
                             if ($ctrlmode=="timer") $ctrlmode_status = "Timer";
                             
-                            if ($device_type=="smartplug" || $device_type=="hpmon") {
+                            if ($device_type=="smartplug" || $device_type=="hpmon" || $device_type=="wifirelay") {
                                 $mqtt_client->publish("emon/$device/in/ctrlmode",$ctrlmode_status,0);
                                 schedule_log("$device set ctrlmode $ctrlmode_status");
                             }
@@ -305,7 +310,7 @@ while(true)
                         if (isset($schedule->settings->flowT)) {
                             if (!isset($last_flowT[$device])) $last_flowT[$device] = false;
                             if ($schedule->settings->flowT!=$last_flowT[$device]) {
-                                if ($device_type=="smartplug" || $device_type=="hpmon") {
+                                if ($device_type=="smartplug" || $device_type=="hpmon" || $device_type=="wifirelay") {
                                     $vout = round(($schedule->settings->flowT-7.14)/0.0371);
                                     $log->info("emon/$device/vout ".$vout);
                                     $mqtt_client->publish("emon/$device/in/vout",$vout,0);
@@ -334,15 +339,15 @@ while(true)
                     if (!isset($schedule->runtime->started) || $schedule->settings->interruptible) {
                         
                         if ($schedule->settings->ctrlmode=="smart") {
-                            $forecast = get_forecast($redis,$schedule->settings->signal);
-                            $schedule->runtime->periods = schedule_smart($forecast,$schedule->runtime->timeleft,$schedule->settings->end,$schedule->settings->interruptible,900);
+                            $forecast = get_forecast($redis,$schedule->settings->signal,$timezone);
+                            $schedule->runtime->periods = schedule_smart($forecast,$schedule->runtime->timeleft,$schedule->settings->end,$schedule->settings->interruptible,900,$timezone);
                             
                         } else if ($schedule->settings->ctrlmode=="timer") {
-                            $forecast = get_forecast($redis,$schedule->settings->signal);
+                            $forecast = get_forecast($redis,$schedule->settings->signal,$timezone);
                             $schedule->runtime->periods = schedule_timer(
                                 $forecast, 
                                 $schedule->settings->timer_start1,$schedule->settings->timer_stop1,$schedule->settings->timer_start2,$schedule->settings->timer_stop2,
-                                900
+                                900,$timezone
                             );
                         } 
                         $schedule = json_decode(json_encode($schedule));
@@ -404,7 +409,7 @@ function disconnect() {
 // -------------------------------------------------------------------------
 function message($message) 
 {
-    global $demandshaper, $userid, $schedules, $log;
+    global $demandshaper, $userid, $schedules, $log, $timezone;
     
     $topic_parts = explode("/",$message->topic);
     if (isset($topic_parts[1])) {
@@ -414,8 +419,8 @@ function message($message)
             // timezone offset for smartplug and hpmon which use UTC time
             $device_type = $schedules->$device->settings->device_type;
             $timeOffset = 0;
-            if ($device_type=="smartplug" || $device_type=="hpmon") {
-                $dateTimeZone = new DateTimeZone("Europe/London");
+            if ($device_type=="smartplug" || $device_type=="hpmon" || $device_type=="wifirelay") {
+                $dateTimeZone = new DateTimeZone($timezone);
                 $date = new DateTime("now", $dateTimeZone);
                 $timeOffset = $dateTimeZone->getOffset($date) / 3600;
             }
