@@ -22,6 +22,7 @@ var battery = {
     end_soc: 0.8,
     capacity: 20.0,
     charge_rate: 3.8,
+    events_loaded: false,
 
     init: function(element) {
         battery.element = element;
@@ -34,6 +35,7 @@ var battery = {
         $("#"+element).attr("width",battery.width);
         $("#"+element).attr("height",battery.height);
 
+        if (!battery.events_loaded) battery.events();
     },
     
     draw: function() {
@@ -105,7 +107,7 @@ var battery = {
     },
     
     events: function() {
-    
+        battery.events_loaded = true;
         element = "#"+battery.element;
     
         $(element).mousedown(function( event ) {

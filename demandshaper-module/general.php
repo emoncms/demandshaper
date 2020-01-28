@@ -16,7 +16,7 @@
           
           <div class="openevse hide">
             <p>Charge Current <span id="charge_current">0</span>A<br><span style="font-weight:normal; font-size:12px">Temperature <span id="openevse_temperature">10</span>C</span></p>
-            <div id="battery_bound" style="width:100%">
+            <div id="battery_bound" style="width:100%" class="hide">
                 <canvas id="battery"></canvas>
             </div>
           </div>
@@ -137,10 +137,13 @@
             <br>
             <table style="width:100%; text-align:left">
               <tr>
+                <td><span class="">Control based on: </span></td><td><select class="input" name="openevsecontroltype"><option value="time">Charge time</option><!--<option value="energy">Charge energy</option><option value="miles">Travel distance</option>--><option value="socinput">Battery charge level (Input)</option><option value="socovms">Battery charge level (OVMS)</option></select></td>
+              </tr>
+              <tr>
                 <td><span class="">Useable Battery Capacity: </span></td><td><input class="input" name="batterycapacity" type="text" style="width:80px"/> kWh</td>
                 <td><span class="">EVSE Charge Rate: </span></td><td><input class="input" name="chargerate" type="text" style="width:80px"/> kW</td>
               </tr>
-              <tr>
+              <tr class="ovms-options hide">
                 <td><span class="">OVMS Vehicle ID: </span></td><td><input class="input" name="vehicleid" type="text" style="width:150px"/></td>
                 <td><span class="">OVMS Car Password: </span></td><td><input class="input" name="carpass" type="text" style="width:150px"/></td>
               </tr>

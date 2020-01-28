@@ -8,18 +8,6 @@ function load_device(device_id, device_name, device_type)
     $("#devicename").html(jsUcfirst(device_name));
     $(".node-scheduler-title").html("<span class='icon-"+device_type+"'></span>"+device_name+" <span class='device-state-message'></span>");
     $(".node-scheduler").attr("node",device_name);
-
-    if (device_type=="openevse") {
-        $(".openevse").show();
-        battery.init("battery");
-        battery.draw();
-        battery.events();
-        $("#run_period").hide();
-        $("#run_period").parent().addClass('span2').removeClass('span4');    
-    }
-    else if (device_type=="hpmon") {
-        $(".heatpumpmonitor").show();
-    }
     
     // -------------------------------------------------------------------------
     // Defaults
@@ -46,6 +34,7 @@ function load_device(device_id, device_name, device_type)
             // hpmon
             flowT:30.0,
             // OpenEVSE
+            openevsecontroltype: "time",
             batterycapacity: 20.0,
             chargerate: 3.8,
             ovms_vehicleid: '',
@@ -70,6 +59,8 @@ function load_device(device_id, device_name, device_type)
     var resolution = 900;
     var resolution_hours = resolution / 3600;
     
+    var last_ev_soc = parseFloat(schedule.settings.ev_soc);
+    
     update_device();    
     
     if (schedule.settings.device_type=="openevse" || schedule.settings.device_type=="hpmon") {
@@ -88,6 +79,12 @@ function load_device(device_id, device_name, device_type)
                          }
                     }
                     if (result.SNXheat!=undefined) $("#heatpump_heat").html((result.SNXheat.value).toFixed(0));
+                    if (schedule.settings.openevsecontroltype=='socinput' && result.soc!=undefined) {
+                        last_ev_soc = parseFloat(schedule.settings.ev_soc)
+                        schedule.settings.ev_soc = result.soc.value*0.01;
+                        schedule.settings.period = ((schedule.settings.ev_target_soc-schedule.settings.ev_soc)*schedule.settings.batterycapacity)/schedule.settings.chargerate;                      
+                        if (schedule.settings.ev_soc!=last_ev_soc) calc_schedule();
+                    }
                 }
             }});
         }
@@ -122,21 +119,22 @@ function load_device(device_id, device_name, device_type)
                 schedule.settings.device = device_name;
                 schedule.settings.device_type = device_type;
                 
-                // Load SOC
-                if (schedule.settings.device_type=="openevse") {
-                    battery.capacity = schedule.settings.batterycapacity;
-                    battery.charge_rate = schedule.settings.chargerate;
-                    battery.end_soc = schedule.settings.ev_target_soc;
+                if (schedule.settings.device_type=="openevse" && schedule.settings.openevsecontroltype=='socinput') {
+                    schedule.settings.period = ((schedule.settings.ev_target_soc - schedule.settings.ev_soc) * schedule.settings.batterycapacity) / schedule.settings.chargerate;
+                }
+                
+                if (schedule.settings.device_type=="openevse" && schedule.settings.openevsecontroltype=='socovms') {
                     if (schedule.settings.ovms_vehicleid!='' && schedule.settings.ovms_carpass!='') {
                         $.ajax({ url: emoncmspath+"demandshaper/ovms?vehicleid="+schedule.settings.ovms_vehicleid+"&carpass="+schedule.settings.ovms_carpass+apikeystr, dataType: 'json', async: true, success: function(result) {
                             schedule.settings.ev_soc = result.soc*0.01;
-                            battery.soc = schedule.settings.ev_soc;
-                            battery.draw();
+                            schedule.settings.period = ((schedule.settings.ev_target_soc-schedule.settings.ev_soc)*schedule.settings.batterycapacity)/schedule.settings.chargerate;
+                            if (schedule.settings.ev_soc!=last_ev_soc) calc_schedule();                     
                         }});
                     }
                 }
             }
             
+            // get forecast and then call calc_schedule on callback
             get_forecast(schedule.settings.signal,calc_schedule);
         }});
     }
@@ -158,6 +156,7 @@ function load_device(device_id, device_name, device_type)
     // After 1.9s of inactivity the schedule is autosaved.
     // --------------------------------------------------------------------------------------------
     function calc_schedule() {
+        console.log("calc_schedule");
         if (forecast && forecast.profile!=undefined) {
             draw_schedule();
             
@@ -218,6 +217,8 @@ function load_device(device_id, device_name, device_type)
     // Populates UI with schedule params        
     // --------------------------------------------------------------------------------------------
     function draw_schedule() {
+        console.log("draw schedule");
+        
         $("#mode button[mode="+schedule.settings.ctrlmode+"]").addClass('active').siblings().removeClass('active');
         if (schedule.settings.ctrlmode=="timer") { $(".smart").hide(); $(".timer").show(); $(".repeat").show(); }
         if (schedule.settings.ctrlmode=="smart") { $(".smart").show(); $(".timer").hide(); $(".repeat").show(); }
@@ -252,13 +253,47 @@ function load_device(device_id, device_name, device_type)
         
         $(".forecast").val(schedule.settings.signal);
         $(".forecast-category").val(forecast_list[schedule.settings.signal].category);
-                    
-        if (schedule.settings.device_type=="openevse") {   
-            $(".input[name=batterycapacity").val(schedule.settings.batterycapacity);
-            $(".input[name=chargerate").val(schedule.settings.chargerate);
-            $(".input[name=vehicleid").val(schedule.settings.ovms_vehicleid);
-            $(".input[name=carpass").val(schedule.settings.ovms_carpass);
-            battery.draw();
+
+        // Show heatpump specific items
+        if (schedule.settings.device_type=="hpmon") {
+            $(".heatpumpmonitor").show();
+        }
+        
+        // Draw OpenEVSE specific items                            
+        if (schedule.settings.device_type=="openevse") {
+            $(".openevse").show();
+              
+            $(".input[name=openevsecontroltype]").val(schedule.settings.openevsecontroltype);
+            $(".input[name=batterycapacity]").val(schedule.settings.batterycapacity);
+            $(".input[name=chargerate]").val(schedule.settings.chargerate);
+            
+            if (schedule.settings.openevsecontroltype=="socinput" || schedule.settings.openevsecontroltype=="socovms") {
+            
+                battery.capacity = schedule.settings.batterycapacity;
+                battery.charge_rate = schedule.settings.chargerate;
+                battery.end_soc = schedule.settings.ev_target_soc;
+                battery.soc = schedule.settings.ev_soc;
+                       
+                $("#battery_bound").show();
+                battery.init("battery");
+                battery.draw();
+                
+                $("#run_period").hide();
+                $("#run_period").parent().addClass('span2').removeClass('span4');
+            } else {
+                $("#battery_bound").hide();
+                $("#run_period").show();
+                $("#run_period").parent().addClass('span4').removeClass('span2');
+            }
+            
+            if (schedule.settings.openevsecontroltype=="socovms") {
+                $(".ovms-options").show();
+                $(".input[name=vehicleid]").val(schedule.settings.ovms_vehicleid);
+                $(".input[name=carpass]").val(schedule.settings.ovms_carpass);
+            } else {
+                $(".ovms-options").hide();
+            }
+           
         }
     }
 
@@ -658,6 +693,12 @@ function load_device(device_id, device_name, device_type)
     });
 
     $("#battery").on("bchange",function() { 
+        battery_change();
+    });
+    
+    function battery_change() {
+        console.log("battery_change");
+        
         battery.period = Math.round(battery.period/resolution_hours)*resolution_hours
         schedule.settings.period = battery.period
         schedule.settings.ev_target_soc = battery.end_soc
@@ -669,7 +710,7 @@ function load_device(device_id, device_name, device_type)
             schedule.settings.end = Math.round((now_hours+schedule.settings.period)/resolution_hours)*resolution_hours;
         }
         calc_schedule();
-    });
+    }
 
     $(".forecast-category").change(function(){
         let selected_forecast_category = $(this).val();
@@ -690,6 +731,11 @@ function load_device(device_id, device_name, device_type)
     // ------------------------------------------------
     // openevse settings
     // ------------------------------------------------
+    $(".input[name=openevsecontroltype").change(function(){
+        schedule.settings.openevsecontroltype =  $(this).val();
+        calc_schedule();
+    });
+    
     $(".input[name=batterycapacity").change(function(){
         var batterycapacity = $(this).val();
         schedule.settings.batterycapacity = batterycapacity*1.0;
