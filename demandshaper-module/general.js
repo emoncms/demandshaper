@@ -39,8 +39,8 @@ function load_device(device_id, device_name, device_type)
             chargerate: 3.8,
             ovms_vehicleid: '',
             ovms_carpass: '',
-            balpercentage: '',
-            baltime: '',
+            balpercentage: 0.9,
+            baltime: 45,
             ev_soc: 0.2,
             ev_target_soc: 0.8,
             ip: ''
@@ -127,7 +127,7 @@ function load_device(device_id, device_name, device_type)
                 
                 if (schedule.settings.device_type=="openevse" && schedule.settings.openevsecontroltype=='socovms') {
                     if (schedule.settings.ovms_vehicleid!='' && schedule.settings.ovms_carpass!='') {
-                        $.ajax({ url: emoncmspath+"demandshaper/ovms?vehicleid="+schedule.settings.ovms_vehicleid+"&carpass="+schedule.settings.ovms_carpass+apikeystr, dataType: 'json', async: true, 
+                        $.ajax({ url: emoncmspath+"demandshaper/ovms?vehicleid="+schedule.settings.ovms_vehicleid+"&carpass="+schedule.settings.ovms_carpass+apikeystr, dataType: 'json', async: true, function(){ 
                             schedule.settings.ev_soc = result.soc*0.01;
                             schedule.settings.period = ((schedule.settings.ev_target_soc-schedule.settings.ev_soc)*schedule.settings.batterycapacity)/schedule.settings.chargerate;
                             if (schedule.settings.ev_soc!=last_ev_soc) calc_schedule();                     
@@ -277,11 +277,8 @@ function load_device(device_id, device_name, device_type)
                 battery.charge_rate = schedule.settings.chargerate;
                 battery.end_soc = schedule.settings.ev_target_soc;
                 battery.soc = schedule.settings.ev_soc;
-
-                if (schedule.settings.balpercentage >=0 && schedule.settings.balpercentage <= 1) {
-                    battery.balpercentage = schedule.settings.balpercentage;
-                    battery.baltime = schedule.settings.baltime;
-                }
+                battery.balpercentage = schedule.settings.balpercentage;
+                battery.baltime = schedule.settings.baltime;
 
                 $("#battery_bound").show();
                 battery.init("battery");
@@ -289,10 +286,12 @@ function load_device(device_id, device_name, device_type)
                 
                 $("#run_period").hide();
                 $("#run_period").parent().addClass('span2').removeClass('span4');
+                $(".openevse-balancing").show();
             } else {
                 $("#battery_bound").hide();
                 $("#run_period").show();
                 $("#run_period").parent().addClass('span4').removeClass('span2');
+                $(".openevse-balancing").hide();
             }
             
             if (schedule.settings.openevsecontroltype=="socovms") {
@@ -710,12 +709,7 @@ function load_device(device_id, device_name, device_type)
         battery.period = Math.round(battery.period/resolution_hours)*resolution_hours
         schedule.settings.period = battery.period
         schedule.settings.ev_target_soc = battery.end_soc
-        if (schedule.settings.balpercentage < schedule.settings.ev_target_soc) {
-            schedule.runtime.timeleft = (schedule.settings.period + schedule.settings.baltime) * 3600;
-        }
-        else {
-            schedule.runtime.timeleft = schedule.settings.period * 3600;
-        }
+        schedule.runtime.timeleft = schedule.settings.period * 3600;
         
         if (mode=="on") {
             var now = new Date();
@@ -752,14 +746,14 @@ function load_device(device_id, device_name, device_type)
     $(".input[name=batterycapacity").change(function(){
         var batterycapacity = $(this).val();
         schedule.settings.batterycapacity = batterycapacity*1.0;
-        battery.capacity = schedule.settings.batterycapacity;
+        if (schedule.settings.batterycapacity<0.0) schedule.settings.batterycapacity = 0.0;
         calc_schedule();
     });
 
     $(".input[name=chargerate").change(function(){
         var chargerate = $(this).val();
         schedule.settings.chargerate = chargerate*1.0;
-        battery.charge_rate = schedule.settings.chargerate;
+        if (schedule.settings.chargerate<0.0) schedule.settings.chargerate = 0.0;
         calc_schedule();
     });
     
@@ -778,12 +772,16 @@ function load_device(device_id, device_name, device_type)
     $(".input[name=balpercentage").change(function(){
         var balpercentage = $(this).val();
         schedule.settings.balpercentage = (balpercentage * 0.01);
+        if (schedule.settings.balpercentage<0.0) schedule.settings.balpercentage = 0.0;
+        if (schedule.settings.balpercentage>1.0) schedule.settings.balpercentage = 1.0;
         calc_schedule();
     });
 
     $(".input[name=baltime").change(function(){
         var baltime = $(this).val();
         schedule.settings.baltime = baltime / 60;
+        if (schedule.settings.baltime<0.0) schedule.settings.baltime = 0.0;
+        if (schedule.settings.baltime>24.0) schedule.settings.baltime = 24.0;
         calc_schedule();
     });
 
