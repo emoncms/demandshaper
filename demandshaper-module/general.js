@@ -179,23 +179,27 @@ function load_device(device_id, device_name, device_type)
             setTimeout(function(){
                 if (((new Date()).getTime()-last_submit)>1900) {
                     submit_schedule(1,function(result){
-                        console.log("saved");
-                        
-                        // Check result
-                        if (js_calc) {
-                            if (JSON.stringify(result.schedule.runtime.periods)==JSON.stringify(schedule.runtime.periods)) { 
-                                console.log("php js schedule match"); 
-                            } else { 
-                                console.log("php js schedule match error")
-                                console.log("php: "+JSON.stringify(result.schedule.runtime.periods))
-                                console.log("js:  "+JSON.stringify(schedule.runtime.periods))
+                        if (result.schedule!=undefined) {
+                            console.log("saved");
+                            
+                            // Check result
+                            if (js_calc) {
+                                if (JSON.stringify(result.schedule.runtime.periods)==JSON.stringify(schedule.runtime.periods)) { 
+                                    console.log("php js schedule match"); 
+                                } else { 
+                                    console.log("php js schedule match error")
+                                    console.log("php: "+JSON.stringify(result.schedule.runtime.periods))
+                                    console.log("js:  "+JSON.stringify(schedule.runtime.periods))
+                                }
+                            } else {
+                                schedule.runtime.periods = result.schedule.runtime.periods
                             }
+                            
+                            clearTimeout(get_device_state_timeout)
+                            get_device_state_timeout = setTimeout(function(){ get_device_state(); },1000);
                         } else {
-                            schedule.runtime.periods = result.schedule.runtime.periods
+                            console.log(result);
                         }
-                        
-                        clearTimeout(get_device_state_timeout)
-                        get_device_state_timeout = setTimeout(function(){ get_device_state(); },1000);
                     });
                 }
             },2000);
@@ -644,6 +648,8 @@ function load_device(device_id, device_name, device_type)
             schedule.settings[name] -= resolution_hours;
             if (schedule.settings[name]<0.0) schedule.settings[name] = 24.0-resolution_hours;
         }
+        
+        if (name=="period") schedule.runtime.timeleft = schedule.settings.period * 3600;
         calc_schedule();
     });
 
@@ -658,6 +664,8 @@ function load_device(device_id, device_name, device_type)
         hour = Math.round(hour/resolution_hours)*resolution_hours
         
         schedule.settings[name] = hour
+        
+        if (name=="period") schedule.runtime.timeleft = schedule.settings.period * 3600;
         calc_schedule(); 
     });
 
