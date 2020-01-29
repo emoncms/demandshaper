@@ -305,15 +305,6 @@ function demandshaper_controller()
         
             break;
 
-        case "get-soc-sql":
-            if ($session["write"] && isset($_GET["sqlsocquery"])) {
-                $route->format = "json";
-                return $demandshaper->get_soc_bysql($_GET["sqlsocquery"]);
-            }
-            
-            break;
-
-
         case "log":
             if (!$remoteaccess && $session["write"]) {
                 $route->format = "text";
