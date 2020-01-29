@@ -50,6 +50,9 @@ function load_device(device_id, device_name, device_type)
             chargerate: 3.8,
             ovms_vehicleid: '',
             ovms_carpass: '',
+            sqlsocquery: '',
+            balpercentage: '',
+            baltime: '',
             ev_soc: 0.2,
             ev_target_soc: 0.8,
             ip: ''
@@ -127,11 +130,24 @@ function load_device(device_id, device_name, device_type)
                     battery.capacity = schedule.settings.batterycapacity;
                     battery.charge_rate = schedule.settings.chargerate;
                     battery.end_soc = schedule.settings.ev_target_soc;
+                    if (schedule.settings.balpercentage >=0 && schedule.settings.balpercentage <= 1) {
+                        battery.balpercentage = schedule.settings.balpercentage;
+                        battery.baltime = schedule.settings.baltime;
+                    }
+
                     if (schedule.settings.ovms_vehicleid!='' && schedule.settings.ovms_carpass!='') {
                         $.ajax({ url: emoncmspath+"demandshaper/ovms?vehicleid="+schedule.settings.ovms_vehicleid+"&carpass="+schedule.settings.ovms_carpass+apikeystr, dataType: 'json', async: true, success: function(result) {
                             schedule.settings.ev_soc = result.soc*0.01;
                             battery.soc = schedule.settings.ev_soc;
                             battery.draw();
+                        }});
+                    }
+                    // Get SOC from SQL Field in the EmonCMS Database using SQL Query provided
+                    if (schedule.settings.sqlsocquery!='') {
+                        $.ajax({ url: emoncmspath+"demandshaper/get-soc-sql?sqlsocquery="+schedule.settings.sqlsocquery+apikeystr, dataType: 'json', async: true, success: function(result) {
+                        schedule.settings.ev_soc = result.soc*0.01;
+                        battery.soc = schedule.settings.ev_soc;
+                        battery.draw();
                         }});
                     }
                 }
@@ -258,6 +274,9 @@ function load_device(device_id, device_name, device_type)
             $(".input[name=chargerate").val(schedule.settings.chargerate);
             $(".input[name=vehicleid").val(schedule.settings.ovms_vehicleid);
             $(".input[name=carpass").val(schedule.settings.ovms_carpass);
+            $(".input[name=sqlsocquery").val(decodeURIComponent(schedule.settings.sqlsocquery));
+            $(".input[name=balpercentage").val(schedule.settings.balpercentage * 100);
+            $(".input[name=baltime").val(Math.round(schedule.settings.baltime * 60));
             battery.draw();
         }
     }
@@ -661,7 +680,12 @@ function load_device(device_id, device_name, device_type)
         battery.period = Math.round(battery.period/resolution_hours)*resolution_hours
         schedule.settings.period = battery.period
         schedule.settings.ev_target_soc = battery.end_soc
-        schedule.runtime.timeleft = schedule.settings.period * 3600
+        if (schedule.settings.balpercentage < schedule.settings.ev_target_soc) {
+            schedule.runtime.timeleft = (schedule.settings.period + schedule.settings.baltime) * 3600;
+        }
+        else {
+            schedule.runtime.timeleft = schedule.settings.period * 3600;
+        }
         
         if (mode=="on") {
             var now = new Date();
@@ -715,6 +739,25 @@ function load_device(device_id, device_name, device_type)
         schedule.settings.ovms_carpass = carpass;
         calc_schedule();
     });
+
+    $(".input[name=sqlsocquery").change(function(){
+        var sqlsocquery = $(this).val();
+        schedule.settings.sqlsocquery = encodeURIComponent(sqlsocquery);
+        calc_schedule();
+    });
+
+    $(".input[name=balpercentage").change(function(){
+        var balpercentage = $(this).val();
+        schedule.settings.balpercentage = (balpercentage * 0.01);
+        calc_schedule();
+    });
+
+    $(".input[name=baltime").change(function(){
+        var baltime = $(this).val();
+        schedule.settings.baltime = baltime / 60;
+        calc_schedule();
+    });
+
     // ------------------------------------------------
     
     $("#delete-device-confirm").click(function(){

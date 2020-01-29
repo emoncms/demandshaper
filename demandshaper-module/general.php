@@ -141,8 +141,15 @@
                 <td><span class="">EVSE Charge Rate: </span></td><td><input class="input" name="chargerate" type="text" style="width:80px"/> kW</td>
               </tr>
               <tr>
+                <td><span class="">Balancing Percentage: </span></td><td><input class="input" name="balpercentage" type="text" style="width:80px"/> %</td>
+                <td><span class="">Balancing Time: </span></td><td><input class="input" name="baltime" type="text" style="width:80px"/> Mins</td>
+              </tr>
+              <tr>
                 <td><span class="">OVMS Vehicle ID: </span></td><td><input class="input" name="vehicleid" type="text" style="width:150px"/></td>
                 <td><span class="">OVMS Car Password: </span></td><td><input class="input" name="carpass" type="text" style="width:150px"/></td>
+              </tr>
+              <tr>
+                <td><span class="">SQL DB Query for SOC: </span></td><td colspan="3"><input class="input" name="sqlsocquery" type="text" style="width:600px"/></td>
               </tr>
               </table>
           </div>

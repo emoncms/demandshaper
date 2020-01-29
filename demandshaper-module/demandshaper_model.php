@@ -76,7 +76,7 @@ class DemandShaper
                 if (!$stmt->execute()) {
                     return array('success'=>false, 'message'=>"Error saving demandshaper settings");
                 }
-                $this->log->error("Saved to disk");
+                $this->log->info("Saved to disk");
                 return array('success'=>true, 'message'=>"Saved to disk");
                 
             } else {
@@ -132,6 +132,23 @@ class DemandShaper
         return $schedules;
     }
     
+    // Use the provided SQL Query to obtain the SOC the field must be returned as soc
+    // so use the "as soc" after your field name, also must be in EmonCMS DB as uses
+    // same connection details.
+    public function get_soc_bysql($sql_query) {
+        $result = $this->mysqli->query($sql_query);
+        $data = array("soc"=>20);
+        $this->log->info("Sql Query: " & $sql_query);
+        if ($result->num_rows > 0) {
+            $row = $result->fetch_assoc();
+            $data = array("soc"=>$row["soc"]);
+        }
+        $this->log->info("Sql Query Returned: " & $row["soc"]);
+        $result->free_result();
+        return $data;
+    }
+
+
     public function get_forecast_list() {
         return array(
             // General
@@ -155,4 +172,5 @@ class DemandShaper
             "energylocal_bethesda"=>array("category"=>"Energy Local","name"=>"Bethesda")
         );
     }
+
 }
