@@ -23,6 +23,8 @@ var battery = {
     capacity: 20.0,
     charge_rate: 3.8,
     events_loaded: false,
+    balpercentage: 1,
+    baltime: 0,
 
     init: function(element) {
         battery.element = element;
@@ -94,6 +96,13 @@ var battery = {
         
         var kwh = (battery.end_soc - battery.soc) * battery.capacity;
         var time_left = kwh / battery.charge_rate;
+        console.log("Time Left: " + time_left);
+        // Add on balancing time if balancing percentage is lower than end SOC
+        if (battery.balpercentage < battery.end_soc) {
+            time_left += battery.baltime;
+            console.log("Balancing required Time to be added: " + battery.baltime + " - New Time Left: " + time_left);
+        }
+        
         battery.period = time_left;
         
         var h = Math.floor(time_left);
