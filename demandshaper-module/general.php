@@ -141,7 +141,7 @@
               </tr>
               <tr>
                 <td><span class="">Useable Battery Capacity: </span></td><td><input class="input" name="batterycapacity" type="text" style="width:80px"/> kWh</td>
-                <td><span class="">EVSE Charge Rate: </span></td><td><input class="input" name="chargerate" type="text" style="width:80px"/> kW</td>
+                <td><span class="">AC Charge Rate: </span></td><td><input class="input" name="chargerate" type="text" style="width:80px"/> kW</td>
               </tr>
               <tr class="openevse-balancing hide">
                 <td><span class="">Balancing Percentage: </span></td><td><input class="input" name="balpercentage" type="text" style="width:80px"/> %</td>
