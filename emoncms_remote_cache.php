@@ -15,7 +15,3 @@ print "$start carbonintensity ".strlen($result)."\n";
 $result = file_get_contents("https://api.octopus.energy/v1/products/AGILE-18-02-21/electricity-tariffs/E-1R-AGILE-18-02-21-D/standard-unit-rates/");
 $redis->set("demandshaper:octopus",$result);
 print "$start octopus ".strlen($result)."\n";
-
-$result = file_get_contents("http://tuntihinta.fi/json/hinnat.json");
-$redis->set("demandshaper:nordpool_fi",$result);
-print "$start nordpool_fi ".strlen($result)."\n";

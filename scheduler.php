@@ -19,8 +19,9 @@ define("MIN",0);
 // FETCH AND PRE-PROCESS FORECASTS AS 24H FROM CURRENT TIME
 // -------------------------------------------------------------------------------------------------------
 
-function get_forecast($redis,$signal,$timezone,$resolution) {
+function get_forecast($redis,$signal,$timezone,$signal_data,$signal_token) {
 
+    $resolution = $signal_data["resolution"];
     $resolution_h = $resolution/3600;
     $divisions = round(24*3600/$resolution);
 
@@ -32,6 +33,9 @@ function get_forecast($redis,$signal,$timezone,$resolution) {
     $profile = array();
     $available = 1;
     $optimise = MIN;
+
+    // persist signal properties in redis
+    $redis->set("demandshaper:signal_token",$signal_token);
     
     // -----------------------------------------------------------------------------
     // Grid carbon intensity
@@ -200,35 +204,45 @@ function get_forecast($redis,$signal,$timezone,$resolution) {
     }
 
     // -----------------------------------------------------------------------------
-    // Nordpool Spot FI
+    // Nordpool Spot
     // ----------------------------------------------------------------------------- 
-    else if ($signal=="nordpool_fi") {
-        $optimise = MIN;
-    
-        if (!$result = $redis->get("demandshaper:nordpool_fi")) {
-            if ($result = http_request("GET","http://tuntihinta.fi/json/hinnat.json",array())) {
-                $redis->set("demandshaper:nordpool_fi",$result);
+    else if (strpos($signal,"nordpool_")!==false) {
+        $optimise = MIN;    
+        $result = json_decode($redis->get("demandshaper:$signal"));
+
+        if (!$result || !is_object($result)) {
+            $area = $signal_data["name"];
+            $currency = $signal_data["currency"];
+            
+            if ($result = http_request("GET","http://datafeed.expektra.se/datafeed.svc/spotprice?token=$signal_token&bidding_area=$area&format=json&perspective=$currency",array())) {
+                $result = json_decode($result);
+
+                if(null!=$result) {
+                    $redis->set("demandshaper:$signal",$result);
+                }
             }
+        } else {
+            $result = json_decode($result);
         }
-        $result = json_decode($result);
          
         if ($result!=null && isset($result->data)) {
 
+            $vat = $signal_data["vat"];
             $timestamp = $start_timestamp;
             
             foreach ($result->data as $row) {
 
-                $arrDate = new DateTime($row->timestamp);
+                $arrDate = new DateTime($row->utc);
                 $arrDate->setTimezone(new DateTimeZone("Europe/London"));                
                 $arrTs = $arrDate->getTimestamp();
-                    
+
                 if ($arrTs>=$start_timestamp) 
                 {
                     $h = 1*$arrDate->format('H');
                     $m = 1*$arrDate->format('i')/60;
                     $hour = $h + $m;
                     
-                    $profile[] = array($arrTs*1000,floatval($row->PriceWithVat),$hour);
+                    $profile[] = array($arrTs*1000,floatval(($row->value*((100+$vat)/100))/100),$hour);
                 }
 
                 $timestamp += $resolution; 

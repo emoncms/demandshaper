@@ -154,7 +154,20 @@ class DemandShaper
             // Energy Local bethesda
             "energylocal_bethesda"=>array("category"=>"Energy Local","name"=>"Bethesda","resolution"=>1800),
             // Nordpool Spot
-            "nordpool_fi"=>array("category"=>"Nordpool Spot","name"=>"FI","resolution"=>3600)
+            "nordpool_dk1"=>array("category"=>"Nordpool Spot","name"=>"DK1","resolution"=>3600,"currency"=>"DKK","vat"=>"25"),
+            "nordpool_dk2"=>array("category"=>"Nordpool Spot","name"=>"DK2","resolution"=>3600,"currency"=>"DKK","vat"=>"25"),
+            "nordpool_ee"=>array("category"=>"Nordpool Spot","name"=>"EE","resolution"=>3600,"currency"=>"EUR","vat"=>"20"),
+            "nordpool_fi"=>array("category"=>"Nordpool Spot","name"=>"FI","resolution"=>3600,"currency"=>"EUR","vat"=>"24"),
+            "nordpool_lt"=>array("category"=>"Nordpool Spot","name"=>"LT","resolution"=>3600,"currency"=>"EUR","vat"=>"21"),
+            "nordpool_no1"=>array("category"=>"Nordpool Spot","name"=>"NO1","resolution"=>3600,"currency"=>"NOK","vat"=>"25"),
+            "nordpool_no2"=>array("category"=>"Nordpool Spot","name"=>"NO2","resolution"=>3600,"currency"=>"NOK","vat"=>"25"),
+            "nordpool_no3"=>array("category"=>"Nordpool Spot","name"=>"NO3","resolution"=>3600,"currency"=>"NOK","vat"=>"25"),
+            "nordpool_no4"=>array("category"=>"Nordpool Spot","name"=>"NO4","resolution"=>3600,"currency"=>"NOK","vat"=>"25"),
+            "nordpool_no5"=>array("category"=>"Nordpool Spot","name"=>"NO5","resolution"=>3600,"currency"=>"NOK","vat"=>"25"),
+            "nordpool_se1"=>array("category"=>"Nordpool Spot","name"=>"SE1","resolution"=>3600,"currency"=>"SEK","vat"=>"25"),
+            "nordpool_se2"=>array("category"=>"Nordpool Spot","name"=>"SE2","resolution"=>3600,"currency"=>"SEK","vat"=>"25"),
+            "nordpool_se3"=>array("category"=>"Nordpool Spot","name"=>"SE3","resolution"=>3600,"currency"=>"SEK","vat"=>"25"),
+            "nordpool_se4"=>array("category"=>"Nordpool Spot","name"=>"SE4","resolution"=>3600,"currency"=>"SEK","vat"=>"25")
         );
     }
 }

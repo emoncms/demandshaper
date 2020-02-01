@@ -132,6 +132,7 @@
           <span class="">Demand shaper signal: </span>
           <select class="input forecast-category" style="margin-top:10px; width:150px"></select>
           <select class="input forecast" style="margin-top:10px; width:180px"></select>
+          <input class="input forecast" name="signaltoken" type="text" style="margin-top:10px; width:150px; display:none;" placeholder="API token"/>
                               
           <div class="openevse hide">
             <br>

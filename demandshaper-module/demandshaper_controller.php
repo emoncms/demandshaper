@@ -51,8 +51,13 @@ function demandshaper_controller()
         case "forecast":
             $signal = "carbonintensity";
             if (isset($_GET['signal'])) $signal = $_GET['signal'];
+            if (isset($_GET['signal_token'])) {
+                $signal_token = $_GET['signal_token'];
+            } else {
+                $signal_token = "";
+            }
             include "$linked_modules_dir/demandshaper/scheduler.php";
-            return get_forecast($redis,$signal,$timezone,$forecast_list[$signal]["resolution"]);
+            return get_forecast($redis,$signal,$timezone,$forecast_list[$signal],$signal_token);
             break;
         
         case "submit":
@@ -108,12 +113,12 @@ function demandshaper_controller()
                     $schedule_log_output = "";
                     
                     if ($schedule->settings->ctrlmode=="smart") {
-                        $forecast = get_forecast($redis,$schedule->settings->signal,$timezone,$forecast_list[$schedule->settings->signal]["resolution"]);
+                        $forecast = get_forecast($redis,$schedule->settings->signal,$timezone,$forecast_list[$schedule->settings->signal],$schedule->settings->signal_token);
                         $schedule->runtime->periods = schedule_smart($forecast,$schedule->runtime->timeleft,$schedule->settings->end,$schedule->settings->interruptible,900,$timezone);
                         $schedule_log_output = "smart ".($schedule->runtime->timeleft/3600)." ".$schedule->settings->end;
                         
                     } else if ($schedule->settings->ctrlmode=="timer") {
-                        $forecast = get_forecast($redis,$schedule->settings->signal,$timezone);
+                        $forecast = get_forecast($redis,$schedule->settings->signal,$timezone,$forecast_list[$schedule->settings->signal],$schedule->settings->signal_token);
                         $schedule->runtime->periods = schedule_timer(
                             $forecast, 
                             $schedule->settings->timer_start1,$schedule->settings->timer_stop1,$schedule->settings->timer_start2,$schedule->settings->timer_stop2,
@@ -252,7 +257,7 @@ function demandshaper_controller()
                                     $state->ctrl_mode = "timer";
                                 }
                             } 
-                            else if ($ret[1]==1 || $ret[1]==3) {
+                            else if ($ret[1]==1 || $ret[1]==2 || $ret[1]==3) {
                                 if ($state->timer_start1==0 && $state->timer_stop1==0) {
                                     $state->ctrl_mode = "on";
                                 } else {

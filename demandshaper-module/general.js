@@ -52,6 +52,7 @@ function load_device(device_id, device_name, device_type)
             ovms_carpass: '',
             ev_soc: 0.2,
             ev_target_soc: 0.8,
+            signal_token: '',
             ip: ''
         },
         // Runtime change often and are saved only to redis
@@ -72,7 +73,8 @@ function load_device(device_id, device_name, device_type)
     
     update_device();    
     
-    if (schedule.settings.device_type=="openevse" || schedule.settings.device_type=="hpmon") {
+    if (schedule.settings.device_type == "openevse" || schedule.settings.device_type == "hpmon") {
+
         update_status();
         setInterval(update_status,5000);
         function update_status(){
@@ -134,15 +136,19 @@ function load_device(device_id, device_name, device_type)
                             battery.draw();
                         }});
                     }
+                            
+                    if (schedule.settings.signal.indexOf('nordpool_') > -1) {
+                        $("input[name='signaltoken']").show();
+                    }
                 }
             }
             
-            get_forecast(schedule.settings.signal,calc_schedule);
+            get_forecast(schedule.settings,calc_schedule);
         }});
     }
     
-    function get_forecast(signal,callback) {
-        $.ajax({ url: emoncmspath+"demandshaper/forecast?signal="+signal+apikeystr,
+    function get_forecast(settings,callback) {
+        $.ajax({ url: emoncmspath+"demandshaper/forecast?signal="+settings.signal+apikeystr+(settings.signal_token?"&signal_token="+settings.signal_token:""),
         dataType: 'json',
         async: true,
         success: function(result) {
@@ -258,6 +264,7 @@ function load_device(device_id, device_name, device_type)
             $(".input[name=chargerate").val(schedule.settings.chargerate);
             $(".input[name=vehicleid").val(schedule.settings.ovms_vehicleid);
             $(".input[name=carpass").val(schedule.settings.ovms_carpass);
+            $(".input[name=signaltoken").val(schedule.settings.signal_token);
             battery.draw();
         }
     }
@@ -329,6 +336,10 @@ function load_device(device_id, device_name, device_type)
         // --------------------------------------------------------------------------------------------
         // Draw schedule graph
         // --------------------------------------------------------------------------------------------
+        if (profile.length === 0) {
+            return;
+        }
+        
         var periods = schedule.runtime.periods;
         
         var interval = 1800;
@@ -658,7 +669,20 @@ function load_device(device_id, device_name, device_type)
     $(".forecast, .forecast-category").change(function(){
         // console.log($(".forecast-category").val()+" "+$(".forecast").val());
         schedule.settings.signal = $(".forecast").val();
-        get_forecast(schedule.settings.signal,calc_schedule);        
+        get_forecast(schedule.settings,calc_schedule);
+        
+        // show signal_token field if signal requiring token is selected
+        if (schedule.settings.signal.indexOf('nordpool_') > -1) {
+            $("input[name='signaltoken']").show();
+        } else {
+            $("input[name='signaltoken']").hide();
+        }
+    });
+
+    $(".input[name=signaltoken").change(function(){
+        var signaltoken = $(this).val();
+        schedule.settings.signal_token = signaltoken;
+        get_forecast(schedule.settings,calc_schedule);
     });
 
     $(".delete-device").click(function(){
