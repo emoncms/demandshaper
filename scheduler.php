@@ -215,14 +215,14 @@ function get_forecast($redis,$signal,$timezone,$signal_data,$signal_token) {
             $currency = $signal_data["currency"];
             
             if ($result = http_request("GET","http://datafeed.expektra.se/datafeed.svc/spotprice?token=$signal_token&bidding_area=$area&format=json&perspective=$currency",array())) {
-                $result = json_decode($result);
+                $r = json_decode($result);
 
-                if(null!=$result) {
+                if(null!=$r) {
                     $redis->set("demandshaper:$signal",$result);
                 }
+
+                $result = $r;
             }
-        } else {
-            $result = json_decode($result);
         }
          
         if ($result!=null && isset($result->data)) {

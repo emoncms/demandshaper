@@ -171,9 +171,9 @@ while(true)
                         $area = $forecast_list[$signal]['name'];
                         $currency = $forecast_list[$signal]['currency'];
                         if ($result = http_request("GET","http://datafeed.expektra.se/datafeed.svc/spotprice?token=$token&bidding_area=$area&format=json&perspective=$currency",array())) {                            
-                            $result = json_decode($result);
+                            $r = json_decode($result);
 
-                            if(null!=$result) {
+                            if(null!=$r) {
                                 $redis->set("demandshaper:$signal",$result);
                                 $log->info("load: demandshaper:$forecast (".strlen($result).")");
                             }                            
