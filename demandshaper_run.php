@@ -168,13 +168,13 @@ while(true)
                     } else if (strpos($forecast,"nordpool_")!==false) {
                         // Nordpool Spot demand shaper
                         $token = $redis->get("demandshaper:signal_token");
-                        $area = $forecast_list[$signal]['name'];
-                        $currency = $forecast_list[$signal]['currency'];
+                        $area = $forecast_list[$forecast]['name'];
+                        $currency = $forecast_list[$forecast]['currency'];
                         if ($result = http_request("GET","http://datafeed.expektra.se/datafeed.svc/spotprice?token=$token&bidding_area=$area&format=json&perspective=$currency",array())) {                            
                             $r = json_decode($result);
 
                             if(null!=$r) {
-                                $redis->set("demandshaper:$signal",$result);
+                                $redis->set("demandshaper:$$forecast",$result);
                                 $log->info("load: demandshaper:$forecast (".strlen($result).")");
                             }                            
                         }
