@@ -135,10 +135,10 @@ function load_device(device_id, device_name, device_type)
                             if (schedule.settings.ev_soc!=last_ev_soc) calc_schedule();                     
                         }});
                     }
-                            
-                    if (schedule.settings.signal.indexOf('nordpool_') > -1) {
-                        $("input[name='signaltoken']").show();
-                    }
+                }
+
+                if (schedule.settings.device_type=="openevse" && schedule.settings.signal.indexOf('nordpool_') > -1) {
+                    $("input[name='signaltoken']").show();
                 }
             }
             
