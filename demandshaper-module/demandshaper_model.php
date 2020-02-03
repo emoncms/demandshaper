@@ -170,4 +170,5 @@ class DemandShaper
             "nordpool_se4"=>array("category"=>"Nordpool Spot","name"=>"SE4","resolution"=>3600,"currency"=>"SEK","vat"=>"25")
         );
     }
+
 }
