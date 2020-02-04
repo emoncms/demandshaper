@@ -22,6 +22,9 @@ var battery = {
     end_soc: 0.8,
     capacity: 20.0,
     charge_rate: 3.8,
+    events_loaded: false,
+    balpercentage: 1,
+    baltime: 0,
 
     init: function(element) {
         battery.element = element;
@@ -29,11 +32,12 @@ var battery = {
         // Dimentions
         battery.width = $("#"+element+"_bound").width()-5;
         if (battery.width>400) battery.width = 400;
-        battery.height = battery.width*0.4;
+        battery.height = battery.width*0.44;
         $("#"+element+"_bound").css("height",battery.height);
         $("#"+element).attr("width",battery.width);
         $("#"+element).attr("height",battery.height);
 
+        if (!battery.events_loaded) battery.events();
     },
     
     draw: function() {
@@ -92,6 +96,13 @@ var battery = {
         
         var kwh = (battery.end_soc - battery.soc) * battery.capacity;
         var time_left = kwh / battery.charge_rate;
+        console.log("Time Left: " + time_left);
+        // Add on balancing time if balancing percentage is lower than end SOC
+        if (battery.balpercentage < battery.end_soc) {
+            time_left += battery.baltime;
+            console.log("Balancing required Time to be added: " + battery.baltime + " - New Time Left: " + time_left);
+        }
+        
         battery.period = time_left;
         
         var h = Math.floor(time_left);
@@ -105,7 +116,7 @@ var battery = {
     },
     
     events: function() {
-    
+        battery.events_loaded = true;
         element = "#"+battery.element;
     
         $(element).mousedown(function( event ) {
