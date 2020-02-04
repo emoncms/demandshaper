@@ -167,10 +167,12 @@ while(true)
                         }
                     } else if (strpos($forecast,"nordpool_")!==false) {
                         // Nordpool Spot demand shaper
-                        $token = $redis->get("demandshaper:signal_token");
+                        $token = $schedule->settings->signal_token;
                         $area = $forecast_list[$forecast]['name'];
                         $currency = $forecast_list[$forecast]['currency'];
-                        if ($result = http_request("GET","http://datafeed.expektra.se/datafeed.svc/spotprice?token=$token&bidding_area=$area&format=json&perspective=$currency",array())) {                            
+                        $time = time();
+
+                        if ($result = http_request("GET","http://datafeed.expektra.se/datafeed.svc/spotprice?token=$token&bidding_area=$area&format=json&perspective=$currency&$time",array())) {                            
                             $r = json_decode($result);
 
                             if(null!=$r) {
@@ -352,11 +354,11 @@ while(true)
                     if (!isset($schedule->runtime->started) || $schedule->settings->interruptible) {
                         
                         if ($schedule->settings->ctrlmode=="smart") {
-                            $forecast = get_forecast($redis,$schedule->settings->signal,$timezone,$forecast_list[$schedule->settings->signal],$redis->get("demandshaper:signal_token"));
+                            $forecast = get_forecast($redis,$schedule->settings->signal,$timezone,$forecast_list[$schedule->settings->signal],$schedule->settings->signal_token);
                             $schedule->runtime->periods = schedule_smart($forecast,$schedule->runtime->timeleft,$schedule->settings->end,$schedule->settings->interruptible,900,$timezone,$forecast_list[$schedule->settings->signal]["resolution"]);
                             
                         } else if ($schedule->settings->ctrlmode=="timer") {
-                            $forecast = get_forecast($redis,$schedule->settings->signal,$timezone,$forecast_list[$schedule->settings->signal],$redis->get("demandshaper:signal_token"));
+                            $forecast = get_forecast($redis,$schedule->settings->signal,$timezone,$forecast_list[$schedule->settings->signal],$schedule->settings->signal_token);
                             $schedule->runtime->periods = schedule_timer(
                                 $forecast, 
                                 $schedule->settings->timer_start1,$schedule->settings->timer_stop1,$schedule->settings->timer_start2,$schedule->settings->timer_stop2,

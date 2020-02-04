@@ -33,9 +33,6 @@ function get_forecast($redis,$signal,$timezone,$signal_data,$signal_token) {
     $profile = array();
     $available = 1;
     $optimise = MIN;
-
-    // persist signal properties in redis
-    $redis->set("demandshaper:signal_token",$signal_token);
     
     // -----------------------------------------------------------------------------
     // Grid carbon intensity
@@ -213,8 +210,9 @@ function get_forecast($redis,$signal,$timezone,$signal_data,$signal_token) {
         if (!$result || !is_object($result)) {
             $area = $signal_data["name"];
             $currency = $signal_data["currency"];
+            $time = time();
             
-            if ($result = http_request("GET","http://datafeed.expektra.se/datafeed.svc/spotprice?token=$signal_token&bidding_area=$area&format=json&perspective=$currency",array())) {
+            if ($result = http_request("GET","http://datafeed.expektra.se/datafeed.svc/spotprice?token=$signal_token&bidding_area=$area&format=json&perspective=$currency&$time",array())) {
                 $r = json_decode($result);
 
                 if(null!=$r) {
@@ -242,7 +240,7 @@ function get_forecast($redis,$signal,$timezone,$signal_data,$signal_token) {
                     $m = 1*$arrDate->format('i')/60;
                     $hour = $h + $m;
                     
-                    $profile[] = array($arrTs*1000,floatval(($row->value*((100+$vat)/100))/100),$hour);
+                    $profile[] = array($arrTs*1000,floatval(($row->value*((100+$vat)/100))/10),$hour);
                 }
 
                 $timestamp += $resolution; 
