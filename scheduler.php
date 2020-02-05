@@ -132,13 +132,13 @@ function get_forecast($redis,$signal,$timezone,$signal_data,$signal_token) {
     else if ($signal=="energylocal_bethesda") {
         $optimise = MIN;
         if (!$result = $redis->get("demandshaper:energylocal_bethesda")) {
-            if ($result = http_request("GET","https://dashboard.energylocal.org.uk/cydynni/demandshaper?time=".time(),array())) {
+            if ($result = http_request("GET","https://dashboard.energylocal.org.uk/cydynni/demandshaper&time=".time(),array())) {
                 $redis->set("demandshaper:energylocal_bethesda",$result);
             }
         }
         $result = json_decode($result);
         // Validate demand shaper
-        if  ($result!=null && isset($result->DATA) && count($result->DATA)>0) {
+        if  ($result!=null && isset($result->DATA)) {
             
             $date = new DateTime();
             $date->setTimezone(new DateTimeZone($timezone));
