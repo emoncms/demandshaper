@@ -273,12 +273,12 @@ function load_device(device_id, device_name, device_type)
         // Draw OpenEVSE specific items                            
         if (schedule.settings.device_type=="openevse") {
             $(".openevse").show();
-              
-            $(".input[name=openevsecontroltype]").val(schedule.settings.openevsecontroltype);
-            $(".input[name=batterycapacity]").val(schedule.settings.batterycapacity);
-            $(".input[name=chargerate]").val(schedule.settings.chargerate);
-            $(".input[name=balpercentage").val(schedule.settings.balpercentage * 100);
-            $(".input[name=baltime").val(Math.round(schedule.settings.baltime * 60));
+            
+            $('.input[name="openevsecontroltype"]').val(schedule.settings.openevsecontroltype);
+            $('.input[name="batterycapacity"]').val(schedule.settings.batterycapacity);
+            $('.input[name="chargerate"]').val(schedule.settings.chargerate);
+            $('.input[name="balpercentage"]').val(schedule.settings.balpercentage * 100);
+            $('.input[name="baltime"]').val(Math.round(schedule.settings.baltime * 60));
             $(".input[name=signaltoken").val(schedule.settings.signal_token);
             
             if (schedule.settings.openevsecontroltype=="socinput" || schedule.settings.openevsecontroltype=="socovms") {
@@ -306,8 +306,8 @@ function load_device(device_id, device_name, device_type)
             
             if (schedule.settings.openevsecontroltype=="socovms") {
                 $(".ovms-options").show();
-                $(".input[name=vehicleid]").val(schedule.settings.ovms_vehicleid);
-                $(".input[name=carpass]").val(schedule.settings.ovms_carpass);
+                $('.input[name="vehicleid"]').val(schedule.settings.ovms_vehicleid);
+                $('.input[name="carpass"]').val(schedule.settings.ovms_carpass);
             } else {
                 $(".ovms-options").hide();
             }
@@ -337,9 +337,9 @@ function load_device(device_id, device_name, device_type)
                 borderWidth:0,
                 hoverable: true, 
                 clickable: true
-            },
-            selection: { mode: "x" },
-            touch: { pan: "x", scale: "x" }
+            }
+            //selection: { mode: "x" },
+            //touch: { pan: "x", scale: "x" }
         };
       
         // --------------------------------------------------------------------------------------------
@@ -748,38 +748,38 @@ function load_device(device_id, device_name, device_type)
     // ------------------------------------------------
     // openevse settings
     // ------------------------------------------------
-    $(".input[name=openevsecontroltype").change(function(){
+    $('.input[name="openevsecontroltype"]').change(function(){
         schedule.settings.openevsecontroltype =  $(this).val();
         calc_schedule();
     });
     
-    $(".input[name=batterycapacity").change(function(){
+    $('.input[name="batterycapacity"]').change(function(){
         var batterycapacity = $(this).val();
         schedule.settings.batterycapacity = batterycapacity*1.0;
         if (schedule.settings.batterycapacity<0.0) schedule.settings.batterycapacity = 0.0;
         calc_schedule();
     });
 
-    $(".input[name=chargerate").change(function(){
+    $('.input[name="chargerate"]').change(function(){
         var chargerate = $(this).val();
         schedule.settings.chargerate = chargerate*1.0;
         if (schedule.settings.chargerate<0.0) schedule.settings.chargerate = 0.0;
         calc_schedule();
     });
     
-    $(".input[name=vehicleid").change(function(){
+    $('.input[name="vehicleid"]').change(function(){
         var vehicleid = $(this).val();
         schedule.settings.ovms_vehicleid = vehicleid;
         calc_schedule();
     });
 
-    $(".input[name=carpass").change(function(){
+    $('.input[name="carpass"]').change(function(){
         var carpass = $(this).val();
         schedule.settings.ovms_carpass = carpass;
         calc_schedule();
     });
 
-    $(".input[name=balpercentage").change(function(){
+    $('.input[name="balpercentage"]').change(function(){
         var balpercentage = $(this).val();
         schedule.settings.balpercentage = (balpercentage * 0.01);
         if (schedule.settings.balpercentage<0.0) schedule.settings.balpercentage = 0.0;
@@ -787,7 +787,7 @@ function load_device(device_id, device_name, device_type)
         calc_schedule();
     });
 
-    $(".input[name=baltime").change(function(){
+    $('.input[name="baltime"]').change(function(){
         var baltime = $(this).val();
         schedule.settings.baltime = baltime / 60;
         if (schedule.settings.baltime<0.0) schedule.settings.baltime = 0.0;
