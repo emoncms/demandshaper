@@ -280,7 +280,7 @@ function load_device(device_id, device_name, device_type)
             $('.input[name="balpercentage"]').val(schedule.settings.balpercentage * 100);
             $('.input[name="baltime"]').val(Math.round(schedule.settings.baltime * 60));
             $(".input[name=signaltoken").val(schedule.settings.signal_token);
-            
+
             if (schedule.settings.openevsecontroltype=="socinput" || schedule.settings.openevsecontroltype=="socovms") {
             
                 battery.capacity = schedule.settings.batterycapacity;
@@ -581,9 +581,9 @@ function load_device(device_id, device_name, device_type)
             else if (hour==12) str = "Noon";
             else if (h>12) {
                 h = h - 12;
-                str = h+":"+m+" p.m.";
+                str = h+":"+m+" pm";
             } else if (h<12) {
-                str += " a.m.";
+                str += " am";
             }
         }
         return str;
