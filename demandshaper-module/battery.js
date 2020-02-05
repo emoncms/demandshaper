@@ -32,7 +32,7 @@ var battery = {
         // Dimentions
         battery.width = $("#"+element+"_bound").width()-5;
         if (battery.width>400) battery.width = 400;
-        battery.height = battery.width*0.4;
+        battery.height = battery.width*0.44;
         $("#"+element+"_bound").css("height",battery.height);
         $("#"+element).attr("width",battery.width);
         $("#"+element).attr("height",battery.height);
