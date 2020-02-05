@@ -445,7 +445,7 @@ function schedule_smart($forecast,$timeleft,$end,$interruptible,$resolution,$tim
                 $last = $val;
             }
             
-            if ($last==0 && $val==1) {                
+            if ($last==0 && $val==1) {
                 $start = $hour;
                 $tstart = $timestamp;
             }
