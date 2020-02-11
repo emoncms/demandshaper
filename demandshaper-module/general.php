@@ -132,7 +132,7 @@
           <span class="">Demand shaper signal: </span>
           <select class="input forecast-category" style="margin-top:10px; width:150px"></select>
           <select class="input forecast" style="margin-top:10px; width:180px"></select>
-          <input class="input forecast" name="signaltoken" type="text" style="margin-top:10px; width:150px; display:none;" placeholder="API token"/>
+          <input class="input forecast" name="signaltoken" type="text" style="margin-top:10px; width:150px; display:none" placeholder="API token" title="See http://datafeed.expektra.se/datafeed.svc/spotprice how to acquire API token." />
                               
           <div class="openevse hide">
             <div><span class="">Control based on: </span></td><td><select class="input" name="openevsecontroltype"><option value="time">Charge time</option><!--<option value="energy">Charge energy</option><option value="miles">Travel distance</option>--><option value="socinput">Battery charge level (Input)</option><option value="socovms">Battery charge level (OVMS)</option></select></div>
