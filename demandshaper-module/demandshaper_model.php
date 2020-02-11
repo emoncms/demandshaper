@@ -155,4 +155,5 @@ class DemandShaper
             "energylocal_bethesda"=>array("category"=>"Energy Local","name"=>"Bethesda")
         );
     }
+
 }

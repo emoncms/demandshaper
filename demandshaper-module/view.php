@@ -16,7 +16,7 @@ global $path;
 $device = "";
 if (isset($_GET['device'])) $device = $_GET['device'];
 
-$v=11;
+$v=1;
 
 $emoncmspath = $path;
 if ($remoteaccess) $emoncmspath .= "remoteaccess/";
@@ -41,8 +41,6 @@ var forecast_list = <?php echo json_encode($forecast_list); ?>;
 </style>
 <!--[if IE]><script language="javascript" type="text/javascript" src="<?php echo $path;?>Lib/flot/excanvas.min.js"></script><![endif]-->
 <script language="javascript" type="text/javascript" src="<?php echo $path; ?>Lib/flot/jquery.flot.min.js"></script>
-<script language="javascript" type="text/javascript" src="<?php echo $path; ?>Lib/flot/jquery.flot.selection.min.js"></script>
-<script language="javascript" type="text/javascript" src="<?php echo $path; ?>Lib/flot/jquery.flot.touch.min.js"></script>
 <script language="javascript" type="text/javascript" src="<?php echo $path; ?>Lib/flot/jquery.flot.time.min.js"></script>
 <script language="javascript" type="text/javascript" src="<?php echo $path; ?>Lib/flot/date.format.min.js"></script>
 <script language="javascript" type="text/javascript" src="<?php echo $path;?>Modules/vis/visualisations/common/vis.helper.js"></script>
@@ -170,6 +168,7 @@ var forecast_list = <?php echo json_encode($forecast_list); ?>;
           //  select first device if device is not defined
               if (!device_name) device_name = name;
           }
+
           // out += "<li id='add-device' style='border-top:1px solid #aaa; cursor:pointer'><a><i class='icon-plus icon-white'></i> Add Device</a></li>";
           // $(".sidenav-menu").html(out);
           
