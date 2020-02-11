@@ -284,7 +284,6 @@ while(true)
                             if ($ctrlmode=="on") $ctrlmode_status = "On";
                             if ($ctrlmode=="smart") $ctrlmode_status = "Timer";
                             if ($ctrlmode=="timer") $ctrlmode_status = "Timer";
-                            if ($ctrlmode=="disabled") $ctrlmode_status = "Disabled";
                                                         
                             if ($device_type=="smartplug" || $device_type=="hpmon" || $device_type=="wifirelay") {
                                 $mqtt_client->publish("emon/$device/in/ctrlmode",$ctrlmode_status,0);
