@@ -5,10 +5,9 @@ function schedule_smart(forecast,timeleft,end,interruptible,resolution)
 {
     var MIN = 0
     var MAX = 1
-    var forecast_length = 24;
     
     var resolution_h = resolution/3600
-    var divisions = Math.round(forecast_length*3600/resolution)
+    var divisions = Math.round(24*3600/resolution)
     
     // period is in hours
     var period = timeleft / 3600
@@ -29,7 +28,7 @@ function schedule_smart(forecast,timeleft,end,interruptible,resolution)
     
     var midnight = timestamp - (start_hour*3600)
     var end_timestamp = midnight + end*3600
-    if (end_timestamp<now) end_timestamp+=3600*forecast_length
+    if (end_timestamp<now) end_timestamp+=3600*24
     
     var profile = forecast.profile
 
@@ -82,7 +81,7 @@ function schedule_smart(forecast,timeleft,end,interruptible,resolution)
              // Calculate sum of probability function values for block of demand covering hours in period
              let sum = 0
              let valid_block = 1
-             for (let i=0; i<period*(divisions/forecast_length); i++) {
+             for (let i=0; i<period*(divisions/24); i++) {
                  
                  if (profile[td+i]!=undefined) {
                      if (profile[td+i][0]*0.001>=end_timestamp) valid_block = 0
@@ -112,7 +111,7 @@ function schedule_smart(forecast,timeleft,end,interruptible,resolution)
         let end_hour = start_hour
         let tend = tstart
         
-        for (let i=0; i<period*(divisions/forecast_length); i++) {
+        for (let i=0; i<period*(divisions/24); i++) {
             if (profile[pos+i]!=undefined) {
                 profile[pos+i][3] = 1
                 end_hour+=resolution/3600
@@ -135,7 +134,7 @@ function schedule_smart(forecast,timeleft,end,interruptible,resolution)
         // ---------------------------------------------------------------------------------
 
         // For each hour of demand
-        for (let p=0; p<period*(divisions/forecast_length); p++) {
+        for (let p=0; p<period*(divisions/24); p++) {
 
             if (forecast.optimise==MIN) threshold = forecast.max; else threshold = forecast.min;
             let pos = -1

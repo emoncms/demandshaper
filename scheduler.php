@@ -272,10 +272,9 @@ function get_forecast($redis,$signal,$timezone,$signal_data,$signal_token) {
 function schedule_smart($forecast,$timeleft,$end,$interruptible,$resolution,$timezone)
 {
     $debug = 0;
-    $forecast_length = 24;
 
     $resolution_h = $resolution/3600;
-    $divisions = round($forecast_length*3600/$resolution);
+    $divisions = round(24*3600/$resolution);
     
     // period is in hours
     $period = $timeleft / 3600;
@@ -297,7 +296,7 @@ function schedule_smart($forecast,$timeleft,$end,$interruptible,$resolution,$tim
     $end = floor($end / $resolution_h) * $resolution_h;
     $date->modify("midnight");
     $end_timestamp = $date->getTimestamp() + $end*3600;
-    if ($end_timestamp<$now) $end_timestamp+=3600*$forecast_length;
+    if ($end_timestamp<$now) $end_timestamp+=3600*24;
 
     $profile = $forecast->profile;
 
@@ -350,7 +349,7 @@ function schedule_smart($forecast,$timeleft,$end,$interruptible,$resolution,$tim
              // Calculate sum of probability function values for block of demand covering hours in period
              $sum = 0;
              $valid_block = 1;
-             for ($i=0; $i<$period*($divisions/$forecast_length); $i++) {
+             for ($i=0; $i<$period*($divisions/24); $i++) {
                  
                  if (isset($profile[$td+$i])) {
                      if ($profile[$td+$i][0]*0.001>=$end_timestamp) $valid_block = 0;
@@ -380,7 +379,7 @@ function schedule_smart($forecast,$timeleft,$end,$interruptible,$resolution,$tim
         $end_hour = $start_hour;
         $tend = $tstart;
         
-        for ($i=0; $i<$period*($divisions/$forecast_length); $i++) {
+        for ($i=0; $i<$period*($divisions/24); $i++) {
             $profile[$pos+$i][3] = 1;
             $end_hour+=$resolution/3600;
             $tend+=$resolution;
@@ -401,7 +400,7 @@ function schedule_smart($forecast,$timeleft,$end,$interruptible,$resolution,$tim
         // ---------------------------------------------------------------------------------
 
         // For each hour of demand
-        for ($p=0; $p<$period*($divisions/$forecast_length); $p++) {
+        for ($p=0; $p<$period*($divisions/24); $p++) {
 
             if ($forecast->optimise==MIN) $threshold = $forecast->max; else $threshold = $forecast->min;
             $pos = -1;

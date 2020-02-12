@@ -66,8 +66,7 @@ function load_device(device_id, device_name, device_type)
     
     update_device();    
     
-    if (schedule.settings.device_type == "openevse" || schedule.settings.device_type == "hpmon") {
-
+    if (schedule.settings.device_type=="openevse" || schedule.settings.device_type=="hpmon") {
         update_status();
         setInterval(update_status,5000);
         function update_status(){
