@@ -20,6 +20,11 @@
             "processList": []
         },
         {
+            "name": "rununtilcompleteby",
+            "description": "rununtilcompleteby",
+            "processList": []
+        },
+        {
             "name": "status",
             "description": "status",
             "processList": []
@@ -35,6 +40,7 @@
         "end": {"name":"Complete by", "type":"time","default":0,"resolution":0.5},
         "repeat": {"type":"weekly-scheduler","default":[1,1,1,1,1,0,0]},
         "interruptible": {"name":"Ok to interrupt schedule","type":"checkbox","default":0},
+        "rununtilcompleteby": {"name":"Run until Complete by","type":"checkbox","default":0},
         "runonce": {"type":"","default":true},
         "basic": {"type":"","default":0}
     }
