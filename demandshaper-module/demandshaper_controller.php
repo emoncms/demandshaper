@@ -73,6 +73,7 @@ function demandshaper_controller()
                     if (!isset($schedule->settings->end)) return array("content"=>"Missing end parameter in schedule object");
                     if (!isset($schedule->settings->period)) return array("content"=>"Missing period parameter in schedule object");
                     if (!isset($schedule->settings->interruptible)) return array("content"=>"Missing interruptible parameter in schedule object");
+                    if (!isset($schedule->settings->rununtilcompleteby)) return array("content"=>"Missing rununtilcompleteby parameter in schedule object");
                     if (!isset($schedule->settings->runonce)) return array("content"=>"Missing runonce parameter in schedule object");
                     if ($schedule->settings->runonce) $schedule->settings->runonce = time();
                     $device = $schedule->settings->device;
