@@ -271,6 +271,11 @@ function get_forecast($redis,$signal,$timezone,$signal_data,$signal_token) {
 
 function schedule_smart($forecast,$timeleft,$end,$interruptible,$resolution,$timezone)
 {
+    // do not proceed if forecast profile is empty
+    if (count($forecast->profile) == 0) {
+        return [];
+    }
+
     $debug = 0;
 
     $resolution_h = $resolution/3600;

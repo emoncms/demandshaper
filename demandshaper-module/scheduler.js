@@ -2,7 +2,12 @@
 // SMART SCHEDULE
 // -------------------------------------------------------------------------------------------------------
 function schedule_smart(forecast,timeleft,end,interruptible,resolution)
-{
+{    
+    // do not proceed if forecast profile is empty
+    if (forecast.profile.length === 0) {
+        return [];
+    }
+
     var MIN = 0
     var MAX = 1
     
@@ -30,12 +35,12 @@ function schedule_smart(forecast,timeleft,end,interruptible,resolution)
     var end_timestamp = midnight + end*3600
     if (end_timestamp<now) end_timestamp+=3600*24
     
-    var profile = forecast.profile
+    var profile = forecast.profile    
 
     // --------------------------------------------------------------------------------
     // Upsample profile
     // -------------------------------------------------------------------------------
-    let upsampled = [];            
+    let upsampled = [];
     
     let profile_start = profile[0][0]*0.001;
 
