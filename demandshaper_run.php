@@ -12,8 +12,6 @@ http://openenergymonitor.org
 
 */
 
-$userid = 2;
-
 define('EMONCMS_EXEC', 1);
 
 $fp = fopen("/var/lock/demandshaper.lock", "w");
@@ -102,7 +100,8 @@ while(true)
     $now = time();
     
     // demandshaper trigger
-    if ($trigger = $redis->get("demandshaper:trigger")) {
+    $trigger = $redis->llen("demandshaper:trigger");
+    if ($trigger>0) {
         $log->info("trigger");
     }
     
@@ -112,264 +111,276 @@ while(true)
     if ($now%$update_interval==0 || $trigger || $firstrun) {
         $firstrun = false;
         
-        $redis->set("demandshaper:trigger",0);
-
-        // Get time of start of day
-        $timezone = $user->get_timezone($userid);
-        $date = new DateTime();
-        $date->setTimezone(new DateTimeZone($timezone));
-        $date->setTimestamp($now);
-        $date->modify("midnight");
-        $daystart = $date->getTimestamp();
-        $second_in_day = $now - $daystart;
-
-        // Schedule definition
-        $schedules = $demandshaper->get($userid);
-        if ($schedules!=null)
+        $users = array();
+        
+        for ($i=0; $i<$trigger; $i++) $users[] = $redis->lpop("demandshaper:trigger");
+        
+        // Get list of users to process
+        if (!$trigger) {
+            $result = $mysqli->query("SELECT `userid` FROM demandshaper");
+            while ($row = $result->fetch_object()) $users[] = $row->userid;
+        }
+        
+        foreach($users as $userid)
         {
-            // ---------------------------------------------------------------------
-            // Load demand shaper and cache locally every hour
-            // - load only relevant forecasts
-            // ---------------------------------------------------------------------
-            if (($now-$last_30min)>=3600) {
-                $last_30min = $now;
-                
-                $request_forecasts = array();
+            print "userid:$userid\n";
+            // Get time of start of day
+            $timezone = $user->get_timezone($userid);
+            $date = new DateTime();
+            $date->setTimezone(new DateTimeZone($timezone));
+            $date->setTimestamp($now);
+            $date->modify("midnight");
+            $daystart = $date->getTimestamp();
+            $second_in_day = $now - $daystart;
 
-                foreach ($schedules as $sid=>$schedule) {
-                    if (!in_array($schedule->settings->signal,$request_forecasts)) $request_forecasts[] = $schedule->settings->signal;
+            // Schedule definition
+            $schedules = $demandshaper->get($userid);
+            if ($schedules!=null)
+            {
+                // ---------------------------------------------------------------------
+                // Load demand shaper and cache locally every hour
+                // - load only relevant forecasts
+                // ---------------------------------------------------------------------
+                if (($now-$last_30min)>=3600) {
+                    $last_30min = $now;
+                    
+                    $request_forecasts = array();
+
+                    foreach ($schedules as $sid=>$schedule) {
+                        if (!in_array($schedule->settings->signal,$request_forecasts)) $request_forecasts[] = $schedule->settings->signal;
+                    }
+                    
+                    // Clear old forecasts - ensures forecasts are reloaded properly if selected after an extended period in the UI
+                    foreach ($forecast_list as $forecast_key=>$forecast) $redis->del("demandshaper:$forecast_key");
+                    
+                    // Load in only relevant forecasts
+                    foreach ($request_forecasts as $forecast) {
+                        if (strpos($forecast,"energylocal_")!==false) {
+                            // Energy Local Bethesda demand shaper
+                            if ($result = http_request("GET","https://dashboard.energylocal.org.uk/cydynni/demandshaper",array())) {
+                                $redis->set("demandshaper:energylocal_bethesda",$result);
+                                $log->info("load: demandshaper:energylocal_bethesda (".strlen($result).")");
+                            }
+                        // Octopus agile
+                        } else if (strpos($forecast,"octopusagile_")!==false && strlen($forecast)==14) {
+                            // Agile region code options
+                            $gsp_id = "A"; if (in_array($forecast[13],array("A","B","C","D","E","F","G","H","J","K","L","M","N","P"))) $gsp_id = $forecast[13];
+                            if ($result = http_request("GET","https://emoncms.org/demandshaper/octopus?gsp=$gsp_id&time=".time(),array())) {
+                                $redis->set("demandshaper:octopusagile_$gsp_id",$result);
+                                $log->info("load: demandshaper:octopusagile_$gsp_id (".strlen($result).")");
+                            }
+                        } else if ($forecast=="carbonintensity") {
+                            // Uk Grid carbon intensity
+                            if ($result = http_request("GET","https://emoncms.org/demandshaper/carbonintensity",array())) {
+                                $redis->set("demandshaper:carbonintensity",$result);
+                                $log->info("load: demandshaper:carbonintensity (".strlen($result).")");
+                            }
+                        }
+                    }
                 }
-                
-                // Clear old forecasts - ensures forecasts are reloaded properly if selected after an extended period in the UI
-                foreach ($forecast_list as $forecast_key=>$forecast) $redis->del("demandshaper:$forecast_key");
-                
-                // Load in only relevant forecasts
-                foreach ($request_forecasts as $forecast) {
-                    if (strpos($forecast,"energylocal_")!==false) {
-                        // Energy Local Bethesda demand shaper
-                        if ($result = http_request("GET","https://dashboard.energylocal.org.uk/cydynni/demandshaper",array())) {
-                            $redis->set("demandshaper:energylocal_bethesda",$result);
-                            $log->info("load: demandshaper:energylocal_bethesda (".strlen($result).")");
-                        }
-                    // Octopus agile
-                    } else if (strpos($forecast,"octopusagile_")!==false && strlen($forecast)==14) {
-                        // Agile region code options
-                        $gsp_id = "A"; if (in_array($forecast[13],array("A","B","C","D","E","F","G","H","J","K","L","M","N","P"))) $gsp_id = $forecast[13];
-                        if ($result = http_request("GET","https://emoncms.org/demandshaper/octopus?gsp=$gsp_id&time=".time(),array())) {
-                            $redis->set("demandshaper:octopusagile_$gsp_id",$result);
-                            $log->info("load: demandshaper:octopusagile_$gsp_id (".strlen($result).")");
-                        }
-                    } else if ($forecast=="carbonintensity") {
-                        // Uk Grid carbon intensity
-                        if ($result = http_request("GET","https://emoncms.org/demandshaper/carbonintensity",array())) {
-                            $redis->set("demandshaper:carbonintensity",$result);
-                            $log->info("load: demandshaper:carbonintensity (".strlen($result).")");
-                        }
-                    }
-                }
-            }
-        
-            foreach ($schedules as $sid=>$schedule)
-            {   
-                $device = false;
-                if (isset($schedule->settings->device)) $device = $schedule->settings->device;
-                $device_type = false;
-                if (isset($schedule->settings->device_type)) $device_type = $schedule->settings->device_type;
-                $ctrlmode = false;
-                if (isset($schedule->settings->ctrlmode)) $ctrlmode = $schedule->settings->ctrlmode;
-                                
-                if ($device_type && $ctrlmode)
-                {
-                    $log->info(date("Y-m-d H:i:s")." Schedule:$device ".$schedule->settings->ctrlmode);
-                    $log->info("  end timestamp: ".$schedule->settings->end_timestamp);
-                    // -----------------------------------------------------------------------
-                    // Work out if schedule is running
-                    // -----------------------------------------------------------------------  
-                    $status = 0;
-                    $active_period = 0;
-                    if ($schedule->runtime->timeleft>0 || $ctrlmode=="timer") {
-                        foreach ($schedule->runtime->periods as $pid=>$period) {
-                            $start = $period->start[0];
-                            $end = $period->end[0];
-                            if ($now>=$start && $now<$end) {
-                                $status = 1;
-                                $active_period = $pid;
-                            }
-                        }
-                    }
-                    
-                    // If runonce is true, check if within 24h period
-                    if ($schedule->settings->runonce!==false) {
-                        if (($now-$schedule->settings->runonce)>(24*3600)) $status = 0;
-                    } else {
-                        // Check if schedule should be ran on this day
-                        if (!$schedule->settings->repeat[$date->format("N")-1]) $status = 0;
-                    }
-                    
-                    if ($schedule->settings->ctrlmode=="on") $status = 1;
-                    if ($schedule->settings->ctrlmode=="off") $status = 0;
-
-                    if ($status) {
-                        $log->info("  status: ON");
-                        $schedule->runtime->started = true;
-                        $time_elapsed = $now - $lasttime;
-                        $log->info("  time elapsed: $time_elapsed");
-                        $schedule->runtime->timeleft -= $time_elapsed; // $update_interval;
-                        $log->info("  timeleft: ".$schedule->runtime->timeleft."s");
-                        if ($schedule->runtime->timeleft<0) $schedule->runtime->timeleft = 0;
-                    } else {
-                        $log->info("  status: OFF");
-                    }
-                    
-                    // $connected = true; $device = "openevse";
-                    
-                    // Publish to MQTT
-                    if ($connected) {
-                        // SmartPlug and WIFI Relay
-                        if ($device_type=="openevse" || $device_type=="smartplug" || $device_type=="hpmon" || $device_type=="wifirelay") {
-                        
-                            // Timezone correction to UTC for smartplug and hpmon
-                            $timeOffset = 0;
-                            if ($device_type=="smartplug" || $device_type=="hpmon" || $device_type=="wifirelay") {
-                                $dateTimeZone = new DateTimeZone($timezone);
-                                $date = new DateTime("now", $dateTimeZone);
-                                $timeOffset = $dateTimeZone->getOffset($date) / 3600;
-                            }
-
-                            // ----------------------------------------------------------------------------
-                            // Set Timer
-                            // ----------------------------------------------------------------------------
-                            $s1 = 0.0; $e1 = 0.0; $s2 = 0.0; $e2 = 0.0;
-                            
-                            // Smart timer
-                            if ($schedule->settings->ctrlmode=="smart") {
-                                if (count($schedule->runtime->periods)) {
-                                    $s1 = time_offset($schedule->runtime->periods[$active_period]->start[1],-$timeOffset);
-                                    $e1 = time_offset($schedule->runtime->periods[$active_period]->end[1],-$timeOffset);
-                                }
-                            // Standard timer
-                            } else if ($schedule->settings->ctrlmode=="timer") {
-                                $s1 = time_offset($schedule->settings->timer_start1,-$timeOffset);
-                                $e1 = time_offset($schedule->settings->timer_stop1,-$timeOffset);
-                                $s2 = time_offset($schedule->settings->timer_start2,-$timeOffset);
-                                $e2 = time_offset($schedule->settings->timer_stop2,-$timeOffset);
-                            }
+            
+                foreach ($schedules as $sid=>$schedule)
+                {   
+                    $device = false;
+                    if (isset($schedule->settings->device)) $device = $schedule->settings->device;
+                    $device_type = false;
+                    if (isset($schedule->settings->device_type)) $device_type = $schedule->settings->device_type;
+                    $ctrlmode = false;
+                    if (isset($schedule->settings->ctrlmode)) $ctrlmode = $schedule->settings->ctrlmode;
                                     
-                            if (!isset($timer[$device])) $timer[$device] = "";
-                            $last_timer[$device] = $timer[$device];
-                            
-                            // Slight difference in API format
-                            if ($device_type=="smartplug" || $device_type=="hpmon" || $device_type=="wifirelay") {
-                                $api = "in/timer";
-                                $timer[$device] = time_conv_dec_str($s1)." ".time_conv_dec_str($e1)." ".time_conv_dec_str($s2)." ".time_conv_dec_str($e2);
+                    if ($device_type && $ctrlmode)
+                    {
+                        $log->info(date("Y-m-d H:i:s")." Schedule:$device ".$schedule->settings->ctrlmode);
+                        $log->info("  end timestamp: ".$schedule->settings->end_timestamp);
+                        // -----------------------------------------------------------------------
+                        // Work out if schedule is running
+                        // -----------------------------------------------------------------------  
+                        $status = 0;
+                        $active_period = 0;
+                        if ($schedule->runtime->timeleft>0 || $ctrlmode=="timer") {
+                            foreach ($schedule->runtime->periods as $pid=>$period) {
+                                $start = $period->start[0];
+                                $end = $period->end[0];
+                                if ($now>=$start && $now<$end) {
+                                    $status = 1;
+                                    $active_period = $pid;
+                                }
                             }
-                            if ($device_type=="openevse") {
-                                $api = "rapi/in/\$ST";
-                                $timer[$device] = time_conv_dec_str($s1," ")." ".time_conv_dec_str($e1," ");
-                            }
-                            
-                            if ($timer[$device]!=$last_timer[$device]) {  //  && (time_conv_dec_str($s1)!=time_conv_dec_str($e1))
-                                $log->info("  user/$userid/$device/$api"." $timer[$device]");
-                                $mqtt_client->publish("user/$userid/$device/$api",$timer[$device],0);
-                                schedule_log($device." set timer ".$timer[$device]);
-                            }
+                        }
+                        
+                        // If runonce is true, check if within 24h period
+                        if ($schedule->settings->runonce!==false) {
+                            if (($now-$schedule->settings->runonce)>(24*3600)) $status = 0;
                         } else {
-                            $mqtt_client->publish("user/$userid/$device/status",$status,0);
+                            // Check if schedule should be ran on this day
+                            if (!$schedule->settings->repeat[$date->format("N")-1]) $status = 0;
                         }
-
-                        if (!isset($last_ctrlmode[$device])) $last_ctrlmode[$device] = false;
-                        if ($ctrlmode!=$last_ctrlmode[$device]) {
                         
-                            $ctrlmode_status = "Off";
-                            if ($ctrlmode=="on") $ctrlmode_status = "On";
-                            if ($ctrlmode=="smart") $ctrlmode_status = "Timer";
-                            if ($ctrlmode=="timer") $ctrlmode_status = "Timer";
+                        if ($schedule->settings->ctrlmode=="on") $status = 1;
+                        if ($schedule->settings->ctrlmode=="off") $status = 0;
+
+                        if ($status) {
+                            $log->info("  status: ON");
+                            $schedule->runtime->started = true;
+                            $time_elapsed = $now - $lasttime;
+                            $log->info("  time elapsed: $time_elapsed");
+                            $schedule->runtime->timeleft -= $time_elapsed; // $update_interval;
+                            $log->info("  timeleft: ".$schedule->runtime->timeleft."s");
+                            if ($schedule->runtime->timeleft<0) $schedule->runtime->timeleft = 0;
+                        } else {
+                            $log->info("  status: OFF");
+                        }
+                        
+                        // $connected = true; $device = "openevse";
+                        
+                        // Publish to MQTT
+                        if ($connected) {
+                            // SmartPlug and WIFI Relay
+                            if ($device_type=="openevse" || $device_type=="smartplug" || $device_type=="hpmon" || $device_type=="wifirelay") {
                             
-                            if ($device_type=="smartplug" || $device_type=="hpmon" || $device_type=="wifirelay") {
-                                $mqtt_client->publish("user/$userid/$device/in/ctrlmode",$ctrlmode_status,0);
-                                schedule_log("$device set ctrlmode $ctrlmode_status");
-                            }
-
-                            if ($device_type=="openevse") {
-                                if ($ctrlmode=="on" || $ctrlmode=="off") {
-                                    $mqtt_client->publish("user/$userid/$device/rapi/in/\$ST","00 00 00 00",0);
-                                }
-                                if ($ctrlmode=="on") {
-                                    $mqtt_client->publish("user/$userid/$device/rapi/in/\$FE","",0);
-                                    schedule_log("$device turning ON");
-                                }
-                                if ($ctrlmode=="off") {
-                                    $mqtt_client->publish("user/$userid/$device/rapi/in/\$FS","",0);
-                                    schedule_log("$device turning OFF");
-                                }
-                            }
-                        }
-                        $last_ctrlmode[$device] = $ctrlmode;
-                        
-                        // Flow temperature target used with heatpump
-                        if (isset($schedule->settings->flowT)) {
-                            if (!isset($last_flowT[$device])) $last_flowT[$device] = false;
-                            if ($schedule->settings->flowT!=$last_flowT[$device]) {
+                                // Timezone correction to UTC for smartplug and hpmon
+                                $timeOffset = 0;
                                 if ($device_type=="smartplug" || $device_type=="hpmon" || $device_type=="wifirelay") {
-                                    $vout = round(($schedule->settings->flowT-7.14)/0.0371);
-                                    $log->info("user/$userid/$device/vout ".$vout);
-                                    $mqtt_client->publish("user/$userid/$device/in/vout",$vout,0);
-                                    schedule_log("$device set vout $vout");
+                                    $dateTimeZone = new DateTimeZone($timezone);
+                                    $date = new DateTime("now", $dateTimeZone);
+                                    $timeOffset = $dateTimeZone->getOffset($date) / 3600;
+                                }
+
+                                // ----------------------------------------------------------------------------
+                                // Set Timer
+                                // ----------------------------------------------------------------------------
+                                $s1 = 0.0; $e1 = 0.0; $s2 = 0.0; $e2 = 0.0;
+                                
+                                // Smart timer
+                                if ($schedule->settings->ctrlmode=="smart") {
+                                    if (count($schedule->runtime->periods)) {
+                                        $s1 = time_offset($schedule->runtime->periods[$active_period]->start[1],-$timeOffset);
+                                        $e1 = time_offset($schedule->runtime->periods[$active_period]->end[1],-$timeOffset);
+                                    }
+                                // Standard timer
+                                } else if ($schedule->settings->ctrlmode=="timer") {
+                                    $s1 = time_offset($schedule->settings->timer_start1,-$timeOffset);
+                                    $e1 = time_offset($schedule->settings->timer_stop1,-$timeOffset);
+                                    $s2 = time_offset($schedule->settings->timer_start2,-$timeOffset);
+                                    $e2 = time_offset($schedule->settings->timer_stop2,-$timeOffset);
+                                }
+                                        
+                                if (!isset($timer[$device])) $timer[$device] = "";
+                                $last_timer[$device] = $timer[$device];
+                                
+                                // Slight difference in API format
+                                if ($device_type=="smartplug" || $device_type=="hpmon" || $device_type=="wifirelay") {
+                                    $api = "in/timer";
+                                    $timer[$device] = time_conv_dec_str($s1)." ".time_conv_dec_str($e1)." ".time_conv_dec_str($s2)." ".time_conv_dec_str($e2);
+                                }
+                                if ($device_type=="openevse") {
+                                    $api = "rapi/in/\$ST";
+                                    $timer[$device] = time_conv_dec_str($s1," ")." ".time_conv_dec_str($e1," ");
+                                }
+                                
+                                if ($timer[$device]!=$last_timer[$device]) {  //  && (time_conv_dec_str($s1)!=time_conv_dec_str($e1))
+                                    $log->info("  user/$userid/$device/$api"." $timer[$device]");
+                                    $mqtt_client->publish("user/$userid/$device/$api",$timer[$device],0);
+                                    schedule_log($device." set timer ".$timer[$device]);
+                                }
+                            } else {
+                                $mqtt_client->publish("user/$userid/$device/status",$status,0);
+                            }
+
+                            if (!isset($last_ctrlmode[$device])) $last_ctrlmode[$device] = false;
+                            if ($ctrlmode!=$last_ctrlmode[$device]) {
+                            
+                                $ctrlmode_status = "Off";
+                                if ($ctrlmode=="on") $ctrlmode_status = "On";
+                                if ($ctrlmode=="smart") $ctrlmode_status = "Timer";
+                                if ($ctrlmode=="timer") $ctrlmode_status = "Timer";
+                                
+                                if ($device_type=="smartplug" || $device_type=="hpmon" || $device_type=="wifirelay") {
+                                    $mqtt_client->publish("user/$userid/$device/in/ctrlmode",$ctrlmode_status,0);
+                                    schedule_log("$device set ctrlmode $ctrlmode_status");
+                                }
+
+                                if ($device_type=="openevse") {
+                                    if ($ctrlmode=="on" || $ctrlmode=="off") {
+                                        $mqtt_client->publish("user/$userid/$device/rapi/in/\$ST","00 00 00 00",0);
+                                    }
+                                    if ($ctrlmode=="on") {
+                                        $mqtt_client->publish("user/$userid/$device/rapi/in/\$FE","",0);
+                                        schedule_log("$device turning ON");
+                                    }
+                                    if ($ctrlmode=="off") {
+                                        $mqtt_client->publish("user/$userid/$device/rapi/in/\$FS","",0);
+                                        schedule_log("$device turning OFF");
+                                    }
                                 }
                             }
-                            $last_flowT[$device] = $schedule->settings->flowT;
-                        }
-                    }
-                    
-                    // -----------------------------------------------------------------------
-                    // Recalculate schedule
-                    // -----------------------------------------------------------------------
-                    if ($now>$schedule->settings->end_timestamp) {
-
-                        $date->setTimestamp($schedule->settings->end_timestamp);
-                        $date->modify("+1 day");
-                        $schedule->settings->end_timestamp = $date->getTimestamp();
-                        
-                        $schedule->runtime->timeleft = $schedule->settings->period * 3600;
-                        unset($schedule->runtime->started);
-                        
-                        schedule_log("$device schedule complete");
-                    }
-                    
-                    if (!isset($schedule->runtime->started) || $schedule->settings->interruptible) {
-                        
-                        if ($schedule->settings->ctrlmode=="smart") {
-                            $forecast = get_forecast($redis,$schedule->settings->signal,$timezone);
-                            $schedule->runtime->periods = schedule_smart($forecast,$schedule->runtime->timeleft,$schedule->settings->end,$schedule->settings->interruptible,900,$timezone);
+                            $last_ctrlmode[$device] = $ctrlmode;
                             
-                        } else if ($schedule->settings->ctrlmode=="timer") {
-                            $forecast = get_forecast($redis,$schedule->settings->signal,$timezone);
-                            $schedule->runtime->periods = schedule_timer(
-                                $forecast, 
-                                $schedule->settings->timer_start1,$schedule->settings->timer_stop1,$schedule->settings->timer_start2,$schedule->settings->timer_stop2,
-                                900,$timezone
-                            );
-                        } 
-                        $schedule = json_decode(json_encode($schedule));
-                        $log->info("  reschedule ".json_encode($schedule->runtime->periods));
+                            // Flow temperature target used with heatpump
+                            if (isset($schedule->settings->flowT)) {
+                                if (!isset($last_flowT[$device])) $last_flowT[$device] = false;
+                                if ($schedule->settings->flowT!=$last_flowT[$device]) {
+                                    if ($device_type=="smartplug" || $device_type=="hpmon" || $device_type=="wifirelay") {
+                                        $vout = round(($schedule->settings->flowT-7.14)/0.0371);
+                                        $log->info("user/$userid/$device/vout ".$vout);
+                                        $mqtt_client->publish("user/$userid/$device/in/vout",$vout,0);
+                                        schedule_log("$device set vout $vout");
+                                    }
+                                }
+                                $last_flowT[$device] = $schedule->settings->flowT;
+                            }
+                        }
+                        
+                        // -----------------------------------------------------------------------
+                        // Recalculate schedule
+                        // -----------------------------------------------------------------------
+                        if ($now>$schedule->settings->end_timestamp) {
+
+                            $date->setTimestamp($schedule->settings->end_timestamp);
+                            $date->modify("+1 day");
+                            $schedule->settings->end_timestamp = $date->getTimestamp();
+                            
+                            $schedule->runtime->timeleft = $schedule->settings->period * 3600;
+                            unset($schedule->runtime->started);
+                            
+                            schedule_log("$device schedule complete");
+                        }
+                        
+                        if (!isset($schedule->runtime->started) || $schedule->settings->interruptible) {
+                            
+                            if ($schedule->settings->ctrlmode=="smart") {
+                                $forecast = get_forecast($redis,$schedule->settings->signal,$timezone);
+                                $schedule->runtime->periods = schedule_smart($forecast,$schedule->runtime->timeleft,$schedule->settings->end,$schedule->settings->interruptible,900,$timezone);
+                                
+                            } else if ($schedule->settings->ctrlmode=="timer") {
+                                $forecast = get_forecast($redis,$schedule->settings->signal,$timezone);
+                                $schedule->runtime->periods = schedule_timer(
+                                    $forecast, 
+                                    $schedule->settings->timer_start1,$schedule->settings->timer_stop1,$schedule->settings->timer_start2,$schedule->settings->timer_stop2,
+                                    900,$timezone
+                                );
+                            } 
+                            $schedule = json_decode(json_encode($schedule));
+                            $log->info("  reschedule ".json_encode($schedule->runtime->periods));
+                        }
+                    } // if active
+                    $schedules->$sid = $schedule;
+                    
+                    if ($device_type===false)
+                    {
+                        $log->info("DELETE: ".$sid);
+                        unset($schedules->$sid);
                     }
-                } // if active
-                $schedules->$sid = $schedule;
-                
-                if ($device_type===false)
-                {
-                    $log->info("DELETE: ".$sid);
-                    unset($schedules->$sid);
-                }
-                
-            } // foreach schedules 
-            $demandshaper->set($userid,$schedules);
-        } // valid schedules
+                    
+                } // foreach schedules 
+                $demandshaper->set($userid,$schedules);
+            } // valid schedules
+        } // user list
         sleep(1.0);
-        
         $lasttime = $now;
     } // 10s update
     
+    /*
     if ($connected && (time()-$last_state_check)>300) {
         $last_state_check = time();
         foreach ($schedules as $schedule) {
@@ -378,7 +389,7 @@ while(true)
             $log->info("user/$userid/$device/in/state");
             if ($device) $mqtt_client->publish("user/$userid/$device/in/state","",0);
         }
-    }
+    }*/
     
     // MQTT Connect or Reconnect
     if (!$connected && (time()-$last_retry)>5.0) {
