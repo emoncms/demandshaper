@@ -12,7 +12,7 @@ http://openenergymonitor.org
 
 */
 
-$userid = 1;
+$userid = 2;
 
 define('EMONCMS_EXEC', 1);
 
@@ -74,7 +74,6 @@ if (!empty($settings['redis']['auth']) && !$redis->auth($settings['redis']['auth
 // Load user module used to fetch user timezone
 require("Modules/user/user_model.php");
 $user = new User($mysqli,$redis);
-$timezone = $user->get_timezone($userid);
 
 if (file_exists("$linked_modules_dir/demandshaper/scheduler.php")) {
     require "$linked_modules_dir/demandshaper/scheduler.php";
@@ -116,6 +115,7 @@ while(true)
         $redis->set("demandshaper:trigger",0);
 
         // Get time of start of day
+        $timezone = $user->get_timezone($userid);
         $date = new DateTime();
         $date->setTimezone(new DateTimeZone($timezone));
         $date->setTimestamp($now);
@@ -269,12 +269,12 @@ while(true)
                             }
                             
                             if ($timer[$device]!=$last_timer[$device]) {  //  && (time_conv_dec_str($s1)!=time_conv_dec_str($e1))
-                                $log->info("  emon/$device/$api"." $timer[$device]");
-                                $mqtt_client->publish("emon/$device/$api",$timer[$device],0);
+                                $log->info("  user/$userid/$device/$api"." $timer[$device]");
+                                $mqtt_client->publish("user/$userid/$device/$api",$timer[$device],0);
                                 schedule_log($device." set timer ".$timer[$device]);
                             }
                         } else {
-                            $mqtt_client->publish("emon/$device/status",$status,0);
+                            $mqtt_client->publish("user/$userid/$device/status",$status,0);
                         }
 
                         if (!isset($last_ctrlmode[$device])) $last_ctrlmode[$device] = false;
@@ -286,20 +286,20 @@ while(true)
                             if ($ctrlmode=="timer") $ctrlmode_status = "Timer";
                             
                             if ($device_type=="smartplug" || $device_type=="hpmon" || $device_type=="wifirelay") {
-                                $mqtt_client->publish("emon/$device/in/ctrlmode",$ctrlmode_status,0);
+                                $mqtt_client->publish("user/$userid/$device/in/ctrlmode",$ctrlmode_status,0);
                                 schedule_log("$device set ctrlmode $ctrlmode_status");
                             }
 
                             if ($device_type=="openevse") {
                                 if ($ctrlmode=="on" || $ctrlmode=="off") {
-                                    $mqtt_client->publish("emon/$device/rapi/in/\$ST","00 00 00 00",0);
+                                    $mqtt_client->publish("user/$userid/$device/rapi/in/\$ST","00 00 00 00",0);
                                 }
                                 if ($ctrlmode=="on") {
-                                    $mqtt_client->publish("emon/$device/rapi/in/\$FE","",0);
+                                    $mqtt_client->publish("user/$userid/$device/rapi/in/\$FE","",0);
                                     schedule_log("$device turning ON");
                                 }
                                 if ($ctrlmode=="off") {
-                                    $mqtt_client->publish("emon/$device/rapi/in/\$FS","",0);
+                                    $mqtt_client->publish("user/$userid/$device/rapi/in/\$FS","",0);
                                     schedule_log("$device turning OFF");
                                 }
                             }
@@ -312,8 +312,8 @@ while(true)
                             if ($schedule->settings->flowT!=$last_flowT[$device]) {
                                 if ($device_type=="smartplug" || $device_type=="hpmon" || $device_type=="wifirelay") {
                                     $vout = round(($schedule->settings->flowT-7.14)/0.0371);
-                                    $log->info("emon/$device/vout ".$vout);
-                                    $mqtt_client->publish("emon/$device/in/vout",$vout,0);
+                                    $log->info("user/$userid/$device/vout ".$vout);
+                                    $mqtt_client->publish("user/$userid/$device/in/vout",$vout,0);
                                     schedule_log("$device set vout $vout");
                                 }
                             }
@@ -375,8 +375,8 @@ while(true)
         foreach ($schedules as $schedule) {
             $device = false;
             if (isset($schedule->settings->device)) $device = $schedule->settings->device;
-            $log->info("emon/$device/in/state");
-            if ($device) $mqtt_client->publish("emon/$device/in/state","",0);
+            $log->info("user/$userid/$device/in/state");
+            if ($device) $mqtt_client->publish("user/$userid/$device/in/state","",0);
         }
     }
     
@@ -397,7 +397,7 @@ while(true)
 function connect($r, $message) {
     global $connected, $mqtt_client; 
     $connected = true;
-    $mqtt_client->subscribe("emon/#",2);
+    $mqtt_client->subscribe("user/#",2);
 }
 
 function disconnect() {
@@ -409,17 +409,19 @@ function disconnect() {
 // -------------------------------------------------------------------------
 function message($message) 
 {
-    global $demandshaper, $userid, $schedules, $log, $timezone;
+    global $demandshaper, $schedules, $log, $user;
     
     $topic_parts = explode("/",$message->topic);
-    if (isset($topic_parts[1])) {
-        $device = $topic_parts[1];
+    if (isset($topic_parts[1]) && isset($topic_parts[2])) {
+        $userid = $topic_parts[1];
+        $device = $topic_parts[2];
         
         if (isset($schedules->$device)) {
             // timezone offset for smartplug and hpmon which use UTC time
             $device_type = $schedules->$device->settings->device_type;
             $timeOffset = 0;
             if ($device_type=="smartplug" || $device_type=="hpmon" || $device_type=="wifirelay") {
+                $timezone = $user->get_timezone($userid);
                 $dateTimeZone = new DateTimeZone($timezone);
                 $date = new DateTime("now", $dateTimeZone);
                 $timeOffset = $dateTimeZone->getOffset($date) / 3600;
@@ -427,7 +429,7 @@ function message($message)
             
             $p = $message->payload;
                  
-            if ($message->topic=="emon/$device/out/state") {
+            if ($message->topic=="user/$userid/$device/out/state") {
                 
                 $p = json_decode($p);
                 
@@ -457,19 +459,19 @@ function message($message)
                 $demandshaper->set($userid,$schedules);
             }
             
-            else if ($message->topic=="emon/$device/out/ctrlmode") {
+            else if ($message->topic=="user/$userid/$device/out/ctrlmode") {
                 if ($p=="On") $schedules->$device->settings->ctrlmode = "on";
                 if ($p=="Off") $schedules->$device->settings->ctrlmode = "off";
                 if ($p=="Timer" && $schedules->$device->settings->ctrlmode!="smart") $schedules->$device->settings->ctrlmode = "timer";
                 $demandshaper->set($userid,$schedules);
             }
             
-            else if ($message->topic=="emon/$device/out/vout") {
+            else if ($message->topic=="user/$userid/$device/out/vout") {
                 $schedules->$device->flowT = ($p*0.0371)+7.14;
                 $demandshaper->set($userid,$schedules);
             }
             
-            else if ($message->topic=="emon/$device/out/timer") {
+            else if ($message->topic=="user/$userid/$device/out/timer") {
                 $timer = explode(" ",$p);
                 $schedules->$device->settings->timer_start1 = time_conv($timer[0],$timeOffset);
                 $schedules->$device->settings->timer_stop1 = time_conv($timer[1],$timeOffset);

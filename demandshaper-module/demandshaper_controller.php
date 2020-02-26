@@ -196,6 +196,7 @@ function demandshaper_controller()
             if (!$remoteaccess && $session["write"] && isset($_GET['device'])) {
                 $route->format = "json";
                 $device = $_GET['device'];
+                $userid = $session["userid"];
                 $schedules = $demandshaper->get($session["userid"]);
                 if (isset($schedules->$device)) {
                     $state = new stdClass;
@@ -205,7 +206,7 @@ function demandshaper_controller()
                     
                     if ($schedules->$device->settings->device_type=="hpmon" || $schedules->$device->settings->device_type=="smartplug" || $schedules->$device->settings->device_type=="wifirelay") {
                         
-                        if ($result = json_decode($mqtt_request->request("emon/$device/in/state","","emon/$device/out/state"))) {
+                        if ($result = json_decode($mqtt_request->request("user/$userid/$device/in/state","","user/$userid/$device/out/state"))) {
                             $state->ctrl_mode = $result->ctrlmode;
                             $timer_parts = explode(" ",$result->timer);
                             
@@ -228,7 +229,7 @@ function demandshaper_controller()
                         $valid = true;
                         
                         // Get OpenEVSE timer state
-                        if ($result = $mqtt_request->request("emon/$device/rapi/in/\$GD","","emon/$device/rapi/out")) {
+                        if ($result = $mqtt_request->request("user/$userid/$device/rapi/in/\$GD","","user/$userid/$device/rapi/out")) {
                             $ret = explode(" ",substr($result,4,11));
                             if (count($ret)==4) {
                                 $state->timer_start1 = ((int)$ret[0])+((int)$ret[1]/60);
@@ -243,7 +244,7 @@ function demandshaper_controller()
                         }
                         
                         // Get OpenEVSE state
-                        if ($result = $mqtt_request->request("emon/$device/rapi/in/\$GS","","emon/$device/rapi/out")) {
+                        if ($result = $mqtt_request->request("user/$userid/$device/rapi/in/\$GS","","user/$userid/$device/rapi/out")) {
                             $ret = explode(" ",$result);
                             if ($ret[1]==254) {
                                 if ($state->timer_start1==0 && $state->timer_stop1==0) {
