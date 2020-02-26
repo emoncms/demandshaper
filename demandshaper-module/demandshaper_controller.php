@@ -125,7 +125,7 @@ function demandshaper_controller()
                     if ($save) {
                         $schedules->$device = $schedule;
                         $demandshaper->set($session["userid"],$schedules);
-                        $redis->set("demandshaper:trigger",1);
+                        $redis->rpush("demandshaper:trigger",$session["userid"]);
                         schedule_log("$device schedule started ".$schedule_log_output);
                     }
                     
