@@ -123,7 +123,7 @@ while(true)
         
         foreach($users as $userid)
         {
-            print "userid:$userid\n";
+            $log->info("processing:$userid");
             // Get time of start of day
             $timezone = $user->get_timezone($userid);
             $date = new DateTime();
