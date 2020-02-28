@@ -20,26 +20,39 @@ Developed as part of the CydYnni EnergyLocal project, see:
 
 ---
 
-## Installation
+## Option 1: Install full emoncms system including demandshaper module
+
+Just run our automated emoncms installation script on a target system of choice, see:
+
+[https://github.com/openenergymonitor/EmonScripts](https://github.com/openenergymonitor/EmonScripts)
+
+## Option 2: Install demandshaper module within an existing emoncms installation
+
+The following installation instructions uses the new [EmonScripts](https://github.com/openenergymonitor/EmonScripts) emoncms symlinked modules directory location: **/opt/emoncms/modules**. 
+
+If you do not already have this directory, start by creating the directory:
+
+    sudo mkdir /opt/emoncms
+    sudo chown pi:pi /opt/emoncms
+    mkdir /opt/emoncms/modules
 
 Download or git clone the demandshaper repository to your home folder:
 
-    cd
+    cd /opt/emoncms/modules
     git clone https://github.com/emoncms/demandshaper.git
+    
+ Run demandshaper module installation script:
+ 
+    cd demandshaper
+    ./install.sh
 
 Link the 'demandshaper-module' into the emoncms Modules folder:
 
-    ln -s /home/pi/demandshaper/demandshaper-module /var/www/emoncms/Modules/demandshaper
+    ln -s /opt/emoncms/modules/demandshaper/demandshaper-module /var/www/emoncms/Modules/demandshaper
 
 Update emoncms database
 
     Setup > Administration > Update database > Update & Check
-
-Install demandshaper service:
-
-    sudo ln -s /home/pi/demandshaper/demandshaper.service /lib/systemd/system
-    sudo systemctl enable demandshaper.service
-    sudo systemctl start demandshaper
 
 Add enable_UDP_broadcast setting to emoncms/settings.php to enable automatic WIFI device setup:
 
@@ -49,14 +62,14 @@ Optional: Enable the periodic UDP broadcast script on the emonbase/emonpi:
 
 <pre>
     crontab -e
-    * * * * * php /home/pi/emonpi/UDPBroadcast/broadcast.php 2>&1
+    * * * * * php /opt/openenergymonitor/emonpi/UDPBroadcast/broadcast.php 2>&1
 </pre>
 
 ---
 
 ## Using the Demand Shaper module with a SonOff S20 smart plug
 
-Install the EmonESP (timer branch) firmware on a Sonoff S20 smartplug. There are pre-compiled binaries to make this step easier as well as the option to compile from source. See guide here:<br>[https://github.com/openenergymonitor/EmonESP/blob/timer/sonoffS20.md](https://github.com/openenergymonitor/EmonESP/blob/timer/sonoffS20.md)
+Install the EmonESP firmware on a Sonoff S20 smartplug. There are pre-compiled binaries to make this step easier as well as the option to compile from source. See guide here:<br>[https://github.com/openenergymonitor/EmonESP/blob/master/sonoffS20.md](https://github.com/openenergymonitor/EmonESP/blob/master/sonoffS20.md)
 
 ## User guide
 
@@ -160,7 +173,7 @@ Response:
 The remote cache currently run's on emoncms.org to reduce the potential API load on the Octopus and CarbonIntensity servers. The cache provides the following routes:
 
     https://emoncms.org/demandshaper/carbonintensity
-    https://emoncms.org/demandshaper/octopus
+    https://emoncms.org/demandshaper/octopus?gsp=A
 
 To install and use the cache on your own server. Symlink emoncms-remote module to Modules folder:
 
