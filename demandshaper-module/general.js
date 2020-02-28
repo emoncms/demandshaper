@@ -399,7 +399,9 @@ function load_device(device_id, device_name, device_type)
         var periods = schedule.runtime.periods;
         
         var interval = 1800;
-        interval = (profile[1][0]-profile[0][0])*0.001;
+        if (profile.length>0) {
+            interval = (profile[1][0]-profile[0][0])*0.001;
+        }
 
         // Calculate end timestamp
         let end_hour = Math.floor(schedule.settings.end);
