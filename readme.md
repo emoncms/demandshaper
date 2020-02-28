@@ -65,58 +65,9 @@ Optional: Enable the periodic UDP broadcast script on the emonbase/emonpi:
     * * * * * php /opt/openenergymonitor/emonpi/UDPBroadcast/broadcast.php 2>&1
 </pre>
 
----
+### Smart Plug
 
-## Using the Demand Shaper module with a SonOff S20 smart plug
-
-Install the EmonESP firmware on a Sonoff S20 smartplug. There are pre-compiled binaries to make this step easier as well as the option to compile from source. See guide here:<br>[https://github.com/openenergymonitor/EmonESP/blob/master/sonoffS20.md](https://github.com/openenergymonitor/EmonESP/blob/master/sonoffS20.md)
-
-## User guide
-
-1. The Sonoff S20 smartplug creates a WIFI access point, connect to the access point and enter home WIFI network. That is all the configuration required.
-
-<table><tr><td>
-<img src="images/EmonESP1.png">
-</td><td>
-<img src="images/EmonESP2.png">
-</td></tr></table>
-
-2. Connect back to your home WIFI network. Login to emoncms and navigate to the DeviceShaper module (in the extras menu). Wait until a popup appears asking to connect:
-
-
-<table><tr><td>
-<img src="images/demandshaper1.png">
-</td><td>
-<img src="images/demandshaper2.png">
-</td></tr></table>
-
-*What happened here?: The smart plug discovers the emonbase/emonpi automatically by listening out for the periodic UDP packet published by the emonbase/emonpi, enabled by the UDP broadcast script and triggered by keeping the demandshaper page open*
-
-3. After clicking allow and waiting a minute or so, the smart plug will then appear:
-
-![demandshaper3.png](images/demandshaper3.png)
-
-*What happened here?: The smart plug received the MQTT authentication details from the emonbase/emonpi automatically as part of a pairing process enabled by clicking on Allow. After connecting to MQTT the smartplug sent a descriptor message that automatically created and configured an emoncms device based on the smartplug device template in the emoncms device module.*
-
----
-
-### Option 1: Turn On/Off directly
-
-The most basic mode of operation, turn on/off device from the interface:
-
-![demandshaper3.png](images/demandshaper4.png)
-
-### Option 2: Use the smart scheduler
-
-Enter the period and end time of the schedule you wish to set and the demand shaper module will do the rest, automatically optimising the schedule for the lowest cost or lowest carbon time.
-
-![demandshaper3.png](images/demandshaper3.png)
-
-### Option 3: Set a manual timer:
-
-Set a manual timer for specific run times:
-
-![demandshaper4.png](images/demandshaper5.png)
+Link to smart plug documentation in guide to go here.
 
 ### OpenEVSE / EmonEVSE electric car charger interface
 
