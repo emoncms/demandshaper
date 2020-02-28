@@ -65,11 +65,9 @@ Optional: Enable the periodic UDP broadcast script on the emonbase/emonpi:
     * * * * * php /opt/openenergymonitor/emonpi/UDPBroadcast/broadcast.php 2>&1
 </pre>
 
-### Smart Plug
+### [Sonoff S20 Smart Plug](https://guide.openenergymonitor.org/integrations/demandshaper-sonoff/)
 
-Link to smart plug documentation in guide to go here.
-
-### OpenEVSE / EmonEVSE electric car charger interface
+### [OpenEVSE / EmonEVSE electric car smart charging](https://guide.openenergymonitor.org/integrations/demandshaper-openevse/)
 
 The module contains custom interfaces for applications such as EV charging where you can drag drop the battery level state of charge to the desired target, the module then calculates the required run time based on the battery size and charger charge rate (hard coded at present, but will be configurable from the interface):
 
