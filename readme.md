@@ -69,7 +69,7 @@ Optional: Enable the periodic UDP broadcast script on the emonbase/emonpi:
 
 ## Using the Demand Shaper module with a SonOff S20 smart plug
 
-Install the EmonESP (timer branch) firmware on a Sonoff S20 smartplug. There are pre-compiled binaries to make this step easier as well as the option to compile from source. See guide here:<br>[https://github.com/openenergymonitor/EmonESP/blob/timer/sonoffS20.md](https://github.com/openenergymonitor/EmonESP/blob/timer/sonoffS20.md)
+Install the EmonESP firmware on a Sonoff S20 smartplug. There are pre-compiled binaries to make this step easier as well as the option to compile from source. See guide here:<br>[https://github.com/openenergymonitor/EmonESP/blob/master/sonoffS20.md](https://github.com/openenergymonitor/EmonESP/blob/master/sonoffS20.md)
 
 ## User guide
 
