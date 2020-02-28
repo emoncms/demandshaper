@@ -173,7 +173,7 @@ Response:
 The remote cache currently run's on emoncms.org to reduce the potential API load on the Octopus and CarbonIntensity servers. The cache provides the following routes:
 
     https://emoncms.org/demandshaper/carbonintensity
-    https://emoncms.org/demandshaper/octopus
+    https://emoncms.org/demandshaper/octopus?gsp=A
 
 To install and use the cache on your own server. Symlink emoncms-remote module to Modules folder:
 
