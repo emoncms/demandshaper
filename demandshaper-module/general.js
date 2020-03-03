@@ -481,7 +481,7 @@ function load_device(device_id, device_name, device_type)
                 if (device_type=="openevse") {
                     var p_per_mile = (mean / 4.0);
                     var prc = 100-(100*(p_per_mile / 10.0));
-                    out = "Cost: "+(p_per_mile).toFixed(1)+"p/mile, "+Math.round(100.0*(1.0-(mean/peak)))+"% reduction vs peak"
+                    out = "Cost: "+mean.toFixed(1)+"p/kWh, "+(p_per_mile).toFixed(1)+"p/mile, "+Math.round(100.0*(1.0-(mean/peak)))+"% reduction vs peak"
                     
                 } else if (device_type=="hpmon") {
                     out = ", "+Math.round(mean/3.8)+" p/kWh Heat @ COP 3.8";
