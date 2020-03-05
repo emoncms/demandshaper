@@ -402,7 +402,9 @@ function load_device(device_id, device_name, device_type)
         var periods = schedule.runtime.periods;
         
         var interval = 1800;
-        interval = (profile[1][0]-profile[0][0])*0.001;
+        if (profile.length>0) {
+            interval = (profile[1][0]-profile[0][0])*0.001;
+        }
 
         // Calculate end timestamp
         let end_hour = Math.floor(schedule.settings.end);
@@ -527,7 +529,11 @@ function load_device(device_id, device_name, device_type)
                 } else {
                     state_matched = true;
                     
-                    device_ctrl_mode = result.ctrl_mode.toLowerCase();
+                    if (result.ctrl_mode!=undefined) {
+                        device_ctrl_mode = result.ctrl_mode.toLowerCase();
+                    } else {
+                        device_ctrl_mode = "timer";
+                    }
                     if (schedule.settings.ctrlmode!=device_ctrl_mode) state_matched = false;
                     if (schedule.settings.ctrlmode=="smart" && device_ctrl_mode=="timer") state_matched = true;
                     if (!state_matched) console.log(schedule.settings.ctrlmode+"!="+device_ctrl_mode)

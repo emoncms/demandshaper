@@ -204,6 +204,21 @@ function get_forecast($redis,$signal,$timezone) {
             $timestamp += $resolution; 
         }
     }
+    
+    // if empty profile create flat line
+    if (count($profile)==0) {
+        $optimise = MIN;
+        for ($i=0; $i<$divisions; $i++) {
+
+            $date->setTimestamp($timestamp);
+            $h = 1*$date->format('H');
+            $m = 1*$date->format('i')/60;
+            $hour = $h + $m;
+            
+            $profile[] = array($timestamp*1000,0.15,$hour);
+            $timestamp += $resolution; 
+        }
+    }
 
     // get max and min values of profile
     $min = 1000000; $max = -1000000;
@@ -212,6 +227,7 @@ function get_forecast($redis,$signal,$timezone) {
         if ($val>$max) $max = $val;
         if ($val<$min) $min = $val;
     }
+    
     
     $result = new stdClass();
     $result->profile = $profile;

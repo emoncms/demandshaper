@@ -12,16 +12,15 @@ http://openenergymonitor.org
 
 */
 
+// default user when mqtt multiuser disabled
+$default_userid = 1;
+
 define('EMONCMS_EXEC', 1);
 
 $fp = fopen("/var/lock/demandshaper.lock", "w");
 if (! flock($fp, LOCK_EX | LOCK_NB)) { echo "Already running\n"; die; }
 
 $pid = getmypid();
-
-//$fh = fopen("/home/pi/data/demandshaper.pid","w");
-//fwrite($fh,$pid);
-//fclose($fh);
 
 chdir("/var/www/emoncms");
 require "process_settings.php";
@@ -123,8 +122,11 @@ while(true)
         
         foreach($users as $userid)
         {
-            $basetopic = $settings['mqtt']['basetopic']."/".$userid;
-        
+            $basetopic = $settings['mqtt']['basetopic'];
+            if (isset($settings['mqtt']['multiuser']) && $settings['mqtt']['multiuser']) {
+                $basetopic .= "/".$userid;
+            }
+            
             $log->info("processing:$userid");
             // Get time of start of day
             $timezone = $user->get_timezone($userid);
@@ -382,16 +384,30 @@ while(true)
         $lasttime = $now;
     } // 10s update
     
-    /*
+    
     if ($connected && (time()-$last_state_check)>300) {
         $last_state_check = time();
-        foreach ($schedules as $schedule) {
-            $device = false;
-            if (isset($schedule->settings->device)) $device = $schedule->settings->device;
-            $log->info("$basetopic/$device/in/state");
-            if ($device) $mqtt_client->publish("$basetopic/$device/in/state","",0);
+        
+        $result = $mysqli->query("SELECT `userid` FROM demandshaper");
+        while ($row = $result->fetch_object()) {
+            $userid = $row->userid;
+            
+            $basetopic = $settings['mqtt']['basetopic'];
+            if (isset($settings['mqtt']['multiuser']) && $settings['mqtt']['multiuser']) {
+                $basetopic .= "/".$userid;
+            }
+            
+            $schedules = $demandshaper->get($userid);
+            if ($schedules!=null) {
+                foreach ($schedules as $schedule) {
+                    $device = false;
+                    if (isset($schedule->settings->device)) $device = $schedule->settings->device;
+                    $log->info("$basetopic/$device/in/state");
+                    if ($device) $mqtt_client->publish("$basetopic/$device/in/state","",0);
+                }
+            }
         }
-    }*/
+    }    
     
     // MQTT Connect or Reconnect
     if (!$connected && (time()-$last_retry)>5.0) {
@@ -408,9 +424,9 @@ while(true)
 }
 
 function connect($r, $message) {
-    global $connected, $mqtt_client; 
+    global $connected, $mqtt_client, $settings; 
     $connected = true;
-    $mqtt_client->subscribe("user/#",2);
+    $mqtt_client->subscribe($settings['mqtt']['basetopic']."/#",2);
 }
 
 function disconnect() {
@@ -422,15 +438,30 @@ function disconnect() {
 // -------------------------------------------------------------------------
 function message($message) 
 {
-    global $demandshaper, $schedules, $log, $user, $settings;
+    global $demandshaper, $schedules, $log, $user, $settings, $default_userid;
+    
+    $basetopic = $settings['mqtt']['basetopic'];
     
     $topic_parts = explode("/",$message->topic);
-    if (isset($topic_parts[1]) && isset($topic_parts[2])) {
-        $userid = $topic_parts[1];
-        $device = $topic_parts[2];
-        
-        $basetopic = $settings['mqtt']['basetopic']."/".$userid;
-        
+    
+    $userid = false;
+    $device = false;
+    
+    if (isset($settings['mqtt']['multiuser']) && $settings['mqtt']['multiuser']) {
+        if (isset($topic_parts[1]) && isset($topic_parts[2])) {
+            $userid = $topic_parts[1];
+            $device = $topic_parts[2];
+            $basetopic .= "/".$userid;
+        }
+    } else {
+        if (isset($topic_parts[1])) {
+            $userid = $default_userid;
+            $device = $topic_parts[1];
+        }
+    }
+    
+    if ($userid && $device) 
+    {   
         if (isset($schedules->$device)) {
             // timezone offset for smartplug and hpmon which use UTC time
             $device_type = $schedules->$device->settings->device_type;
