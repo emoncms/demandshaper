@@ -364,17 +364,22 @@ while(true)
                                     if ($schedule->settings->openevsecontroltype=='socinput') {
                                         if ($feedid = $input->exists_nodeid_name($userid,$device,"soc")) {
                                             $schedule->settings->ev_soc = $input->get_last_value($feedid)*0.01;
+                                            $log->error("Recalculating EVSE schedule based on emoncms input: ".$schedule->settings->ev_soc);
                                         }
                                     }
                                     else if ($schedule->settings->openevsecontroltype=='socovms') {
                                         if ($schedule->settings->ovms_vehicleid!='' && $schedule->settings->ovms_carpass!='') {
                                             $ovms = $demandshaper->fetch_ovms_v2($schedule->settings->ovms_vehicleid,$schedule->settings->ovms_carpass);
                                             if (isset($ovms['soc'])) $schedule->settings->ev_soc = $ovms['soc']*0.01;
+                                            $log->error("Recalculating EVSE schedule based on ovms: ".$schedule->settings->ev_soc);
+
                                         }
                                     }
                                     $kwh_required = ($schedule->settings->ev_target_soc-$schedule->settings->ev_soc)*$schedule->settings->batterycapacity;
                                     $schedule->settings->period = $kwh_required/$schedule->settings->chargerate;            
                                     $schedule->runtime->timeleft = $schedule->settings->period * 3600;
+                                    $log->error("EVSE timeleft: ".$schedule->settings->timeleft);
+
                                 }
                                 // -------------------------------------------------------------------
                             
