@@ -378,7 +378,7 @@ while(true)
                                     $kwh_required = ($schedule->settings->ev_target_soc-$schedule->settings->ev_soc)*$schedule->settings->batterycapacity;
                                     $schedule->settings->period = $kwh_required/$schedule->settings->chargerate;            
                                     $schedule->runtime->timeleft = $schedule->settings->period * 3600;
-                                    $log->error("EVSE timeleft: ".$schedule->settings->timeleft);
+                                    $log->error("EVSE timeleft: ".$schedule->runtime->timeleft);
 
                                 }
                                 // -------------------------------------------------------------------
