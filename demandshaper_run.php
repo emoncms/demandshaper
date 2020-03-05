@@ -97,6 +97,7 @@ $last_state_check = 0;
 $schedules = array();
 $firstrun = true;
 $lasttime = time();
+$last_soc_update = 0;
 
 while(true) 
 {
@@ -360,7 +361,8 @@ while(true)
                                 // -------------------------------------------------------------------
                                 // Recalculate based on car SOC
                                 // -------------------------------------------------------------------
-                                if ($schedule->settings->device_type=="openevse") {
+                                if ($schedule->settings->device_type=="openevse" && (time()-$last_soc_update)>600) {
+                                    $last_soc_update = time();
                                     if ($schedule->settings->openevsecontroltype=='socinput') {
                                         if ($feedid = $input->exists_nodeid_name($userid,$device,"soc")) {
                                             $schedule->settings->ev_soc = $input->get_last_value($feedid)*0.01;
