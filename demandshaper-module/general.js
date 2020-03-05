@@ -127,11 +127,14 @@ function load_device(device_id, device_name, device_type)
                 
                 if (schedule.settings.device_type=="openevse" && schedule.settings.openevsecontroltype=='socovms') {
                     if (schedule.settings.ovms_vehicleid!='' && schedule.settings.ovms_carpass!='') {
-                        $.ajax({ url: emoncmspath+"demandshaper/ovms?vehicleid="+schedule.settings.ovms_vehicleid+"&carpass="+schedule.settings.ovms_carpass+apikeystr, dataType: 'json', async: true, function(){ 
-                            schedule.settings.ev_soc = result.soc*0.01;
-                            schedule.settings.period = ((schedule.settings.ev_target_soc-schedule.settings.ev_soc)*schedule.settings.batterycapacity)/schedule.settings.chargerate;
-                            if (schedule.settings.ev_soc!=last_ev_soc) calc_schedule();                     
-                        }});
+                        $.ajax({ 
+                            url: emoncmspath+"demandshaper/ovms?vehicleid="+schedule.settings.ovms_vehicleid+"&carpass="+schedule.settings.ovms_carpass+apikeystr, 
+                            dataType: 'json', async: true, success: function(ovms_result){                              
+                                schedule.settings.ev_soc = ovms_result.soc*0.01;
+                                schedule.settings.period = ((schedule.settings.ev_target_soc-schedule.settings.ev_soc)*schedule.settings.batterycapacity)/schedule.settings.chargerate;
+                                if (schedule.settings.ev_soc!=last_ev_soc) calc_schedule();                     
+                            }
+                        });
                     }
                 }
             }
