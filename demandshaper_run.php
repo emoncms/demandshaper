@@ -67,6 +67,8 @@ if (!empty($settings['redis']['prefix'])) $redis->setOption(Redis::OPT_PREFIX, $
 if (!empty($settings['redis']['auth']) && !$redis->auth($settings['redis']['auth'])) {
     $log->error("Can't connect to redis, autentication failed"); die;
 }
+$redis->del("demandshaper:trigger");
+
 
 // Load user module used to fetch user timezone
 require("Modules/user/user_model.php");
