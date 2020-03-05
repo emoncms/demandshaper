@@ -369,7 +369,7 @@ while(true)
                                     else if ($schedule->settings->openevsecontroltype=='socovms') {
                                         if ($schedule->settings->ovms_vehicleid!='' && $schedule->settings->ovms_carpass!='') {
                                             $ovms = $demandshaper->fetch_ovms_v2($schedule->settings->ovms_vehicleid,$schedule->settings->ovms_carpass);
-                                            $schedule->settings->ev_soc = $ovms->soc*0.01;
+                                            if (isset($ovms['soc'])) $schedule->settings->ev_soc = $ovms['soc']*0.01;
                                         }
                                     }
                                     $kwh_required = ($schedule->settings->ev_target_soc-$schedule->settings->ev_soc)*$schedule->settings->batterycapacity;
