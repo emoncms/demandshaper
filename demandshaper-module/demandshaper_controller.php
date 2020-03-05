@@ -31,9 +31,14 @@ function demandshaper_controller()
     require_once "Modules/device/device_model.php";
     $device = new Device($mysqli,$redis);
     
-    $timezone = $user->get_timezone($session['userid']);
+    if ($session['userid']) $timezone = $user->get_timezone($session['userid']);
     
     $forecast_list = $demandshaper->get_forecast_list();
+    
+    $basetopic = $settings['mqtt']['basetopic'];
+    if (isset($settings['mqtt']['multiuser']) && $settings['mqtt']['multiuser'] && $session['userid']) {
+        $basetopic .= "/".$session['userid'];
+    }
         
     switch ($route->action)
     {  
@@ -125,7 +130,7 @@ function demandshaper_controller()
                     if ($save) {
                         $schedules->$device = $schedule;
                         $demandshaper->set($session["userid"],$schedules);
-                        $redis->set("demandshaper:trigger",1);
+                        $redis->rpush("demandshaper:trigger",$session["userid"]);
                         schedule_log("$device schedule started ".$schedule_log_output);
                     }
                     
@@ -205,7 +210,7 @@ function demandshaper_controller()
                     
                     if ($schedules->$device->settings->device_type=="hpmon" || $schedules->$device->settings->device_type=="smartplug" || $schedules->$device->settings->device_type=="wifirelay") {
                         
-                        if ($result = json_decode($mqtt_request->request("emon/$device/in/state","","emon/$device/out/state"))) {
+                        if ($result = json_decode($mqtt_request->request("$basetopic/$device/in/state","","$basetopic/$device/out/state"))) {
                             $state->ctrl_mode = $result->ctrlmode;
                             $timer_parts = explode(" ",$result->timer);
                             
@@ -228,7 +233,7 @@ function demandshaper_controller()
                         $valid = true;
                         
                         // Get OpenEVSE timer state
-                        if ($result = $mqtt_request->request("emon/$device/rapi/in/\$GD","","emon/$device/rapi/out")) {
+                        if ($result = $mqtt_request->request("$basetopic/$device/rapi/in/\$GD","","$basetopic/$device/rapi/out")) {
                             $ret = explode(" ",substr($result,4,11));
                             if (count($ret)==4) {
                                 $state->timer_start1 = ((int)$ret[0])+((int)$ret[1]/60);
@@ -243,7 +248,7 @@ function demandshaper_controller()
                         }
                         
                         // Get OpenEVSE state
-                        if ($result = $mqtt_request->request("emon/$device/rapi/in/\$GS","","emon/$device/rapi/out")) {
+                        if ($result = $mqtt_request->request("$basetopic/$device/rapi/in/\$GS","","$basetopic/$device/rapi/out")) {
                             $ret = explode(" ",$result);
                             if ($ret[1]==254) {
                                 if ($state->timer_start1==0 && $state->timer_stop1==0) {
