@@ -128,11 +128,14 @@ function load_device(device_id, device_name, device_type)
                 
                 if (schedule.settings.device_type=="openevse" && schedule.settings.openevsecontroltype=='socovms') {
                     if (schedule.settings.ovms_vehicleid!='' && schedule.settings.ovms_carpass!='') {
-                        $.ajax({ url: emoncmspath+"demandshaper/ovms?vehicleid="+schedule.settings.ovms_vehicleid+"&carpass="+schedule.settings.ovms_carpass+apikeystr, dataType: 'json', async: true, function(){ 
-                            schedule.settings.ev_soc = result.soc*0.01;
-                            schedule.settings.period = ((schedule.settings.ev_target_soc-schedule.settings.ev_soc)*schedule.settings.batterycapacity)/schedule.settings.chargerate;
-                            if (schedule.settings.ev_soc!=last_ev_soc) calc_schedule();                     
-                        }});
+                        $.ajax({ 
+                            url: emoncmspath+"demandshaper/ovms?vehicleid="+schedule.settings.ovms_vehicleid+"&carpass="+schedule.settings.ovms_carpass+apikeystr, 
+                            dataType: 'json', async: true, success: function(ovms_result){                              
+                                schedule.settings.ev_soc = ovms_result.soc*0.01;
+                                schedule.settings.period = ((schedule.settings.ev_target_soc-schedule.settings.ev_soc)*schedule.settings.batterycapacity)/schedule.settings.chargerate;
+                                if (schedule.settings.ev_soc!=last_ev_soc) calc_schedule();                     
+                            }
+                        });
                     }
                 }
             }
@@ -401,7 +404,9 @@ function load_device(device_id, device_name, device_type)
         var periods = schedule.runtime.periods;
         
         var interval = 1800;
-        interval = (profile[1][0]-profile[0][0])*0.001;
+        if (profile.length>0) {
+            interval = (profile[1][0]-profile[0][0])*0.001;
+        }
 
         // Calculate end timestamp
         let end_hour = Math.floor(schedule.settings.end);
@@ -481,7 +486,7 @@ function load_device(device_id, device_name, device_type)
                 if (device_type=="openevse") {
                     var p_per_mile = (mean / 4.0);
                     var prc = 100-(100*(p_per_mile / 10.0));
-                    out = "Cost: "+(p_per_mile).toFixed(1)+"p/mile, "+Math.round(100.0*(1.0-(mean/peak)))+"% reduction vs peak"
+                    out = "Cost: "+mean.toFixed(1)+"p/kWh, "+(p_per_mile).toFixed(1)+"p/mile, "+Math.round(100.0*(1.0-(mean/peak)))+"% reduction vs peak"
                     
                 } else if (device_type=="hpmon") {
                     out = ", "+Math.round(mean/3.8)+" p/kWh Heat @ COP 3.8";
@@ -526,7 +531,11 @@ function load_device(device_id, device_name, device_type)
                 } else {
                     state_matched = true;
                     
-                    device_ctrl_mode = result.ctrl_mode.toLowerCase();
+                    if (result.ctrl_mode!=undefined) {
+                        device_ctrl_mode = result.ctrl_mode.toLowerCase();
+                    } else {
+                        device_ctrl_mode = "timer";
+                    }
                     if (schedule.settings.ctrlmode!=device_ctrl_mode) state_matched = false;
                     if (schedule.settings.ctrlmode=="smart" && device_ctrl_mode=="timer") state_matched = true;
                     if (!state_matched) console.log(schedule.settings.ctrlmode+"!="+device_ctrl_mode)
