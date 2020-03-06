@@ -140,7 +140,7 @@ function get_forecast($redis,$signal,$timezone) {
             }
         }
     }
-
+    
     // -----------------------------------------------------------------------------
     // EnergyLocal demand shaper
     // -----------------------------------------------------------------------------  
@@ -152,6 +152,7 @@ function get_forecast($redis,$signal,$timezone) {
             }
         }
         $result = json_decode($result);
+                
         // Validate demand shaper
         if  ($result!=null && isset($result->DATA)) {
             
@@ -159,39 +160,28 @@ function get_forecast($redis,$signal,$timezone) {
             $date->setTimezone(new DateTimeZone($timezone));
             
             $EL_signal = $result->DATA[0];
-            array_shift($EL_signal);
+            // array_shift($EL_signal);
             $len = count($EL_signal);
-
-            //------------------------
-            // Normalise into 0.0 to 1.0
-            $min = 1000; $max = -1000;
-            for ($i=0; $i<$len; $i++) {
-                $val = (float) $EL_signal[$i];
-                if ($val>$max) $max = $val;
-                if ($val<$min) $min = $val;
-            }
-            
-            $tmp = array();
-            $max = $max += -1*$min;
-            for ($i=0; $i<$len; $i++) $tmp["".($i*0.5)] = (($EL_signal[$i] + -1*$min) / $max);
-            $EL_signal = $tmp;
             
             $value = 0.5;
             $timestamp = $start_timestamp;
+            
             for ($i=0; $i<$divisions; $i++) {
 
                 $date->setTimestamp($timestamp);
                 $h = 1*$date->format('H');
                 $m = 1*$date->format('i')/60;
                 $hour = $h + $m;
+                $hour_index = 2*$h+2*$m;
                 
-                if (isset($EL_signal[$hour])) $value = number_format($EL_signal[$hour],3)*1;
+                if (isset($EL_signal[$hour_index])) $value = $EL_signal[$hour_index];
                 
                 $profile[] = array($timestamp*1000,$value,$hour);
                 $timestamp += $resolution; 
             }
         }
     }
+    
     // -----------------------------------------------------------------------------
     // Economy 7 
     // ----------------------------------------------------------------------------- 
@@ -214,6 +204,21 @@ function get_forecast($redis,$signal,$timezone) {
             $timestamp += $resolution; 
         }
     }
+    
+    // if empty profile create flat line
+    if (count($profile)==0) {
+        $optimise = MIN;
+        for ($i=0; $i<$divisions; $i++) {
+
+            $date->setTimestamp($timestamp);
+            $h = 1*$date->format('H');
+            $m = 1*$date->format('i')/60;
+            $hour = $h + $m;
+            
+            $profile[] = array($timestamp*1000,0.15,$hour);
+            $timestamp += $resolution; 
+        }
+    }
 
     // get max and min values of profile
     $min = 1000000; $max = -1000000;
@@ -222,6 +227,7 @@ function get_forecast($redis,$signal,$timezone) {
         if ($val>$max) $max = $val;
         if ($val<$min) $min = $val;
     }
+    
     
     $result = new stdClass();
     $result->profile = $profile;

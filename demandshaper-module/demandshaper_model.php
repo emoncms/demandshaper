@@ -48,10 +48,10 @@ class DemandShaper
         // Basic validation
         $userid = (int) $userid;
         
-        if ($schedules_old = $this->redis->get("demandshaper:schedules")) {
+        if ($schedules_old = $this->redis->get("demandshaper:schedules:$userid")) {
             $schedules_old = json_decode($schedules_old);
         }
-        $this->redis->set("demandshaper:schedules",json_encode($schedules));
+        $this->redis->set("demandshaper:schedules:$userid",json_encode($schedules));
         
         // remove runtime settings
         $schedules_to_disk = json_decode(json_encode($schedules));
@@ -98,7 +98,7 @@ class DemandShaper
         $userid = (int) $userid;
         
         // Attempt first to load from cache
-        $schedulesjson = $this->redis->get("demandshaper:schedules");
+        $schedulesjson = $this->redis->get("demandshaper:schedules:$userid");
         
         if ($schedulesjson) {
             $schedules = json_decode($schedulesjson);
@@ -112,7 +112,7 @@ class DemandShaper
                     $schedules->$device->runtime->timeleft = 0;
                     $schedules->$device->runtime->periods = array();
                 }
-                $this->redis->set("demandshaper:schedules",json_encode($schedules));
+                $this->redis->set("demandshaper:schedules:$userid",json_encode($schedules));
             } else {
                 $schedules = new stdClass();
             }

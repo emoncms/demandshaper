@@ -32,7 +32,7 @@ function schedule_smart(forecast,timeleft,end,interruptible,resolution)
     if (end_timestamp<now) end_timestamp+=3600*24
     
     var profile = forecast.profile
-
+    if (profile.length==0) return false;
     // --------------------------------------------------------------------------------
     // Upsample profile
     // -------------------------------------------------------------------------------
@@ -165,9 +165,10 @@ function schedule_smart(forecast,timeleft,end,interruptible,resolution)
         
         let i = 0
         let last = 0
+        let hour = 0
         
         for (var td=0; td<profile.length; td++) {
-            let hour = profile[td][2]
+            hour = profile[td][2]
             let timestamp = profile[td][0]*0.001
             let val = profile[td][3]
         
@@ -216,6 +217,7 @@ function schedule_timer(forecast,start1,stop1,start2,stop2,resolution) {
     let tstart1 = date.getTime()*0.001;
     ...
     */
+    if (forecast.profile.length==0) return false;
     
     tstart1 = 0; tstop1 = 0;
     tstart2 = 0; tstop2 = 0;
