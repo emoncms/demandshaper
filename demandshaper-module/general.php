@@ -52,9 +52,15 @@
                   <button>-</button><input type="time" val="00:00"><button>+</button>
                 </div>
               </div>
+            </div>
+            <div class="row" style="max-width:700px; margin: 0 auto;">
               <div class="span4" style="margin-bottom:20px">
                 <p>Ok to interrupt:</p>
                 <div name="interruptible" state=0 class="input scheduler-checkbox" style="margin:0 auto"></div>
+              </div>
+              <div class="span4" style="margin-bottom:20px">
+                <p>Run until Complete by:</p>
+                <div name="rununtilcompleteby" state=0 class="input scheduler-checkbox" style="margin:0 auto"></div>
               </div>
             </div>
             

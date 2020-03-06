@@ -1,7 +1,7 @@
 // -------------------------------------------------------------------------------------------------------
 // SMART SCHEDULE
 // -------------------------------------------------------------------------------------------------------
-function schedule_smart(forecast,timeleft,end,interruptible,resolution)
+function schedule_smart(forecast,timeleft,end,interruptible,resolution,rununtilcompleteby)
 {
     var MIN = 0
     var MAX = 1
@@ -110,6 +110,11 @@ function schedule_smart(forecast,timeleft,end,interruptible,resolution)
         }
         let end_hour = start_hour
         let tend = tstart
+
+        if(rununtilcompleteby) {
+            // if selected to run until complete by, let end time loop run until complete by
+            period=24;
+        }
         
         for (let i=0; i<period*(divisions/24); i++) {
             if (profile[pos+i]!=undefined) {
