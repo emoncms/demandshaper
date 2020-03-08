@@ -378,7 +378,12 @@ while(true)
                                         }
                                     }
                                     $kwh_required = ($schedule->settings->ev_target_soc-$schedule->settings->ev_soc)*$schedule->settings->batterycapacity;
-                                    $schedule->settings->period = $kwh_required/$schedule->settings->chargerate;            
+                                    $schedule->settings->period = $kwh_required/$schedule->settings->chargerate;      
+                                    
+                                    if (isset($schedule->settings->balpercentage) && $schedule->settings->balpercentage < $schedule->settings->ev_target_soc) {
+                                        $schedule->settings->period += $schedule->settings->baltime;
+                                    }
+                                          
                                     $schedule->runtime->timeleft = $schedule->settings->period * 3600;
                                     $log->error("EVSE timeleft: ".$schedule->runtime->timeleft);
 
