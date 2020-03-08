@@ -165,9 +165,10 @@ function schedule_smart(forecast,timeleft,end,interruptible,resolution)
         
         let i = 0
         let last = 0
+        let hour = 0
         
         for (var td=0; td<profile.length; td++) {
-            let hour = profile[td][2]
+            hour = profile[td][2]
             let timestamp = profile[td][0]*0.001
             let val = profile[td][3]
         
