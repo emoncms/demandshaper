@@ -29,6 +29,11 @@ class DemandShaper
     
     public function get_list($device,$userid) {
         $devices_all = $device->get_list($userid);
+        
+        if ($schedules = $this->redis->get("demandshaper:schedules:$userid")) {
+            $schedules = json_decode($schedules);
+        }
+        
         $devices = array();
         foreach ($devices_all as $d) {
             $name = $d["nodeid"];
@@ -40,6 +45,14 @@ class DemandShaper
             if (in_array($d['type'],array("emonth")))
                 $devices[$name] = array("id"=>$d["id"]*1,"type"=>$d["type"]);
         }
+        
+        foreach ($devices as $name=>$device) {
+             $devices[$name]['custom_name'] = $name;
+             if (isset($schedules->$name) && isset($schedules->$name->settings) && isset($schedules->$name->settings->name)) {
+                 $devices[$name]['custom_name'] = $schedules->$name->settings->name;
+             }
+        }
+        
         return $devices;
     }
     
@@ -154,6 +167,31 @@ class DemandShaper
             // Energy Local bethesda
             "energylocal_bethesda"=>array("category"=>"Energy Local","name"=>"Bethesda")
         );
+    }
+    
+    public function fetch_ovms_v2($vehicleid,$carpass) {
+        $csv_str = http_request("GET","https://dexters-web.de/api/call?fn.name=ovms/export&fn.vehicleid=$vehicleid&fn.carpass=$carpass&fn.format=csv&fn.types=D,S&fn.last=1",array());
+        $csv_lines = explode("\n",$csv_str);
+
+        $data = array("soc"=>20);
+        if (count($csv_lines)>6) {
+            $headings1 = explode(",",$csv_lines[1]);
+            $data1 = explode(",",$csv_lines[2]);
+
+            $headings2 = explode(",",$csv_lines[4]);
+            $data2 = explode(",",$csv_lines[5]);
+
+            for ($i=0; $i<count($headings1); $i++) {
+                if (is_numeric($data1[$i])) $data1[$i] *= 1;
+                $data[$headings1[$i]] = $data1[$i];
+            }
+
+            for ($i=0; $i<count($headings2); $i++) {
+                if (is_numeric($data2[$i])) $data2[$i] *= 1;
+                $data[$headings2[$i]] = $data2[$i];
+            }
+        }
+        return $data;
     }
 
 }
