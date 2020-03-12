@@ -29,6 +29,11 @@ class DemandShaper
     
     public function get_list($device,$userid) {
         $devices_all = $device->get_list($userid);
+        
+        if ($schedules = $this->redis->get("demandshaper:schedules:$userid")) {
+            $schedules = json_decode($schedules);
+        }
+        
         $devices = array();
         foreach ($devices_all as $d) {
             $name = $d["nodeid"];
@@ -40,6 +45,14 @@ class DemandShaper
             if (in_array($d['type'],array("emonth")))
                 $devices[$name] = array("id"=>$d["id"]*1,"type"=>$d["type"]);
         }
+        
+        foreach ($devices as $name=>$device) {
+             $devices[$name]['custom_name'] = $name;
+             if (isset($schedules->$name) && isset($schedules->$name->settings) && isset($schedules->$name->settings->name)) {
+                 $devices[$name]['custom_name'] = $schedules->$name->settings->name;
+             }
+        }
+        
         return $devices;
     }
     
