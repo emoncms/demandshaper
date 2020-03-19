@@ -68,14 +68,18 @@ class DemandShaper
         
         // remove runtime settings
         $schedules_to_disk = json_decode(json_encode($schedules));
-        foreach ($schedules_to_disk as $device=>$schedule) {
-            unset($schedules_to_disk->$device->runtime);
+        if ($schedules_to_disk) {
+            foreach ($schedules_to_disk as $device=>$schedule) {
+                unset($schedules_to_disk->$device->runtime);
+            }
         }
         
         // remove runtime settings
         $last_schedules_to_disk = $schedules_old;
-        foreach ($last_schedules_to_disk as $device=>$schedule) {
-            unset($last_schedules_to_disk->$device->runtime);
+        if ($last_schedules_to_disk) {
+            foreach ($last_schedules_to_disk as $device=>$schedule) {
+                unset($last_schedules_to_disk->$device->runtime);
+            }
         }
         
         if (json_encode($schedules_to_disk)!=json_encode($last_schedules_to_disk)) {
