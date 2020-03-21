@@ -113,18 +113,18 @@ function schedule_smart(forecast,timeleft,end,interruptible,resolution,rununtilc
 
         if(rununtilcompleteby) {
             // if selected to run until complete by, let end time loop run until complete by
-            period=24;
+            period = 24;
         }
         
-        for (let i=0; i<period*(divisions/24); i++) {
-            if (profile[pos+i]!=undefined) {
-                profile[pos+i][3] = 1
-                end_hour+=resolution/3600
-                tend+=resolution
-                if (end_hour>=24) end_hour -= 24
-                // dont allow to run past end time
-                if (tend==end_timestamp) break
-            }
+        for (let i = 0; i < period * (divisions / 24); i++) {
+            if (!profile[pos + i]) break
+            
+            profile[pos+i][3] = 1
+            end_hour+=resolution/3600
+            tend+=resolution
+            if (end_hour>=24) end_hour -= 24
+            // dont allow to run past end time
+            if (tend==end_timestamp) break
         }
         
         let periods = []

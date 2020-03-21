@@ -352,10 +352,12 @@ function schedule_smart($forecast,$timeleft,$end,$interruptible,$resolution,$tim
                 
         if($rununtilcompleteby) {
             // if selected to run until complete by, let end time loop run until complete by
-            $period=24;
+            $period = 24;
         }
 
         for ($i=0; $i<$period*($divisions/24); $i++) {
+            if (!$profile[$pos+$i]) break;
+
             $profile[$pos+$i][3] = 1;
             $end_hour+=$resolution/3600;
             $tend+=$resolution;
