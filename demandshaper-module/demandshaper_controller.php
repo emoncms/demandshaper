@@ -31,9 +31,14 @@ function demandshaper_controller()
     require_once "Modules/device/device_model.php";
     $device = new Device($mysqli,$redis);
     
-    $timezone = $user->get_timezone($session['userid']);
+    if ($session['userid']) $timezone = $user->get_timezone($session['userid']);
     
     $forecast_list = $demandshaper->get_forecast_list();
+    
+    $basetopic = $settings['mqtt']['basetopic'];
+    if (isset($settings['mqtt']['multiuser']) && $settings['mqtt']['multiuser'] && $session['userid']) {
+        $basetopic .= "/".$session['userid'];
+    }
         
     switch ($route->action)
     {  
@@ -125,7 +130,7 @@ function demandshaper_controller()
                     if ($save) {
                         $schedules->$device = $schedule;
                         $demandshaper->set($session["userid"],$schedules);
-                        $redis->set("demandshaper:trigger",1);
+                        $redis->rpush("demandshaper:trigger",$session["userid"]);
                         schedule_log("$device schedule started ".$schedule_log_output);
                     }
                     
@@ -205,7 +210,7 @@ function demandshaper_controller()
                     
                     if ($schedules->$device->settings->device_type=="hpmon" || $schedules->$device->settings->device_type=="smartplug" || $schedules->$device->settings->device_type=="wifirelay") {
                         
-                        if ($result = json_decode($mqtt_request->request("emon/$device/in/state","","emon/$device/out/state"))) {
+                        if ($result = json_decode($mqtt_request->request("$basetopic/$device/in/state","","$basetopic/$device/out/state"))) {
                             $state->ctrl_mode = $result->ctrlmode;
                             $timer_parts = explode(" ",$result->timer);
                             
@@ -228,7 +233,7 @@ function demandshaper_controller()
                         $valid = true;
                         
                         // Get OpenEVSE timer state
-                        if ($result = $mqtt_request->request("emon/$device/rapi/in/\$GD","","emon/$device/rapi/out")) {
+                        if ($result = $mqtt_request->request("$basetopic/$device/rapi/in/\$GD","","$basetopic/$device/rapi/out")) {
                             $ret = explode(" ",substr($result,4,11));
                             if (count($ret)==4) {
                                 $state->timer_start1 = ((int)$ret[0])+((int)$ret[1]/60);
@@ -243,7 +248,7 @@ function demandshaper_controller()
                         }
                         
                         // Get OpenEVSE state
-                        if ($result = $mqtt_request->request("emon/$device/rapi/in/\$GS","","emon/$device/rapi/out")) {
+                        if ($result = $mqtt_request->request("$basetopic/$device/rapi/in/\$GS","","$basetopic/$device/rapi/out")) {
                             $ret = explode(" ",$result);
                             if ($ret[1]==254) {
                                 if ($state->timer_start1==0 && $state->timer_stop1==0) {
@@ -274,35 +279,8 @@ function demandshaper_controller()
         case "ovms":
             if ($session["write"] && isset($_GET["vehicleid"]) && isset($_GET["carpass"])) {
                 $route->format = "json";
-                
-                $vehicleid = $_GET["vehicleid"];
-                $carpass = $_GET["carpass"];
-
-                $csv_str = http_request("GET","https://dexters-web.de/api/call?fn.name=ovms/export&fn.vehicleid=$vehicleid&fn.carpass=$carpass&fn.format=csv&fn.types=D,S&fn.last=1",array());
-                $csv_lines = explode("\n",$csv_str);
-
-                $data = array("soc"=>20);
-                if (count($csv_lines)>6) {
-                    $headings1 = explode(",",$csv_lines[1]);
-                    $data1 = explode(",",$csv_lines[2]);
-
-                    $headings2 = explode(",",$csv_lines[4]);
-                    $data2 = explode(",",$csv_lines[5]);
-
-                    for ($i=0; $i<count($headings1); $i++) {
-                        if (is_numeric($data1[$i])) $data1[$i] *= 1;
-                        $data[$headings1[$i]] = $data1[$i];
-                    }
-
-                    for ($i=0; $i<count($headings2); $i++) {
-                        if (is_numeric($data2[$i])) $data2[$i] *= 1;
-                        $data[$headings2[$i]] = $data2[$i];
-                    }
-                }
-
-                return $data;
+                return $demandshaper->fetch_ovms_v2($_GET["vehicleid"],$_GET["carpass"]);
             }
-        
             break;
 
         case "log":
