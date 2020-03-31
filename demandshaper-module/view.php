@@ -16,7 +16,7 @@ global $path;
 $device = "";
 if (isset($_GET['device'])) $device = $_GET['device'];
 
-$v=1;
+$v=2;
 
 $emoncmspath = $path;
 if ($remoteaccess) $emoncmspath .= "remoteaccess/";
