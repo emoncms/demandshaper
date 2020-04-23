@@ -1,0 +1,36 @@
+# Systemd unit file for OVMS bridge
+
+# INSTALL:
+# sudo ln -s /opt/emoncms/modules/demandshaper/ovms_bridge/ovms_bridge.service /lib/systemd/system
+
+# RUN AT STARTUP
+# sudo systemctl daemon-reload
+# sudo systemctl enable ovms_bridge.service
+
+# START / STOP With:
+# sudo systemctl start ovms_bridge
+# sudo systemctl stop ovms_bridge
+
+[Unit]
+Description=ovms_bridge
+Wants=redis-server.service
+After=redis-server.service
+StartLimitIntervalSec=5
+Documentation=https://github.com/emoncms/demandshaper
+
+[Service]
+Type=idle
+ExecStart=/usr/bin/python /opt/emoncms/modules/demandshaper/ovms_bridge/ovms_bridge.py
+
+# Restart script if stopped
+Restart=always
+# Wait 30s before restart
+RestartSec=30s
+
+# Tag things in the log
+# If you want to use the journal instead of the file above, uncomment SyslogIdentifier below
+# View with: sudo journalctl -f -u service-runner -o cat
+SyslogIdentifier=ovms_bridge
+
+[Install]
+WantedBy=multi-user.target
