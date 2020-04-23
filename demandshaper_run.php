@@ -284,6 +284,9 @@ while(true)
                                     $timer[$device] = time_conv_dec_str($s1)." ".time_conv_dec_str($e1)." ".time_conv_dec_str($s2)." ".time_conv_dec_str($e2);
                                 }
                                 if ($device_type=="openevse") {
+                                    // in case it was disabled before
+                                    $mqtt_client->publish("$basetopic/$device/rapi/in/\$FE","",0);
+
                                     $api = "rapi/in/\$ST";
                                     $timer[$device] = time_conv_dec_str($s1," ")." ".time_conv_dec_str($e1," ");
                                 }
@@ -304,6 +307,7 @@ while(true)
                                 if ($ctrlmode=="on") $ctrlmode_status = "On";
                                 if ($ctrlmode=="smart") $ctrlmode_status = "Timer";
                                 if ($ctrlmode=="timer") $ctrlmode_status = "Timer";
+                                if ($ctrlmode=="disabled") $ctrlmode_status = "Disabled";
                                 
                                 if ($device_type=="smartplug" || $device_type=="hpmon" || $device_type=="wifirelay") {
                                     $mqtt_client->publish("$basetopic/$device/in/ctrlmode",$ctrlmode_status,0);
