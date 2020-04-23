@@ -193,7 +193,9 @@ while(true)
                     if (isset($schedule->settings->device_type)) $device_type = $schedule->settings->device_type;
                     $ctrlmode = false;
                     if (isset($schedule->settings->ctrlmode)) $ctrlmode = $schedule->settings->ctrlmode;
-                                    
+                    $rununtilcompleteby = false;
+                    if (isset($schedule->settings->rununtilcompleteby)) $rununtilcompleteby = $schedule->settings->rununtilcompleteby;
+
                     if ($device_type && $ctrlmode)
                     {
                         $log->info(date("Y-m-d H:i:s")." Schedule:$device ".$schedule->settings->ctrlmode);
@@ -356,7 +358,7 @@ while(true)
 
                             if ($schedule->settings->ctrlmode=="smart") {
                                 $forecast = get_forecast($redis,$schedule->settings->signal,$timezone);
-                                $schedule->runtime->periods = schedule_smart($forecast,$schedule->runtime->timeleft,$schedule->settings->end,$schedule->settings->interruptible,900,$timezoney);
+                                $schedule->runtime->periods = schedule_smart($forecast,$schedule->runtime->timeleft,$schedule->settings->end,$schedule->settings->interruptible,900,$timezone,$rununtilcompleteby);
                                 
                             } else if ($schedule->settings->ctrlmode=="timer") {
                                 $forecast = get_forecast($redis,$schedule->settings->signal,$timezone);
