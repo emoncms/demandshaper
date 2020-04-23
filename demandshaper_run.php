@@ -69,7 +69,6 @@ if (!empty($settings['redis']['auth']) && !$redis->auth($settings['redis']['auth
 }
 $redis->del("demandshaper:trigger");
 
-
 // Load user module used to fetch user timezone
 require("Modules/user/user_model.php");
 $user = new User($mysqli,$redis);
@@ -80,6 +79,9 @@ if (file_exists("$linked_modules_dir/demandshaper/scheduler.php")) {
 require "Modules/demandshaper/demandshaper_model.php";
 $demandshaper = new DemandShaper($mysqli,$redis);
 $forecast_list = $demandshaper->get_forecast_list();
+
+require_once "Modules/input/input_model.php";
+$input = new Input($mysqli,$redis,false);
 
 // -------------------------------------------------------------------------
 // Control Loop
@@ -95,6 +97,7 @@ $last_state_check = 0;
 $schedules = array();
 $firstrun = true;
 $lasttime = time();
+$last_soc_update = 0;
 
 while(true) 
 {
@@ -341,20 +344,53 @@ while(true)
                         // Recalculate schedule
                         // -----------------------------------------------------------------------
                         if ($now>$schedule->settings->end_timestamp) {
-
                             $date->setTimestamp($schedule->settings->end_timestamp);
                             $date->modify("+1 day");
                             $schedule->settings->end_timestamp = $date->getTimestamp();
-                            
+                                                        
                             $schedule->runtime->timeleft = $schedule->settings->period * 3600;
                             unset($schedule->runtime->started);
-                            
+                                                        
                             schedule_log("$device schedule complete");
                         }
                         
                         if (!isset($schedule->runtime->started) || $schedule->settings->interruptible) {
                             
                             if ($schedule->settings->ctrlmode=="smart") {
+                            
+                                // -------------------------------------------------------------------
+                                // Recalculate based on car SOC
+                                // -------------------------------------------------------------------
+                                if ($schedule->settings->device_type=="openevse" && (time()-$last_soc_update)>600) {
+                                    $last_soc_update = time();
+                                    if (isset($schedule->settings->openevsecontroltype)) {
+                                        if ($schedule->settings->openevsecontroltype=='socinput') {
+                                            if ($feedid = $input->exists_nodeid_name($userid,$device,"soc")) {
+                                                $schedule->settings->ev_soc = $input->get_last_value($feedid)*0.01;
+                                                $log->error("Recalculating EVSE schedule based on emoncms input: ".$schedule->settings->ev_soc);
+                                            }
+                                        }
+                                        else if ($schedule->settings->openevsecontroltype=='socovms') {
+                                            if ($schedule->settings->ovms_vehicleid!='' && $schedule->settings->ovms_carpass!='') {
+                                                $ovms = $demandshaper->fetch_ovms_v2($schedule->settings->ovms_vehicleid,$schedule->settings->ovms_carpass);
+                                                if (isset($ovms['soc'])) $schedule->settings->ev_soc = $ovms['soc']*0.01;
+                                                $log->error("Recalculating EVSE schedule based on ovms: ".$schedule->settings->ev_soc);
+
+                                            }
+                                        }
+                                        $kwh_required = ($schedule->settings->ev_target_soc-$schedule->settings->ev_soc)*$schedule->settings->batterycapacity;
+                                        $schedule->settings->period = $kwh_required/$schedule->settings->chargerate;      
+                                        
+                                        if (isset($schedule->settings->balpercentage) && $schedule->settings->balpercentage < $schedule->settings->ev_target_soc) {
+                                            $schedule->settings->period += $schedule->settings->baltime;
+                                        }
+                                              
+                                        $schedule->runtime->timeleft = $schedule->settings->period * 3600;
+                                        $log->error("EVSE timeleft: ".$schedule->runtime->timeleft);
+                                    }
+                                }
+                                // -------------------------------------------------------------------
+                            
                                 $forecast = get_forecast($redis,$schedule->settings->signal,$timezone);
                                 $schedule->runtime->periods = schedule_smart($forecast,$schedule->runtime->timeleft,$schedule->settings->end,$schedule->settings->interruptible,900,$timezone);
                                 

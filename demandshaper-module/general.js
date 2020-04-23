@@ -6,7 +6,10 @@ function load_device(device_id, device_name, device_type)
     $("#scheduler-outer").show();
 
     $("#devicename").html(jsUcfirst(device_name));
-    $(".node-scheduler-title").html("<span class='icon-"+device_type+"'></span>"+device_name+" <span class='device-state-message'></span>");
+    $(".title-icon").html('<svg class="icon '+device_type+'"><use xlink:href="#icon-'+device_type+'"></use></svg>');
+    $(".custom-name").html(" "+device_name);
+    // $(".device-name").html(" ("+device_name+")");
+    
     $(".node-scheduler").attr("node",device_name);
     
     // -------------------------------------------------------------------------
@@ -15,6 +18,7 @@ function load_device(device_id, device_name, device_type)
     var default_schedule = {
         // Settings are persisted to mysql database
         settings: {
+            name:device_name,
             device:device_name,
             device_type:device_type,
             ctrlmode:"smart", // on, off, smart, timer
@@ -227,7 +231,13 @@ function load_device(device_id, device_name, device_type)
     // --------------------------------------------------------------------------------------------
     function draw_schedule() {
         console.log("draw schedule");
-        
+
+        $('.input[name="device-name"]').val(schedule.settings.name);
+        if (schedule.settings.name && schedule.settings.name!="" && device_name!=schedule.settings.name) {
+            $(".device-name").html(" ("+device_name+")");
+            $(".custom-name").html(" "+schedule.settings.name);
+        }
+    
         $("#mode button[mode="+schedule.settings.ctrlmode+"]").addClass('active').siblings().removeClass('active');
         if (schedule.settings.ctrlmode=="timer") { $(".smart").hide(); $(".timer").show(); $(".repeat").show(); }
         if (schedule.settings.ctrlmode=="smart") { $(".smart").show(); $(".timer").hide(); $(".repeat").show(); }
@@ -799,6 +809,12 @@ function load_device(device_id, device_name, device_type)
         schedule.settings.baltime = baltime / 60;
         if (schedule.settings.baltime<0.0) schedule.settings.baltime = 0.0;
         if (schedule.settings.baltime>24.0) schedule.settings.baltime = 24.0;
+        calc_schedule();
+    });
+    
+    $('.input[name="device-name"]').change(function(){
+        var name = $(this).val();
+        schedule.settings.name = name
         calc_schedule();
     });
 
