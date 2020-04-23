@@ -195,7 +195,7 @@ while(true)
                                 $r = json_decode($result);
     
                                 if(null!=$r) {
-                                    $redis->set("demandshaper:$$forecast",$result);
+                                    $redis->set("demandshaper:$forecast",$result);
                                     $log->info("load: demandshaper:$forecast (".strlen($result).")");
                                 }                            
                             }
