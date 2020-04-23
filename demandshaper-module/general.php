@@ -1,6 +1,6 @@
 <div id="scheduler-outer">
   <div class="delete-device"><i class="icon-trash icon-white"></i></div>
-  <div class="node-scheduler-title"></div>
+  <div class="node-scheduler-title"><span class="title-icon"></span><span class="custom-name"></span><span class="device-name"></span> <span class='device-state-message'></span></div>
   <div class="node-scheduler" node="">
 
     <div class="scheduler-inner">
@@ -155,9 +155,9 @@
               <div><span class="">OVMS Vehicle ID: </span></td><td><input class="input" name="vehicleid" type="text" style="width:150px"/></div>
               <div><span class="">OVMS Car Password: </span></td><td><input class="input" name="carpass" type="text" style="width:150px"/></div>
             </div>
-            
+                        
           </div>
-                    
+          <div><span class="">Device name: </span></td><td><input class="input" name="device-name" type="text" style="width:150px"/></div>        
       </div> <!-- schedule-inner2 -->
     </div> <!-- schedule-inner -->
     <div id="ip_address"></div>
@@ -179,5 +179,5 @@
     </div>
 </div>
 
-<script type="text/javascript" src="<?php echo $path; ?>Modules/demandshaper/scheduler.js?v=10"></script>
-<script type="text/javascript" src="<?php echo $path; ?>Modules/demandshaper/general.js?v=12"></script>
+<script type="text/javascript" src="<?php echo $path; ?>Modules/demandshaper/scheduler.js?v=11"></script>
+<script type="text/javascript" src="<?php echo $path; ?>Modules/demandshaper/general.js?v=11"></script>
