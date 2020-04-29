@@ -361,8 +361,7 @@ while(true)
                                 // -------------------------------------------------------------------
                                 // Recalculate based on car SOC
                                 // -------------------------------------------------------------------
-                                if ($schedule->settings->device_type=="openevse" && (time()-$last_soc_update)>600 
-                                        && isset($schedule->settings->openevsecontroltype) && $schedule->settings->openevsecontroltype!='time') {
+                                if ($schedule->settings->device_type=="openevse" && (time()-$last_soc_update)>600 && isset($schedule->settings->openevsecontroltype) && $schedule->settings->openevsecontroltype!='time') {
                                     $last_soc_update = time();
                                     
                                     if ($schedule->settings->openevsecontroltype=='socinput') {
