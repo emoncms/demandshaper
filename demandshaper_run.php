@@ -457,7 +457,7 @@ while(true)
     try { $mqtt_client->loop(); } catch (Exception $e) { }
     
     // Dont loop to fast
-    sleep(0.1);
+    usleep(100000);
 }
 
 function connect($r, $message) {
