@@ -21,193 +21,54 @@ define("MIN",0);
 
 function get_forecast($redis,$signal,$timezone) {
 
-    $resolution = 1800;
-    $resolution_h = $resolution/3600;
-    $divisions = round(24*3600/$resolution);
+    $demandshaper_dir = "/opt/emoncms/modules/demandshaper";
+
+    $params = new stdClass();
+    $params->timezone = $timezone;
+    $params->resolution = 1800;
 
     $now = time();
-    $timestamp = floor($now/$resolution)*$resolution;
-    $start_timestamp = $timestamp;
+    $timestamp = floor($now/$params->resolution)*$params->resolution;
+    $params->start = $timestamp;
     
-    // -----------------------------------------------------------------------------   
-    $profile = array();
-    $available = 1;
-    $optimise = MIN;
+    global $forecast_list;
+    $forecast_list = array();
     
-    // -----------------------------------------------------------------------------
-    // Grid carbon intensity
-    // ----------------------------------------------------------------------------- 
-    if ($signal=="carbonintensity") {
-        $optimise = MIN;
-        
-        if (!$result = $redis->get("demandshaper:carbonintensity")) {
-            if ($result = http_request("GET","https://emoncms.org/demandshaper/carbonintensity&time=".time(),array())) {
-                $redis->set("demandshaper:carbonintensity",$result);
-            }
-        }
-        $result = json_decode($result);
-         
-        if ($result!=null && isset($result->data)) {
-        
-            $datetimestr = $result->data[0]->from;
-            $date = new DateTime($datetimestr);
-            $date->setTimezone(new DateTimeZone($timezone));
-            $start = $date->getTimestamp();
-            
-            $datetimestr = $result->data[count($result->data)-1]->from;
-            $date = new DateTime($datetimestr);
-            $end = $date->getTimestamp();
-        
-            for ($timestamp=$start; $timestamp<$end; $timestamp+=$resolution) {
-            
-                $i = floor(($timestamp - $start)/1800);
-                if (isset($result->data[$i])) {
-                    $co2intensity = $result->data[$i]->intensity->forecast;
-                    
-                    $date->setTimestamp($timestamp);
-                    $h = 1*$date->format('H');
-                    $m = 1*$date->format('i')/60;
-                    $hour = $h + $m;
-                    
-                    if ($timestamp>=$start_timestamp) $profile[] = array($timestamp*1000,$co2intensity,$hour);
-                }
-            }
-        }
+    $forecast = new stdClass();
+
+    switch ($signal)
+    {
+        case "octopusagile":
+            $params->gsp_id = "D";
+            break;
+
+        case "energylocal":
+            $params->club = "bethesda";
+            break;
+
+        case "solcast":
+            $params->siteid = "";
+            $params->api_key = "";
+            break;
+
+        case "solarclimacell":
+            $params->lat = "";
+            $params->lon = "";
+            $params->apikey = "";
+            break;
     }
     
-    // -----------------------------------------------------------------------------
-    // Octopus Agile
-    // -----------------------------------------------------------------------------
-    else if (strpos($signal,"octopusagile_")!==false && strlen($signal)==14) {
-        $gsp_id = "A"; if (in_array($signal[13],array("A","B","C","D","E","F","G","H","J","K","L","M","N","P"))) $gsp_id = $signal[13];
-    
-        $optimise = MIN;
-        //$result = json_decode(file_get_contents("https://api.octopus.energy/v1/products/AGILE-18-02-21/electricity-tariffs/E-1R-AGILE-18-02-21-D/standard-unit-rates/"));
-        // 1. Fetch Octopus forecast
-        if (!$result = $redis->get("demandshaper:octopusagile_$gsp_id")) {
-            if ($result = http_request("GET","https://emoncms.org/demandshaper/octopus?gsp=$gsp_id&time=".time(),array())) {
-                $redis->set("demandshaper:octopusagile_$gsp_id",$result);
-            }
-        }
-        $result = json_decode($result);
-        $start = $timestamp; // current time
-        $td = 0;
-        
-        // if forecast is valid
-        if ($result!=null && isset($result->results)) {
-            /* for each half hour in forecast
-            for ($i=count($result->results)-1; $i>0; $i--) {
-                $datetimestr = $result->results[$i]->valid_from;
-                $price = $result->results[$i]->value_inc_vat;
-                $date = new DateTime($datetimestr);
-                $timestamp = $date->getTimestamp();
-                if ($timestamp>=$start && $td<48) {
-                    $h = 1*$date->format('H');
-                    $m = 1*$date->format('i')/60;
-                    $hour = $h + $m;
-                    if ($timestamp>=$end_timestamp) $available = 0;
-                    if ($timestamp>=$start_timestamp) $profile[] = array($timestamp*1000,$price,$hour,$available,0);
-                    $td++;
-                }
-            }*/
-            
-            // sort octopus forecast into time => price associative array
-            $octopus = array();
-            foreach ($result->results as $row) {
-                $date = new DateTime($row->valid_from);
-                $date->setTimezone(new DateTimeZone($timezone));
-                $octopus[$date->getTimestamp()] = $row->value_inc_vat;
-            }
-            
-            $timestamp = $start_timestamp;
-            for ($i=0; $i<$divisions; $i++) {
-
-                $date->setTimestamp($timestamp);
-                $h = 1*$date->format('H');
-                $m = 1*$date->format('i')/60;
-                $hour = $h + $m;
-                
-                if (isset($octopus[$timestamp])) {
-                    $price = $octopus[$timestamp]; 
-                } else if (isset($octopus[$timestamp-(24*3600)])) {
-                    $price = $octopus[$timestamp-(24*3600)]; 
-                } else {
-                    $price = 12.0;
-                }
-                
-                $profile[] = array($timestamp*1000,$price,$hour);
-                $timestamp += $resolution; 
-            }
-        }
-    }
-    
-    // -----------------------------------------------------------------------------
-    // EnergyLocal demand shaper
-    // -----------------------------------------------------------------------------  
-    else if ($signal=="energylocal_bethesda") {
-        $optimise = MIN;
-        if (!$result = $redis->get("demandshaper:energylocal_bethesda")) {
-            if ($result = http_request("GET","https://dashboard.energylocal.org.uk/cydynni/demandshaper&time=".time(),array())) {
-                $redis->set("demandshaper:energylocal_bethesda",$result);
-            }
-        }
-        $result = json_decode($result);
-                
-        // Validate demand shaper
-        if  ($result!=null && isset($result->DATA)) {
-            
-            $date = new DateTime();
-            $date->setTimezone(new DateTimeZone($timezone));
-            
-            $EL_signal = $result->DATA[0];
-            // array_shift($EL_signal);
-            $len = count($EL_signal);
-            
-            $value = 0.5;
-            $timestamp = $start_timestamp;
-            
-            for ($i=0; $i<$divisions; $i++) {
-
-                $date->setTimestamp($timestamp);
-                $h = 1*$date->format('H');
-                $m = 1*$date->format('i')/60;
-                $hour = $h + $m;
-                $hour_index = 2*$h+2*$m;
-                
-                if (isset($EL_signal[$hour_index])) $value = $EL_signal[$hour_index];
-                
-                $profile[] = array($timestamp*1000,$value,$hour);
-                $timestamp += $resolution; 
-            }
-        }
-    }
-    
-    // -----------------------------------------------------------------------------
-    // Economy 7 
-    // ----------------------------------------------------------------------------- 
-    else if ($signal=="economy7") {
-    
-        $date = new DateTime();
-        $date->setTimezone(new DateTimeZone($timezone));
-        
-        $optimise = MIN;
-        for ($i=0; $i<$divisions; $i++) {
-
-            $date->setTimestamp($timestamp);
-            $h = 1*$date->format('H');
-            $m = 1*$date->format('i')/60;
-            $hour = $h + $m;
-            
-            if ($hour>=0.0 && $hour<7.0) $economy7 = 0.07; else $economy7 = 0.15;
-            
-            $profile[] = array($timestamp*1000,$economy7,$hour);
-            $timestamp += $resolution; 
-        }
+    if (file_exists("$demandshaper_dir/forecasts/$signal.php")) {
+        require_once "$demandshaper_dir/forecasts/$signal.php";
+        $forecast_fn = "get_forecast_$signal";
+        $forecast = $forecast_fn($redis,$params);
     }
     
     // if empty profile create flat line
-    if (count($profile)==0) {
-        $optimise = MIN;
+    $date = new DateTime();
+    if (count($forecast->profile)==0) {
+        $forecast->optimise = MIN;
+        $divisions = round(24*3600/$params->resolution);
         for ($i=0; $i<$divisions; $i++) {
 
             $date->setTimestamp($timestamp);
@@ -215,26 +76,20 @@ function get_forecast($redis,$signal,$timezone) {
             $m = 1*$date->format('i')/60;
             $hour = $h + $m;
             
-            $profile[] = array($timestamp*1000,0.15,$hour);
-            $timestamp += $resolution; 
+            $forecast->profile[] = array($timestamp*1000,0.15,$hour);
+            $timestamp += $params->resolution; 
         }
     }
 
     // get max and min values of profile
-    $min = 1000000; $max = -1000000;
-    for ($i=0; $i<count($profile); $i++) {
-        $val = (float) $profile[$i][1];
-        if ($val>$max) $max = $val;
-        if ($val<$min) $min = $val;
+    $forecast->min = 1000000; $forecast->max = -1000000;
+    for ($i=0; $i<count($forecast->profile); $i++) {
+        $val = (float) $forecast->profile[$i][1];
+        if ($val>$forecast->max) $forecast->max = $val;
+        if ($val<$forecast->min) $forecast->min = $val;
     }
     
-    
-    $result = new stdClass();
-    $result->profile = $profile;
-    $result->optimise = $optimise;
-    $result->min = $min;
-    $result->max = $max;
-    return $result;
+    return $forecast;
 }
 
 // -------------------------------------------------------------------------------------------------------

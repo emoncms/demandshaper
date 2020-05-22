@@ -29,9 +29,6 @@ if (!empty($settings['redis']['auth']) && !$redis->auth($settings['redis']['auth
     $log->error("Can't connect to redis, autentication failed"); die;
 }
 
-$redis = new Redis();
-$redis->connect("127.0.0.1");
-
 include "Modules/feed/feed_model.php";
 $feed = new Feed($mysqli,$redis,$settings["feed"]);
 

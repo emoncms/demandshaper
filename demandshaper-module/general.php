@@ -38,7 +38,8 @@
           <div class="smart">
           
             <div class="row" style="max-width:700px; margin: 0 auto;">
-              <div class="span4" style="margin-bottom:20px">
+              <div class="span1" style="margin-bottom:0px"></div>
+              <div class="span4" style="margin-bottom:0px">
                 <div id="run_period">
                   <p>Run period:</p>
                   <div id="period" class="btn-group input-time">
@@ -46,16 +47,17 @@
                   </div>
                 </div>
               </div>
-              <div class="span4" style="margin-bottom:20px">
+              <div class="span4" style="margin-bottom:0px">
                 <p>Complete by:</p>
                 <div id="end" class="btn-group input-time">
                   <button>-</button><input type="time" val="00:00"><button>+</button>
                 </div>
               </div>
+              <!--
               <div class="span4" style="margin-bottom:20px">
                 <p>Ok to interrupt:</p>
                 <div name="interruptible" state=0 class="input scheduler-checkbox" style="margin:0 auto"></div>
-              </div>
+              </div>-->
             </div>
             
             <br>
@@ -105,7 +107,7 @@
             <br>
           </div>
           <!---------------------------------------------------------------------------------------------------------------------------->
-          
+          <!--
           <div class="repeat">
           <p>Repeat:</p>
           <div class="weekly-scheduler-days">
@@ -117,7 +119,7 @@
             <div name="repeat" day=5 val=0 class="input weekly-scheduler weekly-scheduler-day"><div class="weekly-scheduler-text">Sat</div></div>
             <div name="repeat" day=6 val=0 class="input weekly-scheduler weekly-scheduler-day"><div class="weekly-scheduler-text">Sun</div></div>
           </div>
-          </div>
+          </div>-->
           <!---------------------------------------------------------------------------------------------------------------------------->
         
           

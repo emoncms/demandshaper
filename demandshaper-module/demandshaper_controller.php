@@ -59,6 +59,10 @@ function demandshaper_controller()
             include "$linked_modules_dir/demandshaper/scheduler.php";
             return get_forecast($redis,$signal,$timezone);
             break;
+            
+        case "forecast-list":
+            $route->format = "json";
+            return $forecast_list;
         
         case "submit":
             if (!$remoteaccess && $session["write"]) {
