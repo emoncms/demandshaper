@@ -1,39 +1,40 @@
 <?php
-global $forecast_list;
 
-// Available forecasts
-$forecast_list["octopusagile"] = array(
-    "category"=>"Octopus Agile",
-    "name"=>"Octopus Agile",
-    "params"=>array(
-        "gsp_id"=>array(
-            "type"=>"select",
-            "options"=>array(
-                "A"=>"Eastern England",
-                "B"=>"East Midlands",
-                "C"=>"London",
-                "D"=>"Merseyside and Northern Wales",
-                "E"=>"West Midlands",
-                "F"=>"North Eastern England",
-                "G"=>"North Western England",
-                "H"=>"Southern England",
-                "J"=>"South Eastern England",
-                "K"=>"Southern Wales",
-                "L"=>"South Western England",
-                "M"=>"Yorkshire",
-                "N"=>"Southern Scotland",
-                "P"=>"Northern Scotland"
+function get_list_entry_octopusagile()
+{
+    return array(
+        "category"=>"Octopus Agile",
+        "name"=>"Octopus Agile",
+        "params"=>array(
+            "gsp_id"=>array(
+                "type"=>"select",
+                "options"=>array(
+                    "A"=>"Eastern England",
+                    "B"=>"East Midlands",
+                    "C"=>"London",
+                    "D"=>"Merseyside and Northern Wales",
+                    "E"=>"West Midlands",
+                    "F"=>"North Eastern England",
+                    "G"=>"North Western England",
+                    "H"=>"Southern England",
+                    "J"=>"South Eastern England",
+                    "K"=>"Southern Wales",
+                    "L"=>"South Western England",
+                    "M"=>"Yorkshire",
+                    "N"=>"Southern Scotland",
+                    "P"=>"Northern Scotland"
+                )
             )
         )
-    )
-);
+    );
+}
 
 function get_forecast_octopusagile($redis,$params)
 { 
     if (!isset($params->gsp_id)) return false;
     
-    global $forecast_list;
-    if (!isset($forecast_list["octopusagile"]["params"]["gsp_id"]["options"][$params->gsp_id])) return false;
+    $list_entry = get_list_entry_octopusagile();
+    if (!isset($list_entry["params"]["gsp_id"]["options"][$params->gsp_id])) return false;
     
     // Request directly from Octopus API
     // $result = json_decode(file_get_contents("https://api.octopus.energy/v1/products/AGILE-18-02-21/electricity-tariffs/E-1R-AGILE-18-02-21-D/standard-unit-rates/"));

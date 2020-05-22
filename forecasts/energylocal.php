@@ -1,27 +1,28 @@
 <?php
-global $forecast_list;
 
-// Energy Local bethesda
-$forecast_list["energylocal"] = array(
-    "category"=>"Energy Local",
-    "name"=>"Energy Local",
-    "params"=>array(
-        "club"=>array(
-            "type"=>"select",
-            "options"=>array(
-                "bethesda"=>"Bethesda",
-                "repower"=>"Repower"
+function get_list_entry_energylocal()
+{
+    return array(
+        "category"=>"Energy Local",
+        "name"=>"Energy Local",
+        "params"=>array(
+            "club"=>array(
+                "type"=>"select",
+                "options"=>array(
+                    "bethesda"=>"Bethesda",
+                    "repower"=>"Repower"
+                )
             )
         )
-    )
-);
+    );
+}
 
 function get_forecast_energylocal($redis,$params)
 {
     if (!isset($params->club)) return false;
     
-    global $forecast_list;
-    if (!isset($forecast_list["energylocal"]["params"]["club"]["options"][$params->club])) return false;
+    $list_entry = get_list_entry_energylocal();
+    if (!isset($list_entry["params"]["club"]["options"][$params->club])) return false;
     
     $key = "demandshaper:energylocal_".$params->club;
     if (!$result = $redis->get($key)) {

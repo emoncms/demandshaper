@@ -31,11 +31,6 @@ function get_forecast($redis,$signal,$timezone) {
     $timestamp = floor($now/$params->resolution)*$params->resolution;
     $params->start = $timestamp;
     
-    global $forecast_list;
-    $forecast_list = array();
-    
-    $forecast = new stdClass();
-
     switch ($signal)
     {
         case "octopusagile":
@@ -62,6 +57,8 @@ function get_forecast($redis,$signal,$timezone) {
         require_once "$demandshaper_dir/forecasts/$signal.php";
         $forecast_fn = "get_forecast_$signal";
         $forecast = $forecast_fn($redis,$params);
+    } else {
+        $forecast = new stdClass();
     }
     
     // if empty profile create flat line

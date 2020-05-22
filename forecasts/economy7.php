@@ -1,7 +1,9 @@
 <?php
 
-// Basic economy7
-$forecast_list["economy7"] = array("category"=>"General","name"=>"Economy7");
+function get_list_entry_economy7()
+{
+    return array("category"=>"General","name"=>"Economy7");
+}
 
 function get_forecast_economy7($redis,$start_timestamp,$resolution,$timezone)
 {

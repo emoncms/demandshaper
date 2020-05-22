@@ -156,6 +156,9 @@ class DemandShaper
         for ($i=2; $i<count($forecasts); $i++) {
             if (is_file($dir."/".$forecasts[$i])) {
                 require $dir."/".$forecasts[$i];
+                $name = str_replace(".php","",$forecasts[$i]);
+                $forecast_list_entry_fn = "get_list_entry_$name";
+                $forecast_list[$name] = $forecast_list_entry_fn();
             }
         }
         return $forecast_list;

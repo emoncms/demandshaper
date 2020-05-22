@@ -1,6 +1,16 @@
 <?php
-global $forecast_list;
 
+function get_list_entry_nordpool()
+{
+    return array(
+        "category"=>"Nordpool Spot",
+        "name"=>"DK1",
+        "currency"=>"DKK",
+        "vat"=>"25"
+    );
+}
+
+/*
 $forecast_list["nordpool_dk1"] = array("category"=>"Nordpool Spot","name"=>"DK1","currency"=>"DKK","vat"=>"25");
 $forecast_list["nordpool_dk2"] = array("category"=>"Nordpool Spot","name"=>"DK2","currency"=>"DKK","vat"=>"25");
 $forecast_list["nordpool_ee"] = array("category"=>"Nordpool Spot","name"=>"EE","currency"=>"EUR","vat"=>"20");
@@ -15,18 +25,17 @@ $forecast_list["nordpool_se1"] = array("category"=>"Nordpool Spot","name"=>"SE1"
 $forecast_list["nordpool_se2"] = array("category"=>"Nordpool Spot","name"=>"SE2","currency"=>"SEK","vat"=>"25");
 $forecast_list["nordpool_se3"] = array("category"=>"Nordpool Spot","name"=>"SE3","currency"=>"SEK","vat"=>"25");
 $forecast_list["nordpool_se4"] = array("category"=>"Nordpool Spot","name"=>"SE4","currency"=>"SEK","vat"=>"25");
+*/
 
-function get_forecast_nordpool($redis,$signal,$start_timestamp,$resolution,$timezone)
-{   
-    global $forecast_list;
-    // Invalid signal
-    if (!isset($forecast_list[$signal])) return array();
+function get_forecast_nordpool($redis,$params)
+{
+    $list_entry = get_list_entry_nordpool();
     
     $result = json_decode($redis->get("demandshaper:$signal"));
 
     if (!$result || !is_object($result)) {
-        $area = $forecast_list[$signal]["name"];
-        $currency = $forecast_list[$signal]["currency"];
+        $area = $list_entry["name"];
+        $currency = $list_entry["currency"];
         $time = time();
         
         if ($result = http_request("GET","http://datafeed.expektra.se/datafeed.svc/spotprice?token=$signal_token&bidding_area=$area&format=json&perspective=$currency&$time",array())) {
@@ -45,16 +54,16 @@ function get_forecast_nordpool($redis,$signal,$start_timestamp,$resolution,$time
      
     if ($result!=null && isset($result->data)) {
 
-        $vat = $forecast_list[$signal]["vat"];
-        $timestamp = $start_timestamp;
+        $vat = $list_entry["vat"];
+        $timestamp = $params->start;
         
         foreach ($result->data as $row) {
 
             $arrDate = new DateTime($row->utc);
-            $arrDate->setTimezone(new DateTimeZone($timezone));                
+            $arrDate->setTimezone(new DateTimeZone($params->timezone));                
             $arrTs = $arrDate->getTimestamp();
 
-            if ($arrTs>=$start_timestamp) 
+            if ($arrTs>=$params->start) 
             {
                 $h = 1*$arrDate->format('H');
                 $m = 1*$arrDate->format('i')/60;
@@ -63,7 +72,7 @@ function get_forecast_nordpool($redis,$signal,$start_timestamp,$resolution,$time
                 $profile[] = array($arrTs*1000,floatval(($row->value*((100+$vat)/100))/10),$hour);
             }
 
-            $timestamp += $resolution; 
+            $timestamp += $params->resolution; 
         }
     }
 

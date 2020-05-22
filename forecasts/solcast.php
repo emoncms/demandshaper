@@ -1,14 +1,16 @@
 <?php
-global $forecast_list;
 
-$forecast_list["solcast"] = array(
-    "category"=>"Solar",
-    "name"=>"Solcast",
-    "params"=>array(
-        "api_key"=>array("type"=>"text"),
-        "siteid"=>array("type"=>"text")
-    )
-);
+function get_list_entry_solcast()
+{
+    return array(
+        "category"=>"Solar",
+        "name"=>"Solcast",
+        "params"=>array(
+            "api_key"=>array("type"=>"text"),
+            "siteid"=>array("type"=>"text")
+        )
+    );
+}
 
 function get_forecast_solcast($redis,$params)
 {

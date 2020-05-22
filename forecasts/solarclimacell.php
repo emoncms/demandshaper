@@ -1,16 +1,17 @@
 <?php
-global $forecast_list;
 
-$forecast_list["solarclimacell"] = array(
-    "category"=>"Solar",
-    "name"=>"ClimaCell",
-    "params"=>array(
-        "lat"=>array("type"=>"text"),
-        "lon"=>array("type"=>"text"),
-        "apikey"=>array("type"=>"text")
-    )
-);
-
+function get_list_entry_solarclimacell()
+{
+    return array(
+        "category"=>"Solar",
+        "name"=>"ClimaCell",
+        "params"=>array(
+            "lat"=>array("type"=>"text"),
+            "lon"=>array("type"=>"text"),
+            "apikey"=>array("type"=>"text")
+        )
+    );
+}
 
 function get_forecast_solarclimacell($redis,$params)
 {   

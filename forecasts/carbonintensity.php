@@ -1,6 +1,14 @@
 <?php
 
-$forecast_list["carbonintensity"] = array("category"=>"General","name"=>"Carbon Intensity","params"=>array());
+
+function get_list_entry_carbonintensity()
+{
+    return array(
+        "category"=>"General",
+        "name"=>"Carbon Intensity",
+        "params"=>array()
+    );
+}
 
 function get_forecast_carbonintensity($redis,$params)
 {
