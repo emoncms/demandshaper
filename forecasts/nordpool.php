@@ -39,21 +39,21 @@ function get_forecast_nordpool($redis,$params)
     $list_entry = get_list_entry_nordpool();
     if (!isset($list_entry["params"]["area"]["options"][$params->area])) return false;
     
-    $nordpool = array(;
-        "DK1"=>array("currency"=>"DKK","vat"=>"25");
-        "DK2"=>array("currency"=>"DKK","vat"=>"25");
-        "EE"=>array("currency"=>"EUR","vat"=>"20");
-        "FI"=>array("currency"=>"EUR","vat"=>"24");
-        "LT"=>array("currency"=>"EUR","vat"=>"21");
-        "NO1"=>array("currency"=>"NOK","vat"=>"25");
-        "NO2"=>array("currency"=>"NOK","vat"=>"25");
-        "NO3"=>array("currency"=>"NOK","vat"=>"25");
-        "NO4"=>array("currency"=>"NOK","vat"=>"25");
-        "NO5"=>array("currency"=>"NOK","vat"=>"25");
-        "SE1"=>array("currency"=>"SEK","vat"=>"25");
-        "SE2"=>array("currency"=>"SEK","vat"=>"25");
-        "SE3"=>array("currency"=>"SEK","vat"=>"25");
-        "SE4"=>array("currency"=>"SEK","vat"=>"25");
+    $nordpool = array(
+        "DK1"=>array("currency"=>"DKK","vat"=>"25"),
+        "DK2"=>array("currency"=>"DKK","vat"=>"25"),
+        "EE"=>array("currency"=>"EUR","vat"=>"20"),
+        "FI"=>array("currency"=>"EUR","vat"=>"24"),
+        "LT"=>array("currency"=>"EUR","vat"=>"21"),
+        "NO1"=>array("currency"=>"NOK","vat"=>"25"),
+        "NO2"=>array("currency"=>"NOK","vat"=>"25"),
+        "NO3"=>array("currency"=>"NOK","vat"=>"25"),
+        "NO4"=>array("currency"=>"NOK","vat"=>"25"),
+        "NO5"=>array("currency"=>"NOK","vat"=>"25"),
+        "SE1"=>array("currency"=>"SEK","vat"=>"25"),
+        "SE2"=>array("currency"=>"SEK","vat"=>"25"),
+        "SE3"=>array("currency"=>"SEK","vat"=>"25"),
+        "SE4"=>array("currency"=>"SEK","vat"=>"25")
     );
 
     $list_entry = get_list_entry_nordpool();
@@ -66,7 +66,7 @@ function get_forecast_nordpool($redis,$params)
             "token"=>$params->signal_token,
             "bidding_area"=>$params->area,
             "perspective"=>$nordpool[$params->area]["currency"],
-            "format"=>"json"
+            "format"=>"json",
             "t"=>time()
         );
         
