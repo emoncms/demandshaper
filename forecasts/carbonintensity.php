@@ -12,7 +12,8 @@ function get_list_entry_carbonintensity()
 
 function get_forecast_carbonintensity($redis,$params)
 {
-    // $optimise = MIN;
+    $forecast_interval = 1800;
+
     // Original forecast API
     // https://api.carbonintensity.org.uk/intensity/2020-05-21T21:00:00Z/fw24h
     // We fetch instead here the cached copy:
@@ -23,36 +24,33 @@ function get_forecast_carbonintensity($redis,$params)
             $redis->expire($key,1800);
         }
     }
-    
     $result = json_decode($result);
     
-    $profile = array();
-     
+    // 2. Create associative array out of original forecast
+    //    format: timestamp:value
+    $timevalues = array();
     if ($result!=null && isset($result->data)) {
-
-        $datetimestr = $result->data[0]->from;
-        $date = new DateTime($datetimestr);
-        $date->setTimezone(new DateTimeZone($params->timezone));
-        $start = $date->getTimestamp();
-        
-        $datetimestr = $result->data[count($result->data)-1]->from;
-        $date = new DateTime($datetimestr);
-        $end = $date->getTimestamp();
-
-        for ($timestamp=$start; $timestamp<$end; $timestamp+=$params->resolution) {
-        
-            $i = floor(($timestamp - $start)/1800);
-            if (isset($result->data[$i])) {
-                $co2intensity = $result->data[$i]->intensity->forecast;
-                
-                $date->setTimestamp($timestamp);
-                $h = 1*$date->format('H');
-                $m = 1*$date->format('i')/60;
-                $hour = $h + $m;
-                
-                if ($timestamp>=$params->start) $profile[] = array($timestamp*1000,$co2intensity,$hour);
-            }
+        foreach ($result->data as $hour) {
+            $date = new DateTime($hour->from);
+            $timestamp = $date->getTimestamp();
+            $timevalues[$timestamp] = $hour->intensity->forecast;
         }
+    }
+    
+    // 3. Map forecast to request start, end and interval
+    $profile = array();
+    for ($time=$params->start; $time<$params->end; $time+=$params->resolution) {
+        $forecast_time = floor($time / $forecast_interval) * $forecast_interval;
+
+        if (isset($timevalues[$forecast_time])) {
+            $value = $timevalues[$forecast_time];
+        } else if (isset($timevalues[$forecast_time-(24*3600)])) { // if not available try to use value 24h in past
+            $value = $timevalues[$forecast_time-(24*3600)]; 
+        } else if (isset($timevalues[$forecast_time+(24*3600)])) { // if not available try to use value 24h in future
+            $value = $timevalues[$forecast_time+(24*3600)]; 
+        }
+
+        $profile[] = array($time*1000,$value);
     }
     
     $result = new stdClass();

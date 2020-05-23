@@ -21,15 +21,19 @@ $params->resolution = 1800;
 // 2. Get time now to set starting point
 $now = time();
 $params->start = floor($now/$params->resolution)*$params->resolution;
-
-$forecast_list = array();
-
+$params->end = $params->start + (3600*24);
 // 3. Load forecast
-$signal = "carbonintensity";
+$signal = "nordpool";
 
 // Forecast params
 switch ($signal)
 {
+    case "carbonintensity":
+        break;
+        
+    case "economy7":
+        break;
+        
     case "octopusagile":
         $params->gsp_id = "D";
         break;
@@ -38,23 +42,55 @@ switch ($signal)
         $params->club = "bethesda";
         break;
 
+    case "nordpool":
+        $params->area = "DK1";
+        $params->signal_token = "";
+        break;
+
     case "solcast":
         $params->siteid = "";
         $params->api_key = "";
         break;
 
     case "solarclimacell":
-        $params->lat = "";
-        $params->lon = "";
+        $params->lat = "56.782122";
+        $params->lon = "-7.630868";
         $params->apikey = "";
         break;
 }
 
-if (file_exists("forecasts/$signal.php")) {
-    require_once "forecasts/$signal.php";
+if (file_exists("../forecasts/$signal.php")) {
+    require_once "../forecasts/$signal.php";
     $forecast_fn = "get_forecast_$signal";
     $forecast = $forecast_fn($redis,$params);
+} else {
+    print "forecast does not exist\n"; die;
 }
 
 // 4. Output forecast
-echo json_encode($forecast)."\n";
+// echo json_encode($forecast)."\n";
+
+echo "----------------------------------\n";
+echo "Forecast: $signal\n";
+echo "----------------------------------\n";
+
+$date = new DateTime();
+$date->setTimezone(new DateTimeZone($params->timezone));
+
+$n=0;
+for ($time=$params->start; $time<$params->end; $time+=$params->resolution) {
+
+    $date->setTimestamp($time);    
+    echo $date->format("Y-m-d H:i")."\t".$forecast->profile[$n][1]."\t";
+    
+    // test: check that forecast returns expected timestamps
+    if ($forecast->profile[$n][0]*0.001!=$time) {
+        echo "TIME MISMATCH";
+    } else {
+        echo "OK";
+    }
+    echo "\n";
+    
+    $n++;
+}
+

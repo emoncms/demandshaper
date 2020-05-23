@@ -19,27 +19,28 @@ function get_forecast_solarclimacell($redis,$params)
     if (!isset($params->lon)) return false;
     if (!isset($params->apikey)) return false;
     
-    $start = floor(time()/1800)*1800;
-    $end = $start + (3600*48);
-    
     $date = new DateTime();
-    $date->setTimestamp($start);
+    $date->setTimestamp($params->start);
     $start = $date->format("c");
-    $date->setTimestamp($end);
+    $date->setTimestamp($params->end);
     $end = $date->format("c");
-       
-    $req_params = array(
-        "lat"=>$params->lat,
-        "lon"=>$params->lon,
-        "unit_system"=>"si",
-        "start_time"=>$start,
-        "end_time"=>$end,
-        "fields"=>"surface_shortwave_radiation",
-        "apikey"=>$params->apikey
-    );
+    
+    $forecast_interval = 3600;
 
+    // 1. Load forecast from local cache if it exists
+    //    otherwise load from climacell api
+    //    expire cache every 1800 seconds to limit API calls       
     $key = "demandshaper:solarclimacell:".$params->lat.":".$params->lon;
     if (!$result = $redis->get($key)) {
+        $req_params = array(
+            "lat"=>$params->lat,
+            "lon"=>$params->lon,
+            "unit_system"=>"si",
+            "start_time"=>$start,
+            "end_time"=>$end,
+            "fields"=>"surface_shortwave_radiation",
+            "apikey"=>$params->apikey
+        );
         if ($result = http_request("GET","https://api.climacell.co/v3/weather/forecast/hourly",$req_params)) {
             $redis->set($key,$result);
             $redis->expire($key,1800);
@@ -48,10 +49,32 @@ function get_forecast_solarclimacell($redis,$params)
     
     $result = json_decode($result);
     
+    // 2. Create associative array out of original forecast
+    //    format: timestamp:value
+    $timevalues = array();
+    if ($result!=null) {
+        foreach ($result as $hour) {
+            $date = new DateTime($hour->observation_time->value);
+            // $date->setTimezone($timezone);
+            $timestamp = $date->getTimestamp();
+            $timevalues[$timestamp] = $hour->surface_shortwave_radiation->value;
+        }
+    }
+    
+    // 3. Map forecast to request start, end and interval
     $profile = array();
-    foreach ($result as $hour) {
-        $date = new DateTime($hour->observation_time->value);
-        $profile[] = array($date->getTimestamp()*1000,$hour->surface_shortwave_radiation->value,$date->format("H")*1);
+    for ($time=$params->start; $time<$params->end; $time+=$params->resolution) {
+        $forecast_time = floor($time / $forecast_interval) * $forecast_interval;
+        
+        if (isset($timevalues[$forecast_time])) {
+            $value = $timevalues[$forecast_time];
+        } else if (isset($timevalues[$forecast_time-(24*3600)])) { // if not available try to use value 24h in past
+            $value = $timevalues[$forecast_time-(24*3600)]; 
+        } else if (isset($timevalues[$forecast_time+(24*3600)])) { // if not available try to use value 24h in future
+            $value = $timevalues[$forecast_time+(24*3600)]; 
+        }
+        
+        $profile[] = array($time*1000,$value);
     }
     
     $result = new stdClass();
