@@ -25,7 +25,7 @@ $now = time();
 $params->start = floor($now/$params->interval)*$params->interval;
 $params->end = $params->start + (3600*24);
 // 3. Load forecast
-$signal = "nordpool";
+$signal = "carbonintensity";
 
 // Forecast params
 switch ($signal)

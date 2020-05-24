@@ -233,3 +233,14 @@ function get_hour($date,$timestamp) {
     $m = number_format(1*$date->format('i')/60,3,'.','');
     return $h + $m;
 }
+
+function forecast_calc_min_max($forecast) {
+    // get max and min values of profile
+    $forecast->min = 1000000; $forecast->max = -1000000;
+    for ($i=0; $i<count($forecast->profile); $i++) {
+        $val = (float) $forecast->profile[$i];
+        if ($val>$forecast->max) $forecast->max = $val;
+        if ($val<$forecast->min) $forecast->min = $val;
+    }
+    return $forecast;
+}
