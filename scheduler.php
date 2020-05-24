@@ -22,6 +22,7 @@ define("MIN",0);
 function get_forecast($redis,$signal,$timezone) {
 
     $demandshaper_dir = "/opt/emoncms/modules/demandshaper";
+    require $demandshaper_dir."/cli/settings.php";
 
     $params = new stdClass();
     $params->timezone = $timezone;
@@ -49,18 +50,18 @@ function get_forecast($redis,$signal,$timezone) {
 
         case "nordpool":
             $params->area = "DK1";
-            $params->signal_token = "";
+            $params->signal_token = $nordpool_token;
             break;
 
         case "solcast":
-            $params->siteid = "";
-            $params->api_key = "";
+            $params->siteid = $solcast_siteid;
+            $params->api_key = $solcast_apikey;
             break;
 
         case "solarclimacell":
             $params->lat = "56.782122";
             $params->lon = "-7.630868";
-            $params->apikey = "";
+            $params->apikey = $climacell_apikey;
             break;
     }
     

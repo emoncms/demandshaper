@@ -2,6 +2,8 @@
 // --------------------------------------------------
 // Forecast test script
 // --------------------------------------------------
+require "settings.php";
+
 define("MAX",1);
 define("MIN",0);
 
@@ -16,11 +18,11 @@ $params->timezone = "Europe/London";
 
 // 1. Set desired forecast interval
 // This will downsample or upsample original forecast
-$params->resolution = 1800;
+$params->interval = 1800;
 
 // 2. Get time now to set starting point
 $now = time();
-$params->start = floor($now/$params->resolution)*$params->resolution;
+$params->start = floor($now/$params->interval)*$params->interval;
 $params->end = $params->start + (3600*24);
 // 3. Load forecast
 $signal = "nordpool";
@@ -44,18 +46,18 @@ switch ($signal)
 
     case "nordpool":
         $params->area = "DK1";
-        $params->signal_token = "";
+        $params->signal_token = $nordpool_token;
         break;
 
     case "solcast":
-        $params->siteid = "";
-        $params->api_key = "";
+        $params->siteid = $solcast_siteid;
+        $params->api_key = $solcast_apikey;
         break;
 
     case "solarclimacell":
         $params->lat = "56.782122";
         $params->lon = "-7.630868";
-        $params->apikey = "";
+        $params->apikey = $climacell_apikey;
         break;
 }
 
@@ -78,19 +80,15 @@ $date = new DateTime();
 $date->setTimezone(new DateTimeZone($params->timezone));
 
 $n=0;
-for ($time=$params->start; $time<$params->end; $time+=$params->resolution) {
-
+for ($time=$params->start; $time<$params->end; $time+=$params->interval) {
     $date->setTimestamp($time);    
-    echo $date->format("Y-m-d H:i")."\t".$forecast->profile[$n][1]."\t";
-    
-    // test: check that forecast returns expected timestamps
-    if ($forecast->profile[$n][0]*0.001!=$time) {
-        echo "TIME MISMATCH";
-    } else {
-        echo "OK";
-    }
-    echo "\n";
-    
+    echo $date->format("Y-m-d H:i")."\t".$forecast->profile[$n]."\n";    
     $n++;
+}
+
+if ($n!=count($forecast->profile)) {
+    echo "MISMATCH profile count\n";
+} else {
+    echo "MATCH profile count\n";
 }
 

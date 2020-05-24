@@ -16,11 +16,11 @@ $params->timezone = "Europe/London";
 
 // 1. Set desired forecast interval
 // This will downsample or upsample original forecast
-$params->resolution = 1800;
+$params->interval = 1800;
 
 // 2. Get time now to set starting point
 $now = time();
-$params->start = floor($now/$params->resolution)*$params->resolution;
+$params->start = floor($now/$params->interval)*$params->interval;
 $params->end = $params->start + (3600*24);
 
 require_once "../forecasts/octopusagile.php";

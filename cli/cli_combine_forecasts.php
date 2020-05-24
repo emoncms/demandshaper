@@ -2,6 +2,8 @@
 // --------------------------------------------------
 // Combine solar and agile forecasts & apply weighting
 // --------------------------------------------------
+require "settings.php";
+
 define("MAX",1);
 define("MIN",0);
 
@@ -16,11 +18,11 @@ $params->timezone = "Europe/London";
 
 // 1. Set desired forecast interval
 // This will downsample or upsample original forecast
-$params->resolution = 1800;
+$params->interval = 1800;
 
 // 2. Get time now to set starting point
 $now = time();
-$params->start = floor($now/$params->resolution)*$params->resolution;
+$params->start = floor($now/$params->interval)*$params->interval;
 $params->end = $params->start + (3600*24);
 
 
@@ -30,8 +32,8 @@ $agile = get_forecast_octopusagile($redis,$params);
 $agile_weighting = 1.0;
 
 require_once "../forecasts/solcast.php";
-$params->siteid = "8ffd-005c-5686-8116";
-$params->api_key = "pBQwdyxbLutCFemv2My1SXdW6aEIAd2K";
+$params->siteid = $solcast_siteid;
+$params->api_key = $solcast_apikey;
 $solar = get_forecast_solcast($redis,$params);
 $solar_weighting = -5.0;
 
@@ -43,13 +45,12 @@ $date = new DateTime();
 $date->setTimezone(new DateTimeZone($params->timezone));
 
 $n=0;
-for ($time=$params->start; $time<$params->end; $time+=$params->resolution) {
+for ($time=$params->start; $time<$params->end; $time+=$params->interval) {
 
-    $combined = ($agile->profile[$n][1]*$agile_weighting) + ($solar->profile[$n][1]*$solar_weighting);
+    $combined = ($agile->profile[$n]*$agile_weighting) + ($solar->profile[$n]*$solar_weighting);
 
     $date->setTimestamp($time);    
-    echo $date->format("Y-m-d H:i")."\t".$agile->profile[$n][1]."\t".$solar->profile[$n][1]."\t".$combined."\n";
-    
+    echo $date->format("Y-m-d H:i")."\t".$agile->profile[$n]."\t".$solar->profile[$n]."\t".$combined."\n";
     
     $n++;
 }
