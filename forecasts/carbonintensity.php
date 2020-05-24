@@ -39,7 +39,7 @@ function get_forecast_carbonintensity($redis,$params)
     
     // 3. Map forecast to request start, end and interval
     $profile = array();
-    for ($time=$params->start; $time<$params->end; $time+=$params->resolution) {
+    for ($time=$params->start; $time<$params->end; $time+=$params->interval) {
         $forecast_time = floor($time / $forecast_interval) * $forecast_interval;
 
         if (isset($timevalues[$forecast_time])) {
@@ -57,7 +57,7 @@ function get_forecast_carbonintensity($redis,$params)
     $result->profile = $profile;
     $result->start = $params->start;
     $result->end = $params->end; 
-    $result->interval = $params->resolution;
+    $result->interval = $params->interval;
     $result->optimise = MIN;
     return $result;
 }

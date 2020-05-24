@@ -13,7 +13,7 @@ function get_forecast_economy7($redis,$params)
     $date->setTimezone(new DateTimeZone($params->timezone));
     
     $profile = array();
-    for ($time=$params->start; $time<$params->end; $time+=$params->resolution) {
+    for ($time=$params->start; $time<$params->end; $time+=$params->interval) {
         $date->setTimestamp($time);
         $hour = 1*$date->format('H');
         if ($hour>=0.0 && $hour<7.0) $economy7 = 0.07; else $economy7 = 0.15;
@@ -25,7 +25,7 @@ function get_forecast_economy7($redis,$params)
     $result->profile = $profile;
     $result->start = $params->start;
     $result->end = $params->end; 
-    $result->interval = $params->resolution;
+    $result->interval = $params->interval;
     $result->optimise = MIN;
     return $result;
 }

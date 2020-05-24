@@ -46,7 +46,7 @@ function get_forecast_energylocal($redis,$params)
         $EL_signal = $result->DATA[0];
         
         $value = 0.5;
-        for ($time=$params->start; $time<$params->end; $time+=$params->resolution) {
+        for ($time=$params->start; $time<$params->end; $time+=$params->interval) {
             $date->setTimestamp($time);
             $h = 1*$date->format('H');
             $m = 1*$date->format('i')/60;
@@ -63,7 +63,7 @@ function get_forecast_energylocal($redis,$params)
     $result->profile = $profile;
     $result->start = $params->start;
     $result->end = $params->end; 
-    $result->interval = $params->resolution;
+    $result->interval = $params->interval;
     $result->optimise = MIN;
     return $result;
 }
