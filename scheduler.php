@@ -33,6 +33,12 @@ function get_forecast($redis,$signal,$timezone) {
     
     switch ($signal)
     {
+        case "carbonintensity":
+            break;
+            
+        case "economy7":
+            break;
+            
         case "octopusagile":
             $params->gsp_id = "D";
             break;
@@ -41,14 +47,19 @@ function get_forecast($redis,$signal,$timezone) {
             $params->club = "bethesda";
             break;
 
+        case "nordpool":
+            $params->area = "DK1";
+            $params->signal_token = "";
+            break;
+
         case "solcast":
             $params->siteid = "";
             $params->api_key = "";
             break;
 
         case "solarclimacell":
-            $params->lat = "";
-            $params->lon = "";
+            $params->lat = "56.782122";
+            $params->lon = "-7.630868";
             $params->apikey = "";
             break;
     }

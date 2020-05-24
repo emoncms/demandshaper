@@ -18,11 +18,14 @@ function get_forecast_economy7($redis,$params)
         $hour = 1*$date->format('H');
         if ($hour>=0.0 && $hour<7.0) $economy7 = 0.07; else $economy7 = 0.15;
 
-        $profile[] = array($time*1000,$economy7);
+        $profile[] = $economy7;
     }
     
     $result = new stdClass();
     $result->profile = $profile;
+    $result->start = $params->start;
+    $result->end = $params->end; 
+    $result->interval = $params->resolution;
     $result->optimise = MIN;
     return $result;
 }

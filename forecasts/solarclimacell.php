@@ -74,11 +74,14 @@ function get_forecast_solarclimacell($redis,$params)
             $value = $timevalues[$forecast_time+(24*3600)]; 
         }
         
-        $profile[] = array($time*1000,$value);
+        $profile[] = $value;
     }
     
     $result = new stdClass();
     $result->profile = $profile;
+    $result->start = $params->start;
+    $result->end = $params->end; 
+    $result->interval = $params->resolution;
     $result->optimise = MAX;
     return $result;
 }

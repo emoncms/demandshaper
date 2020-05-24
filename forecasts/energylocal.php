@@ -55,12 +55,15 @@ function get_forecast_energylocal($redis,$params)
             
             if (isset($EL_signal[$hour_index])) $value = $EL_signal[$hour_index];
             
-            $profile[] = array($time*1000,$value);
+            $profile[] = $value;
         }
     }
     
     $result = new stdClass();
     $result->profile = $profile;
+    $result->start = $params->start;
+    $result->end = $params->end; 
+    $result->interval = $params->resolution;
     $result->optimise = MIN;
     return $result;
 }

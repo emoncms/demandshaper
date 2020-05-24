@@ -80,12 +80,15 @@ function get_forecast_octopusagile($redis,$params)
         } else {
             $price = 12.0;
         }
-        $profile[] = array($time*1000,$price);
+        $profile[] = $price;
     }
 
     
     $result = new stdClass();
     $result->profile = $profile;
+    $result->start = $params->start;
+    $result->end = $params->end; 
+    $result->interval = $params->resolution;
     $result->optimise = MIN;
     return $result;
 }
