@@ -22,10 +22,10 @@ function get_forecast_economy7($redis,$params)
     }
     
     $result = new stdClass();
-    $result->profile = $profile;
     $result->start = $params->start;
     $result->end = $params->end; 
     $result->interval = $params->interval;
+    $result->profile = $profile;
     $result->optimise = MIN;
     return $result;
 }

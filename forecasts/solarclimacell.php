@@ -46,7 +46,6 @@ function get_forecast_solarclimacell($redis,$params)
             $redis->expire($key,1800);
         }
     }
-    
     $result = json_decode($result);
     
     // 2. Create associative array out of original forecast
@@ -78,10 +77,10 @@ function get_forecast_solarclimacell($redis,$params)
     }
     
     $result = new stdClass();
-    $result->profile = $profile;
     $result->start = $params->start;
     $result->end = $params->end; 
     $result->interval = $params->interval;
+    $result->profile = $profile;
     $result->optimise = MAX;
     return $result;
 }

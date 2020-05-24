@@ -105,15 +105,15 @@ function get_forecast_nordpool($redis,$params)
             $value = $timevalues[$forecast_time+(24*3600)]; 
         }
         
-        $profile[] = $value;
+        $profile[] = 1*$value;
     }
     
 
     $result = new stdClass();
-    $result->profile = $profile;
     $result->start = $params->start;
     $result->end = $params->end; 
     $result->interval = $params->interval;
+    $result->profile = $profile;
     $result->optimise = MIN;
     return $result;
 }
