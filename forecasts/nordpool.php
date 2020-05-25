@@ -27,7 +27,8 @@ function get_list_entry_nordpool()
                     "SE3"=>"SE3",
                     "SE4"=>"SE4"
                 )
-            )
+            ),
+            "signal_token"=>array("name"=>"Token","type"=>"text")
         )
     );
 }
