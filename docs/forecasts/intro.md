@@ -15,4 +15,3 @@ This is typically achieved by:
 ### Caching
 
 In order to reduce API calls to forcast servers and to speed up schedule recalculation, forecasts should be cached using redis with an expiry time set to that updated forecasts are automatically loaded.
-

@@ -9,6 +9,7 @@ function get_list_entry_nordpool()
         "vat"=>"25",
         "params"=>array(
             "area"=>array(
+                "name"=>"Area",
                 "type"=>"select",
                 "options"=>array(
                     "DK1"=>"DK1",

@@ -52,6 +52,13 @@ function demandshaper_controller()
                 return "";
             }
             break;
+        
+        case "forecastviewer":
+            $route->format = "html";
+            //if ($session["write"]) {
+                return view("Modules/demandshaper/forecast_view.php", array("forecast_list"=>$forecast_list));
+            //}
+            break;
             
         case "forecast":
             $signal = "carbonintensity";

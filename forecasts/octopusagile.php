@@ -7,6 +7,7 @@ function get_list_entry_octopusagile()
         "name"=>"Octopus Agile",
         "params"=>array(
             "gsp_id"=>array(
+                "name"=>"Region",
                 "type"=>"select",
                 "options"=>array(
                     "A"=>"Eastern England",

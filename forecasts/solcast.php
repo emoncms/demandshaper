@@ -9,8 +9,8 @@ function get_list_entry_solcast()
         "category"=>"Solar",
         "name"=>"Solcast",
         "params"=>array(
-            "api_key"=>array("type"=>"text"),
-            "siteid"=>array("type"=>"text")
+            "api_key"=>array("name"=>"API key", "type"=>"text"),
+            "siteid"=>array("name"=>"Site ID", "type"=>"text")
         )
     );
 }

@@ -6,9 +6,9 @@ function get_list_entry_solarclimacell()
         "category"=>"Solar",
         "name"=>"ClimaCell",
         "params"=>array(
-            "lat"=>array("type"=>"text"),
-            "lon"=>array("type"=>"text"),
-            "apikey"=>array("type"=>"text")
+            "lat"=>array("name"=>"Latitude","type"=>"text"),
+            "lon"=>array("name"=>"Longitude","type"=>"text"),
+            "apikey"=>array("name"=>"API key", "type"=>"text")
         )
     );
 }

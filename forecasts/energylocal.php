@@ -7,6 +7,7 @@ function get_list_entry_energylocal()
         "name"=>"Energy Local",
         "params"=>array(
             "club"=>array(
+                "name"=>"Club",
                 "type"=>"select",
                 "options"=>array(
                     "bethesda"=>"Bethesda",
