@@ -206,7 +206,7 @@ Exampled of smartplug schedule object:
                     {
                         "name":"solcast", 
                         "siteid":"8ffd-005c-5686-8116", 
-                        "api_key":"pBQwdyxbLutCFemv2My1SXdW6aEIAd2K", 
+                        "api_key":"", 
                         "weight":-5.0
                     }
                 ],
