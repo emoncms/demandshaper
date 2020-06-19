@@ -61,10 +61,56 @@ function demandshaper_controller()
             break;
             
         case "forecast":
-            $signal = "carbonintensity";
-            if (isset($_GET['signal'])) $signal = $_GET['signal'];
-            include "$linked_modules_dir/demandshaper/scheduler.php";
-            return get_forecast($redis,$signal,$timezone);
+            if (isset($_POST['config'])) {
+                $config = json_decode($_POST['config']);
+                define("MAX",1);
+                define("MIN",0);
+                $params = new stdClass();
+                $params->timezone = "Europe/London";
+
+                // 1. Set desired forecast interval
+                // This will downsample or upsample original forecast
+                $params->interval = 1800;
+
+                // 2. Get time now to set starting point
+                $now = time();
+                $params->start = floor($now/$params->interval)*$params->interval;
+                $params->end = $params->start + (3600*24);
+
+                $profile_length = ($params->end-$params->start)/$params->interval;        
+                $combined = false;
+                foreach ($config as $config_item) {
+                    $name = $config_item->name;
+                    if (file_exists("$linked_modules_dir/demandshaper/forecasts/$name.php")) {
+                        require_once "$linked_modules_dir/demandshaper/forecasts/$name.php";
+                        
+                        // Copy over params
+                        $fn = "get_list_entry_$name";
+                        $list_entry = $fn();
+                        foreach ($list_entry["params"] as $param_key=>$param) {
+                            if (isset($config_item->$param_key)) {
+                                $params->$param_key = $config_item->$param_key;
+                            }
+                        }
+                        
+                        // Fetch forecast
+                        $fn = "get_forecast_$name";
+                        if ($forecast = $fn($redis,$params)) {
+                            // Clone first, combine 2nd, 3rd etc
+                            if ($combined==false) {
+                                $combined = clone $forecast;
+                                for ($td=0; $td<$profile_length; $td++) $combined->profile[$td] = 0;
+                            }
+                            
+                            // Combine
+                            for ($td=0; $td<$profile_length; $td++) {
+                                $combined->profile[$td] += ($forecast->profile[$td]*$config_item->weight);
+                            }
+                        }
+                    }
+                }
+                return $combined;
+            } 
             break;
             
         case "forecast-list":

@@ -57,6 +57,8 @@ function get_forecast_solcast($redis,$params)
     for ($time=$params->start; $time<$params->end; $time+=$params->interval) {
         $forecast_time = floor($time / $forecast_interval) * $forecast_interval;
         
+        $value = 0;
+        
         if (isset($timevalues[$forecast_time])) {
             $value = $timevalues[$forecast_time];
         } else if (isset($timevalues[$forecast_time-(24*3600)])) { // if not available try to use value 24h in past
