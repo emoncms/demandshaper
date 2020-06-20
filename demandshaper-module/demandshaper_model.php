@@ -148,22 +148,7 @@ class DemandShaper
         
         return $schedules;
     }
-    
-    public function get_forecast_list() {
-        $forecast_list = array();
-        $dir = "/opt/emoncms/modules/demandshaper/forecasts";
-        $forecasts = scandir($dir);
-        for ($i=2; $i<count($forecasts); $i++) {
-            if (is_file($dir."/".$forecasts[$i])) {
-                require $dir."/".$forecasts[$i];
-                $name = str_replace(".php","",$forecasts[$i]);
-                $forecast_list_entry_fn = "get_list_entry_$name";
-                $forecast_list[$name] = $forecast_list_entry_fn();
-            }
-        }
-        return $forecast_list;
-    }
-    
+        
     public function fetch_ovms_v2($vehicleid,$carpass) {
         $csv_str = http_request("GET","https://dexters-web.de/api/call?fn.name=ovms/export&fn.vehicleid=$vehicleid&fn.carpass=$carpass&fn.format=csv&fn.types=D,S&fn.last=1",array());
         $csv_lines = explode("\n",$csv_str);
@@ -187,6 +172,74 @@ class DemandShaper
             }
         }
         return $data;
+    }
+
+    public function get_forecast_list() {
+        global $linked_modules_dir;
+        $forecast_list = array();
+        $dir = "$linked_modules_dir/demandshaper/forecasts";
+        $forecasts = scandir($dir);
+        for ($i=2; $i<count($forecasts); $i++) {
+            if (is_file($dir."/".$forecasts[$i])) {
+                require $dir."/".$forecasts[$i];
+                $name = str_replace(".php","",$forecasts[$i]);
+                $forecast_list_entry_fn = "get_list_entry_$name";
+                $forecast_list[$name] = $forecast_list_entry_fn();
+            }
+        }
+        return $forecast_list;
+    }
+    
+    public function get_combined_forecast($config) {
+        global $linked_modules_dir;
+        define("MAX",1);
+        define("MIN",0);
+        
+        $params = new stdClass();
+        $params->timezone = "Europe/London";
+
+        // 1. Set desired forecast interval
+        // This will downsample or upsample original forecast
+        $params->interval = 1800;
+
+        // 2. Get time now to set starting point
+        $now = time();
+        $params->start = floor($now/$params->interval)*$params->interval;
+        $params->end = $params->start + (3600*24);
+
+        $profile_length = ($params->end-$params->start)/$params->interval;        
+        $combined = false;
+        foreach ($config as $config_item) {
+            $name = $config_item->name;
+            if (file_exists("$linked_modules_dir/demandshaper/forecasts/$name.php")) {
+                require_once "$linked_modules_dir/demandshaper/forecasts/$name.php";
+                
+                // Copy over params
+                $fn = "get_list_entry_$name";
+                $list_entry = $fn();
+                foreach ($list_entry["params"] as $param_key=>$param) {
+                    if (isset($config_item->$param_key)) {
+                        $params->$param_key = $config_item->$param_key;
+                    }
+                }
+                
+                // Fetch forecast
+                $fn = "get_forecast_$name";
+                if ($forecast = $fn($this->redis,$params)) {
+                    // Clone first, combine 2nd, 3rd etc
+                    if ($combined==false) {
+                        $combined = clone $forecast;
+                        for ($td=0; $td<$profile_length; $td++) $combined->profile[$td] = 0;
+                    }
+                    
+                    // Combine
+                    for ($td=0; $td<$profile_length; $td++) {
+                        $combined->profile[$td] += ($forecast->profile[$td]*$config_item->weight);
+                    }
+                }
+            }
+        }
+        return $combined;
     }
 
 }

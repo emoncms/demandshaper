@@ -59,63 +59,34 @@ function demandshaper_controller()
                 return view("Modules/demandshaper/forecast_view.php", array("forecast_list"=>$forecast_list));
             //}
             break;
-            
-        case "forecast":
-            if (isset($_POST['config'])) {
-                $config = json_decode($_POST['config']);
-                define("MAX",1);
-                define("MIN",0);
-                $params = new stdClass();
-                $params->timezone = "Europe/London";
 
-                // 1. Set desired forecast interval
-                // This will downsample or upsample original forecast
-                $params->interval = 1800;
-
-                // 2. Get time now to set starting point
-                $now = time();
-                $params->start = floor($now/$params->interval)*$params->interval;
-                $params->end = $params->start + (3600*24);
-
-                $profile_length = ($params->end-$params->start)/$params->interval;        
-                $combined = false;
-                foreach ($config as $config_item) {
-                    $name = $config_item->name;
-                    if (file_exists("$linked_modules_dir/demandshaper/forecasts/$name.php")) {
-                        require_once "$linked_modules_dir/demandshaper/forecasts/$name.php";
-                        
-                        // Copy over params
-                        $fn = "get_list_entry_$name";
-                        $list_entry = $fn();
-                        foreach ($list_entry["params"] as $param_key=>$param) {
-                            if (isset($config_item->$param_key)) {
-                                $params->$param_key = $config_item->$param_key;
-                            }
-                        }
-                        
-                        // Fetch forecast
-                        $fn = "get_forecast_$name";
-                        if ($forecast = $fn($redis,$params)) {
-                            // Clone first, combine 2nd, 3rd etc
-                            if ($combined==false) {
-                                $combined = clone $forecast;
-                                for ($td=0; $td<$profile_length; $td++) $combined->profile[$td] = 0;
-                            }
-                            
-                            // Combine
-                            for ($td=0; $td<$profile_length; $td++) {
-                                $combined->profile[$td] += ($forecast->profile[$td]*$config_item->weight);
-                            }
-                        }
-                    }
-                }
-                return $combined;
-            } 
-            break;
-            
         case "forecast-list":
             $route->format = "json";
             return $forecast_list;
+                        
+        case "forecast":
+            if (isset($_POST['config'])) {
+                $config = json_decode($_POST['config']);
+                return $demandshaper->get_combined_forecast($config);
+            } 
+            break;
+            
+        case "schedule":
+            if (isset($_POST['config'])) {
+                $config = json_decode($_POST['config']);
+                $combined = $demandshaper->get_combined_forecast($config);
+                
+                $period = (int) post('period');
+                $end = (int) post('end');
+
+                // Run schedule
+                require_once "$linked_modules_dir/demandshaper/scheduler2.php";
+                $combined = forecast_calc_min_max($combined);
+
+                return schedule_interruptible($combined,$period,$end,"Europe/London");
+            }
+            break;
+            
         
         case "submit":
             if (!$remoteaccess && $session["write"]) {
