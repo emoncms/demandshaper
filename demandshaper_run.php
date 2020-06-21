@@ -11,6 +11,8 @@ Part of the OpenEnergyMonitor project:
 http://openenergymonitor.org
 
 */
+define("MAX",1);
+define("MIN",0);
 
 // default user when mqtt multiuser disabled
 $default_userid = 1;
@@ -73,8 +75,8 @@ $redis->del("demandshaper:trigger");
 require("Modules/user/user_model.php");
 $user = new User($mysqli,$redis);
 
-if (file_exists("$linked_modules_dir/demandshaper/scheduler.php")) {
-    require "$linked_modules_dir/demandshaper/scheduler.php";
+if (file_exists("$linked_modules_dir/demandshaper/scheduler2.php")) {
+    require "$linked_modules_dir/demandshaper/scheduler2.php";
 }
 require "Modules/demandshaper/demandshaper_model.php";
 $demandshaper = new DemandShaper($mysqli,$redis);
@@ -176,12 +178,13 @@ while(true)
                         }
                         
                         // If runonce is true, check if within 24h period
+                        /*
                         if ($schedule->settings->runonce!==false) {
                             if (($now-$schedule->settings->runonce)>(24*3600)) $status = 0;
                         } else {
                             // Check if schedule should be ran on this day
                             if (!$schedule->settings->repeat[$date->format("N")-1]) $status = 0;
-                        }
+                        }*/
                         
                         if ($schedule->settings->ctrlmode=="on") $status = 1;
                         if ($schedule->settings->ctrlmode=="off") $status = 0;
@@ -347,17 +350,20 @@ while(true)
                                     $log->error("EVSE timeleft: ".$schedule->runtime->timeleft);                                    
                                 }
                                 // -------------------------------------------------------------------
-                            
-                                $forecast = get_forecast($redis,$schedule->settings->signal,$timezone);
-                                $schedule->runtime->periods = schedule_smart($forecast,$schedule->runtime->timeleft,$schedule->settings->end,$schedule->settings->interruptible,900,$timezone);
-                                
+                                $combined = $demandshaper->get_combined_forecast($schedule->settings->forecast_config);
+                                $combined = forecast_calc_min_max($combined);
+                                if ($schedule->settings->interruptible) {
+                                    $schedule->runtime->periods = schedule_interruptible($combined,$schedule->runtime->timeleft,$schedule->settings->end,$timezone);
+                                } else {
+                                    $schedule->runtime->periods = schedule_block($combined,$schedule->runtime->timeleft,$schedule->settings->end,$timezone);
+                                }
                             } else if ($schedule->settings->ctrlmode=="timer") {
-                                $forecast = get_forecast($redis,$schedule->settings->signal,$timezone);
-                                $schedule->runtime->periods = schedule_timer(
+                                //$forecast = get_forecast($redis,$schedule->settings->signal,$timezone);
+                                /*$schedule->runtime->periods = schedule_timer(
                                     $forecast, 
                                     $schedule->settings->timer_start1,$schedule->settings->timer_stop1,$schedule->settings->timer_start2,$schedule->settings->timer_stop2,
                                     900,$timezone
-                                );
+                                );*/
                             } 
                             $schedule = json_decode(json_encode($schedule));
                             $log->info("  reschedule ".json_encode($schedule->runtime->periods));

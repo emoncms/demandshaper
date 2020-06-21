@@ -192,8 +192,6 @@ class DemandShaper
     
     public function get_combined_forecast($config) {
         global $linked_modules_dir;
-        define("MAX",1);
-        define("MIN",0);
         
         $params = new stdClass();
         $params->timezone = "Europe/London";

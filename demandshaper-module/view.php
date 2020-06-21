@@ -48,6 +48,8 @@ var forecast_list = <?php echo json_encode($forecast_list); ?>;
 <link rel="stylesheet" href="<?php echo $path; ?>Modules/demandshaper/demandshaper.css?v=<?php echo $v; ?>">
 <script type="text/javascript" src="<?php echo $path; ?>Modules/demandshaper/battery.js?v=<?php echo $v; ?>"></script>
 
+<script type="text/javascript" src="<?php echo $path; ?>Modules/demandshaper/js/openevse.js?v=<?php echo $v; ?>"></script>
+
   <div id="scheduler-top"></div>
   
   <div id="auth-check" class="hide">

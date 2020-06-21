@@ -20,6 +20,9 @@ function demandshaper_controller()
     global $mysqli, $redis, $session, $route, $settings, $linked_modules_dir, $user;
     $result = false;
 
+    define("MAX",1);
+    define("MIN",0);
+
     $route->format = "json";
     $result = false;
 
@@ -60,6 +63,13 @@ function demandshaper_controller()
             //}
             break;
 
+        case "view":
+            $route->format = "html";
+            //if ($session["write"]) {
+                return view("Modules/demandshaper/view2.php", array("forecast_list"=>$forecast_list));
+            //}
+            break;
+
         case "forecast-list":
             $route->format = "json";
             return $forecast_list;
@@ -78,13 +88,32 @@ function demandshaper_controller()
                 
                 $period = (int) post('period');
                 $end = (int) post('end');
+                $interruptible = (int) post('interruptible');
 
                 // Run schedule
                 require_once "$linked_modules_dir/demandshaper/scheduler2.php";
                 $combined = forecast_calc_min_max($combined);
-
-                return schedule_interruptible($combined,$period,$end,"Europe/London");
+                if ($interruptible) {
+                    return schedule_interruptible($combined,$period,$end,"Europe/London");
+                } else {
+                    return schedule_block($combined,$period,$end,"Europe/London");
+                }
             }
+            break;
+            
+        case "save": 
+            if (isset($_POST['schedule']) || isset($_GET['schedule'])) {
+                $schedule = json_decode(prop('schedule'));
+                
+                if (!isset($schedule->settings->device)) return array("content"=>"Missing device parameter in schedule object");
+                $device = $schedule->settings->device;
+                
+                $schedules = $demandshaper->get($session["userid"]); 
+                $schedules->$device = $schedule;
+                $demandshaper->set($session["userid"],$schedules);
+                $redis->rpush("demandshaper:trigger",$session["userid"]); 
+            }
+            return $schedules;
             break;
             
         

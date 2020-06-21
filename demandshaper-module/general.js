@@ -22,7 +22,7 @@ function load_device(device_id, device_name, device_type)
             device:device_name,
             device_type:device_type,
             ctrlmode:"smart", // on, off, smart, timer
-            signal:"carbonintensity",
+            forecast_config: [{"name":"octopusagile","gsp_id":"D","weight":1.0}],
             // Smart mode
             period:3,
             end:8,
@@ -144,19 +144,23 @@ function load_device(device_id, device_name, device_type)
             }
             
             // get forecast and then call calc_schedule on callback
-            get_forecast(schedule.settings.signal,calc_schedule);
+            get_forecast(calc_schedule);
         }});
     }
-    
-    function get_forecast(signal,callback) {
-        $.ajax({ url: emoncmspath+"demandshaper/forecast?signal="+signal+apikeystr,
-        dataType: 'json',
-        async: true,
-        success: function(result) {
-            forecast = result;
-            profile = forecast.profile;
-            callback();
-        }});    
+
+    // FETCH COMBINED FORECAST 
+    function get_forecast(callback) {
+        $.ajax({
+            type: 'POST',
+            data: "config="+JSON.stringify(schedule.settings.forecast_config),
+            url: path+"demandshaper/forecast", 
+            dataType: 'json', 
+            async: true, 
+            success: function(result) {
+                forecast = result;
+                callback();
+            }
+        });
     }
         
     // --------------------------------------------------------------------------------------------
@@ -164,7 +168,7 @@ function load_device(device_id, device_name, device_type)
     // The schedule is submited without saving to start with assuming user is still changing schedule
     // After 1.9s of inactivity the schedule is autosaved.
     // --------------------------------------------------------------------------------------------
-    function calc_schedule() {
+    /*function calc_schedule() {
         console.log("calc_schedule");
         if (forecast && forecast.profile!=undefined) {
             draw_schedule();
@@ -181,6 +185,8 @@ function load_device(device_id, device_name, device_type)
                 }
                 draw_schedule_output(schedule);
             }
+            
+            draw_schedule_output(schedule);
             
             last_submit = (new Date()).getTime();
             setTimeout(function(){
@@ -224,6 +230,40 @@ function load_device(device_id, device_name, device_type)
                 submit_callback(result);
             }
         });
+    }*/
+
+    // FETCH CALCULATED SCHEDULE
+    function calc_schedule() {
+
+        // Convert hour into end timestamp
+        let end_hour = Math.floor(schedule.settings.end);
+        let end_minutes = (schedule.settings.end - end_hour)*60;
+        date = new Date();
+        now = date.getTime()*0.001;
+        date.setHours(end_hour,end_minutes,0,0);
+        let end_timestamp = date.getTime()*0.001;
+        if (end_timestamp<now) end_timestamp+=3600*24
+        
+        draw_schedule();
+        
+        if (schedule.settings.ctrlmode=="smart") {
+            
+            $.ajax({
+                type: 'POST',
+                data: "config="+JSON.stringify(schedule.settings.forecast_config)+"&interruptible="+schedule.settings.interruptible+"&period="+(3600*schedule.settings.period)+"&end="+end_timestamp,
+                url: path+"demandshaper/schedule", 
+                dataType: 'json', 
+                async: true, 
+                success: function(result) {
+                    schedule.runtime.periods = result;
+                    draw_schedule_output(schedule);
+                }
+            });
+        
+        } else {
+            schedule.runtime.periods = [];
+            draw_schedule_output(schedule);
+        }
     }
 
     // --------------------------------------------------------------------------------------------
@@ -244,9 +284,6 @@ function load_device(device_id, device_name, device_type)
         if (schedule.settings.ctrlmode=="on") { $(".smart").hide(); $(".timer").hide(); $(".repeat").hide(); }
         if (schedule.settings.ctrlmode=="off") { $(".smart").hide(); $(".timer").hide(); $(".repeat").hide(); }
         
-        // var elapsed = Math.round((new Date()).getTime()*0.001 - schedule.settings.last_update_from_device);
-        // $("#last_update_from_device").html(elapsed+"s ago");
-        
         if (schedule.settings.ip!="") $("#ip_address").html("IP Address: <a href='http://"+schedule.settings.ip+"'>"+schedule.settings.ip+"</a>");
         
         $("#period input[type=time]").val(timestr(schedule.settings.period,false));
@@ -261,17 +298,7 @@ function load_device(device_id, device_name, device_type)
             $("#flowT input[type=text]").val(schedule.settings.flowT.toFixed(1)+"C");
         }
         
-        for (var i=0; i<7; i++) {
-            $(".weekly-scheduler[day="+i+"]").attr("val",schedule.settings.repeat[i]);
-        }
-        
         $(".scheduler-checkbox[name='interruptible']").attr("state",schedule.settings.interruptible);
-        
-        draw_forecast_category_select(); 
-        draw_forecast_select(forecast_list[schedule.settings.signal].category);
-        
-        $(".forecast").val(schedule.settings.signal);
-        $(".forecast-category").val(forecast_list[schedule.settings.signal].category);
 
         // Show heatpump specific items
         if (schedule.settings.device_type=="hpmon") {
@@ -279,46 +306,7 @@ function load_device(device_id, device_name, device_type)
         }
         
         // Draw OpenEVSE specific items                            
-        if (schedule.settings.device_type=="openevse") {
-            $(".openevse").show();
-            
-            $('.input[name="openevsecontroltype"]').val(schedule.settings.openevsecontroltype);
-            $('.input[name="batterycapacity"]').val(schedule.settings.batterycapacity);
-            $('.input[name="chargerate"]').val(schedule.settings.chargerate);
-            $('.input[name="balpercentage"]').val(schedule.settings.balpercentage * 100);
-            $('.input[name="baltime"]').val(Math.round(schedule.settings.baltime * 60));
-            
-            if (schedule.settings.openevsecontroltype=="socinput" || schedule.settings.openevsecontroltype=="socovms") {
-            
-                battery.capacity = schedule.settings.batterycapacity;
-                battery.charge_rate = schedule.settings.chargerate;
-                battery.end_soc = schedule.settings.ev_target_soc;
-                battery.soc = schedule.settings.ev_soc;
-                battery.balpercentage = schedule.settings.balpercentage;
-                battery.baltime = schedule.settings.baltime;
-
-                $("#battery_bound").show();
-                battery.init("battery");
-                battery.draw();
-                
-                $("#run_period").hide();
-                $("#run_period").parent().addClass('span2').removeClass('span4');
-                $(".openevse-balancing").show();
-            } else {
-                $("#battery_bound").hide();
-                $("#run_period").show();
-                $("#run_period").parent().addClass('span4').removeClass('span2');
-                $(".openevse-balancing").hide();
-            }
-            
-            if (schedule.settings.openevsecontroltype=="socovms") {
-                $(".ovms-options").show();
-                $('.input[name="vehicleid"]').val(schedule.settings.ovms_vehicleid);
-                $('.input[name="carpass"]').val(schedule.settings.ovms_carpass);
-            } else {
-                $(".ovms-options").hide();
-            }
-        }
+        if (schedule.settings.device_type=="openevse") openevse_update_ui();
     }
 
     // --------------------------------------------------------------------------------------------
@@ -326,6 +314,7 @@ function load_device(device_id, device_name, device_type)
     // --------------------------------------------------------------------------------------------    
     function draw_schedule_output(schedule)
     {  
+        console.log("draw_schedule_output");
         options = {
             xaxis: { 
                 mode: "time", 
@@ -345,8 +334,6 @@ function load_device(device_id, device_name, device_type)
                 hoverable: true, 
                 clickable: true
             }
-            //selection: { mode: "x" },
-            //touch: { pan: "x", scale: "x" }
         };
       
         // --------------------------------------------------------------------------------------------
@@ -449,29 +436,33 @@ function load_device(device_id, device_name, device_type)
         var peak = 0;
         var lowest = 0;
         var active = 0;
-        available = [];
-        unavailable = [];
+
+        // Convert to flot format
+        graph_profile = [];
+        graph_active = [];
         
-        for (var z in profile) {
-            var time = profile[z][0];
-            var value = profile[z][1];
-            
+        var i=0;
+        for (var time=forecast.start; time<forecast.end; time+=forecast.interval) {
+            var value = forecast.profile[i];
+
             if (value>peak) peak = value;
             if (value<lowest) lowest = value;
-            
-            active = false;
+
+            var active = false;
             for (var p in periods) {
-                if (time>=periods[p].start[0]*1000 && time<periods[p].end[0]*1000) active = true;
-            }
+                if (time>=periods[p].start[0] && time<periods[p].end[0]) active = true;
+            } 
             
             if (schedule.settings.ctrlmode=="on") active = true;
-                
-            if (active) { 
-                available.push([time,value]); 
+        
+            if (active) {
+                graph_active.push([time*1000,value]);
                 sum += value; sum_n++;
                 if (bars) value=null;
-            } 
-            unavailable.push([time,value]);
+            }
+            graph_profile.push([time*1000,value]);
+            
+            i++;
         }
         
         options.yaxis.min = lowest;
@@ -480,7 +471,7 @@ function load_device(device_id, device_name, device_type)
         var out = "";
         if (sum_n>0) {
             var mean = sum/sum_n;
-            
+            /*
             if (schedule.settings.signal=="carbonintensity") {
                 var co2_km = (mean / 4.0) / 1.6;
                 var prc = 100-(100*(co2_km / 130));
@@ -507,7 +498,7 @@ function load_device(device_id, device_name, device_type)
                 }  
             } else {
                 out = Math.round(100.0*(1.0-(mean/peak)))+"% reduction vs peak";  
-            }
+            }*/
         }
         $("#schedule-co2").html(out);
         
@@ -518,7 +509,7 @@ function load_device(device_id, device_name, device_type)
         var width = $("#placeholder_bound").width();
         if (width>0) {
             $("#placeholder").width(width);
-            $.plot($('#placeholder'), [{data:available,color:"#ea510e",fill:1.0},{data:unavailable,color:"#888"}], options);
+            $.plot($('#placeholder'), [{data:graph_active,color:"#ea510e",fill:1.0},{data:graph_profile,color:"#888"}], options);
         }
     }
 
@@ -566,8 +557,6 @@ function load_device(device_id, device_name, device_type)
                             }
                         }
                     }
-                    //if (schedule.settings.timer_start2 != result.timer_start2) { state_matched = false; console.log(schedule.settings.timer_start2+"!="+result.timer_start2); }
-                    //if (schedule.settings.timer_stop2 != result.timer_stop2) { state_matched = false; console.log(schedule.settings.timer_stop2+"!="+result.timer_stop2); }
                     
                     if (schedule.settings.device_type=="hpmon") {
                         schedule_voltage_output = Math.round((schedule.settings.flowT - 7.14)/0.0371);
@@ -636,18 +625,12 @@ function load_device(device_id, device_name, device_type)
         
         switch (schedule.settings.ctrlmode) {
           case "on":
-            // if (schedule.settings.period==0) schedule.settings.period = last_period;
-            // var now = new Date();
-            // var now_hours = (now.getHours() + (now.getMinutes()/60));
-            // schedule.settings.end = Math.round((now_hours+schedule.settings.period)/resolution_hours)*resolution_hours;
             $(this).addClass("green").siblings().removeClass('red').removeClass('green');
             break;
           case "off":
             $(this).addClass("red").siblings().removeClass('red').removeClass('green');
             break;
           case "timer":
-            // if (schedule.settings.period==0) schedule.settings.period = last_period;
-            // if (schedule.settings.end==0) schedule.settings.end = 8.0;
             $(this).siblings().removeClass('red').removeClass('green');
             break;
           case "smart":
@@ -658,8 +641,6 @@ function load_device(device_id, device_name, device_type)
     });
 
     $(".input-time button").click(function() {
-        //schedule.settings.ctrlmode = "smart";
-        //$("#mode button[mode=smart]").addClass('active').siblings().removeClass('active');
         
         var name = $(this).parent().attr("id");
         var type = $(this).html();
@@ -677,14 +658,12 @@ function load_device(device_id, device_name, device_type)
     });
 
     $(".input-time input[type=time]").change(function() {
-        //schedule.settings.ctrlmode = "smart";
-        //$("#mode button[mode=smart]").addClass('active').siblings().removeClass('active');
         
         var name = $(this).parent().attr("id");
         var timestring = $(this).val();
         var parts = timestring.split(":");
         var hour = parseInt(parts[0])+(parseInt(parts[1])/60.0)
-        hour = Math.round(hour/resolution_hours)*resolution_hours
+        // hour = Math.round(hour/resolution_hours)*resolution_hours
         
         schedule.settings[name] = hour
         
@@ -719,102 +698,14 @@ function load_device(device_id, device_name, device_type)
         $(this).attr("state",state);
         schedule.settings[name] = state;
         calc_schedule();
-    });
-
-    $(".weekly-scheduler").click(function(){
-        var day = $(this).attr('day');
-        var val = 1; if ($(this).attr('val')==1) val = 0;
-        
-        $(this).attr("val",val);
-        schedule.settings.repeat[day] = val;
-        calc_schedule();
-    });
-
-    $("#battery").on("bchange",function() { 
-        battery_change();
-    });
-    
-    function battery_change() {
-        console.log("battery_change");
-        
-        battery.period = Math.round(battery.period/resolution_hours)*resolution_hours
-        schedule.settings.period = battery.period
-        schedule.settings.ev_target_soc = battery.end_soc
-        schedule.runtime.timeleft = schedule.settings.period * 3600;
-        
-        if (mode=="on") {
-            var now = new Date();
-            var now_hours = (now.getHours() + (now.getMinutes()/60));
-            schedule.settings.end = Math.round((now_hours+schedule.settings.period)/resolution_hours)*resolution_hours;
-        }
-        calc_schedule();
-    }
-
-    $(".forecast-category").change(function(){
-        let selected_forecast_category = $(this).val();
-        draw_forecast_select(selected_forecast_category);
-    });
-    
-    $(".forecast, .forecast-category").change(function(){
-        // console.log($(".forecast-category").val()+" "+$(".forecast").val());
-        schedule.settings.signal = $(".forecast").val();
-        get_forecast(schedule.settings.signal,calc_schedule);        
-    });
+    }); 
 
     $(".delete-device").click(function(){
         $("#DeleteDeviceModal").modal();
         $(".device-name").html(schedule.settings.device);
     });
     
-    // ------------------------------------------------
-    // openevse settings
-    // ------------------------------------------------
-    $('.input[name="openevsecontroltype"]').change(function(){
-        schedule.settings.openevsecontroltype =  $(this).val();
-        calc_schedule();
-    });
-    
-    $('.input[name="batterycapacity"]').change(function(){
-        var batterycapacity = $(this).val();
-        schedule.settings.batterycapacity = batterycapacity*1.0;
-        if (schedule.settings.batterycapacity<0.0) schedule.settings.batterycapacity = 0.0;
-        calc_schedule();
-    });
-
-    $('.input[name="chargerate"]').change(function(){
-        var chargerate = $(this).val();
-        schedule.settings.chargerate = chargerate*1.0;
-        if (schedule.settings.chargerate<0.0) schedule.settings.chargerate = 0.0;
-        calc_schedule();
-    });
-    
-    $('.input[name="vehicleid"]').change(function(){
-        var vehicleid = $(this).val();
-        schedule.settings.ovms_vehicleid = vehicleid;
-        calc_schedule();
-    });
-
-    $('.input[name="carpass"]').change(function(){
-        var carpass = $(this).val();
-        schedule.settings.ovms_carpass = carpass;
-        calc_schedule();
-    });
-
-    $('.input[name="balpercentage"]').change(function(){
-        var balpercentage = $(this).val();
-        schedule.settings.balpercentage = (balpercentage * 0.01);
-        if (schedule.settings.balpercentage<0.0) schedule.settings.balpercentage = 0.0;
-        if (schedule.settings.balpercentage>1.0) schedule.settings.balpercentage = 1.0;
-        calc_schedule();
-    });
-
-    $('.input[name="baltime"]').change(function(){
-        var baltime = $(this).val();
-        schedule.settings.baltime = baltime / 60;
-        if (schedule.settings.baltime<0.0) schedule.settings.baltime = 0.0;
-        if (schedule.settings.baltime>24.0) schedule.settings.baltime = 24.0;
-        calc_schedule();
-    });
+    openevse_events();
     
     $('.input[name="device-name"]').change(function(){
         var name = $(this).val();
@@ -849,32 +740,4 @@ function load_device(device_id, device_name, device_type)
             }});
         }});
     });
-    
-    // ----------------------------------------------------------------------------------------------------
-    // Forecast selection
-    // ----------------------------------------------------------------------------------------------------
-    function draw_forecast_category_select() {
-        let forecast_categories = [];
-        for (let z in forecast_list) {
-            if (forecast_categories.indexOf(forecast_list[z].category)==-1) {
-                forecast_categories.push(forecast_list[z].category)
-            }
-        }
-
-        let out = "";
-        for (let z in forecast_categories) {
-            out += "<option>"+forecast_categories[z]+"</option>";
-        }
-        $(".forecast-category").html(out);
-    }
-
-    function draw_forecast_select(selected_forecast_category) {
-        let out = "";
-        for (let z in forecast_list) {
-            if (selected_forecast_category==forecast_list[z].category) {
-                out += "<option value='"+z+"'>"+forecast_list[z].name+"</option>";
-            }
-        }
-        $(".forecast").html(out);
-    }
 }

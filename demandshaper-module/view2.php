@@ -1,6 +1,17 @@
+<?php global $path; $v=1; ?>
+<link rel="stylesheet" href="<?php echo $path; ?>Modules/demandshaper/demandshaper.css?v=<?php echo $v; ?>">
+
+<script language="javascript" type="text/javascript" src="<?php echo $path; ?>Lib/flot/jquery.flot.min.js"></script>
+<script language="javascript" type="text/javascript" src="<?php echo $path; ?>Lib/flot/jquery.flot.time.min.js"></script>
+<script language="javascript" type="text/javascript" src="<?php echo $path; ?>Lib/flot/date.format.min.js"></script>
+
+<script language="javascript" type="text/javascript" src="<?php echo $path; ?>Modules/demandshaper/js/forecast_builder.js"></script>
+<script language="javascript" type="text/javascript" src="<?php echo $path; ?>Modules/demandshaper/js/get_device_state.js"></script>
+<div id="scheduler-top"></div>
+
 <div id="scheduler-outer">
   <div class="delete-device"><i class="icon-trash icon-white"></i></div>
-  <div class="node-scheduler-title"><span class="title-icon"></span><span class="custom-name"></span><span class="device-name"></span> <span class='device-state-message'></span></div>
+  <div class="node-scheduler-title"><span class="title-icon"></span><span class="custom-name"></span><span class="device-name">My Device</span> <span class='device-state-message'></span></div>
   <div class="node-scheduler" node="">
 
     <div class="scheduler-inner">
@@ -13,27 +24,6 @@
           <div id="mode" class="btn-group">
             <button mode="on">On</button><button mode="off">Off</button><button mode="smart" class="active">Smart</button><button mode="timer">Timer</button>
           </div><br><br>
-          
-          <div class="openevse hide">
-            <p>Charge Current <span id="charge_current">0</span>A<br><span style="font-weight:normal; font-size:12px">Temperature <span id="openevse_temperature">10</span>C</span></p>
-            <div id="battery_bound" style="width:100%" class="hide">
-                <canvas id="battery"></canvas>
-            </div>
-          </div>
-
-          <div class="heatpumpmonitor hide">
-            <div class="row" style="max-width:700px; margin: 0 auto;">
-              <div class="span4 offset2" style="margin-bottom:20px"><br>
-                <p>Flow Temperature <span id="heatpump_flowT"></span>C<br><span style="font-weight:normal; font-size:12px">Heat Output <span id="heatpump_heat"></span>W</span></p>
-              </div>
-              <div class="span4" style="margin-bottom:20px">
-                <p>Target Temperature</p>
-                <div id="flowT" class="btn-group input-temperature">
-                  <button>-</button><input type="text" val="0" style="width:60px"><button>+</button>
-                </div>
-              </div>
-            </div>
-          </div>
           <!---------------------------------------------------------------------------------------------------------------------------->
           <div class="smart">
           
@@ -111,48 +101,18 @@
             <div id="placeholder" style="height:300px"></div>
           </div><br>
           <div id="schedule-co2" style="font-size:14px; color:#888;"></div>
-
-          <br>
-                              
-          <div class="openevse hide">
-            <div><span class="">Control based on: </span></td><td><select class="input" name="openevsecontroltype"><option value="time">Charge time</option><!--<option value="energy">Charge energy</option><option value="miles">Travel distance</option>--><option value="socinput">Battery charge level (Input)</option><option value="socovms">Battery charge level (OVMS)</option></select></div>
-            
-            <div><span class="">Useable Battery Capacity: </span></td><td><input class="input" name="batterycapacity" type="text" style="width:80px"/> kWh</div>
-                        
-            <div><span class="">AC Charge Rate: </span></td><td><input class="input" name="chargerate" type="text" style="width:80px"/> kW</div>
-
-            <div class="openevse-balancing hide">
-              <div><span class="">Balancing Percentage: </span></td><td><input class="input" name="balpercentage" type="text" style="width:80px"/> %</div>
-              <div><span class="">Balancing Time: </span></td><td><input class="input" name="baltime" type="text" style="width:80px"/> Mins</div>
-            </div>
-
-            <div class="ovms-options hide">
-              <div><span class="">OVMS Vehicle ID: </span></td><td><input class="input" name="vehicleid" type="text" style="width:150px"/></div>
-              <div><span class="">OVMS Car Password: </span></td><td><input class="input" name="carpass" type="text" style="width:150px"/></div>
-            </div>
-                        
-          </div>
-          <div><span class="">Device name: </span></td><td><input class="input" name="device-name" type="text" style="width:150px"/></div>        
+          
+          <table class="table">
+            <tr><th>Forecast name</th><th>Parameters</th><th>Weight</th><th></th></tr>
+            <tbody id="forecasts"></tbody>
+          </table>
+          <div class="input-prepend input-append"><span class="add-on">Add forecast</span><select id="forecast_list"></select></div>
+      
       </div> <!-- schedule-inner2 -->
     </div> <!-- schedule-inner -->
-    <div id="ip_address"></div>
+    <div id="ip_address">IP Address: 192.168.1.20</div>
   </div> <!-- node-scheduler -->
 </div> <!-- table -->
 </div>
-
-<div id="DeleteDeviceModal" class="modal hide" tabindex="-1" role="dialog" aria-labelledby="DeleteDeviceModalLabel" aria-hidden="true" data-backdrop="static">
-    <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-        <h3 id="feedDeleteModalLabel">Delete Device: <span class='device-name'></span></h3>
-    </div>
-    <div class="modal-body">
-         <p>Are you sure you want to delete device <span class='device-name'></span>?</p>
-    </div>
-    <div class="modal-footer">
-        <button class="btn" data-dismiss="modal" aria-hidden="true"><?php echo _('Close'); ?></button>
-        <button id="delete-device-confirm" class="btn btn-danger"><?php echo _('Confirm'); ?></button>
-    </div>
-</div>
-
-<script type="text/javascript" src="<?php echo $path; ?>Modules/demandshaper/scheduler.js?v=11"></script>
-<script type="text/javascript" src="<?php echo $path; ?>Modules/demandshaper/general.js?v=11"></script>
+<script>var forecast_list = <?php echo json_encode($forecast_list); ?>;</script>
+<script language="javascript" type="text/javascript" src="<?php echo $path; ?>Modules/demandshaper/view.js"></script>

@@ -356,3 +356,14 @@ body {padding:0}
     text-align:left;
     font-size:16px;
 }
+
+.param_name {
+    font-weight:bold;
+    display:inline-block;
+    width:120px;
+}
+
+.weight {
+    width:50px;
+    margin-bottom:0;
+}
