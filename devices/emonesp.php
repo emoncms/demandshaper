@@ -95,4 +95,26 @@ class emonesp
     
         return $schedule;
     }
+    
+    public function get_state($mqtt_request,$device,$timezone) {
+    
+        if ($result = json_decode($mqtt_request->request($this->basetopic."/$device/in/state","",$this->basetopic."/$device/out/state"))) {
+            $state = new stdClass;
+            $state->ctrl_mode = $result->ctrlmode;
+            $timer_parts = explode(" ",$result->timer);
+            
+            $dateTimeZone = new DateTimeZone($timezone);
+            $date = new DateTime("now", $dateTimeZone);
+            $timeOffset = $dateTimeZone->getOffset($date) / 3600;
+            
+            $state->timer_start1 = conv_time($timer_parts[0],$timeOffset);
+            $state->timer_stop1 = conv_time($timer_parts[1],$timeOffset);
+            $state->timer_start2 = conv_time($timer_parts[2],$timeOffset);
+            $state->timer_stop2 = conv_time($timer_parts[3],$timeOffset);
+            $state->voltage_output = $result->vout*1;
+            return $state;
+        } else {
+            return false;
+        }
+    }
 }

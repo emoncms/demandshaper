@@ -28,6 +28,8 @@ function demandshaper_controller()
 
     $remoteaccess = false;
     
+    require_once "$linked_modules_dir/demandshaper/lib/misc.php";
+    
     include "Modules/demandshaper/demandshaper_model.php";
     $demandshaper = new DemandShaper($mysqli,$redis);
     
@@ -116,88 +118,6 @@ function demandshaper_controller()
             return $schedules;
             break;
             
-        
-        case "submit":
-            if (!$remoteaccess && $session["write"]) {
-                $route->format = "json";
-                
-                if (isset($_POST['schedule']) || isset($_GET['schedule'])) {
-                    include "$linked_modules_dir/demandshaper/lib/scheduler.php";
-                    
-                    $save = 1;
-                    if (isset($_GET['save']) && $_GET['save']==0) $save = 0;
-                    if (isset($_POST['save']) && $_POST['save']==0) $save = 0;
-                                    
-                    $schedule = json_decode(prop('schedule'));
-                    
-                    if (!isset($schedule->settings->ctrlmode)) return array("content"=>"Missing ctrlmode parameter in schedule object");
-                    if (!isset($schedule->settings->device)) return array("content"=>"Missing device parameter in schedule object");
-                    if (!isset($schedule->settings->end)) return array("content"=>"Missing end parameter in schedule object");
-                    if (!isset($schedule->settings->period)) return array("content"=>"Missing period parameter in schedule object");
-                    if (!isset($schedule->settings->interruptible)) return array("content"=>"Missing interruptible parameter in schedule object");
-                    if (!isset($schedule->settings->runonce)) return array("content"=>"Missing runonce parameter in schedule object");
-                    if ($schedule->settings->runonce) $schedule->settings->runonce = time();
-                    $device = $schedule->settings->device;
-                    
-                    $schedules = $demandshaper->get($session["userid"]);
-                    
-                    $last_schedule = false;
-                    if (isset($schedules->$device)) $last_schedule = $schedules->$device;
-
-                    // -------------------------------------------------
-                    // Calculate time left
-                    // -------------------------------------------------
-                    $now = time();
-                    $date = new DateTime();
-                    $date->setTimezone(new DateTimeZone($timezone));
-                    $date->setTimestamp($now);
-                    $date->modify("midnight");
-                    
-                    $end_time = floor($schedule->settings->end / 0.5) * 0.5;
-                    $schedule->settings->end_timestamp = $date->getTimestamp() + $end_time*3600;
-                    
-                    if ($schedule->settings->end_timestamp<$now) $schedule->settings->end_timestamp+=3600*24;
-                    
-                    if (!$last_schedule || $schedule->settings->end!=$last_schedule->settings->end || $schedule->settings->period!=$last_schedule->settings->period) {
-                        $schedule->runtime->timeleft = $schedule->settings->period * 3600;
-                    } else {
-                        $schedule->runtime->timeleft = $last_schedule->runtime->timeleft;
-                    }
-                    
-                    $timeleft = $schedule->settings->end_timestamp - $now;
-                    // if ($schedule->runtime->timeleft>$timeleft) $schedule->runtime->timeleft = $timeleft;
-                    
-                    $schedule_log_output = "";
-                    
-                    if ($schedule->settings->ctrlmode=="smart") {
-                        $forecast = get_forecast($redis,$schedule->settings->signal,$timezone);
-                        $schedule->runtime->periods = schedule_smart($forecast,$schedule->runtime->timeleft,$schedule->settings->end,$schedule->settings->interruptible,900,$timezone);
-                        $schedule_log_output = "smart ".($schedule->runtime->timeleft/3600)." ".$schedule->settings->end;
-                        
-                    } else if ($schedule->settings->ctrlmode=="timer") {
-                        $forecast = get_forecast($redis,$schedule->settings->signal,$timezone);
-                        $schedule->runtime->periods = schedule_timer(
-                            $forecast, 
-                            $schedule->settings->timer_start1,$schedule->settings->timer_stop1,$schedule->settings->timer_start2,$schedule->settings->timer_stop2,
-                            900,$timezone
-                        );
-                        $schedule_log_output = "timer ".$schedule->settings->timer_start1." ".$schedule->settings->timer_stop1." ".$schedule->settings->timer_start2." ".$schedule->settings->timer_stop2;
-                    } 
-                    
-                    if ($save) {
-                        $schedules->$device = $schedule;
-                        $demandshaper->set($session["userid"],$schedules);
-                        $redis->rpush("demandshaper:trigger",$session["userid"]);
-                        schedule_log("$device schedule started ".$schedule_log_output);
-                    }
-                    
-                    return array("schedule"=>$schedule);
-                } else {
-                    return "Schedule object not present";
-                }
-            }
-            break;
-            
         case "get":
             if (!$remoteaccess && $session["read"]) {
                 $route->format = "json";
@@ -260,73 +180,16 @@ function demandshaper_controller()
                 $device = $_GET['device'];
                 $schedules = $demandshaper->get($session["userid"]);
                 if (isset($schedules->$device)) {
-                    $state = new stdClass;
-                    
+                
+                    $device_class = array();
+                    foreach (device_class_scan($linked_modules_dir) as $device_type) {
+                        require "$linked_modules_dir/demandshaper/devices/$device_type.php";
+                        $device_class[$device_type] = new $device_type(false,$settings['mqtt']['basetopic']);
+                    }
+                
                     include "Modules/demandshaper/MQTTRequest.php";
                     $mqtt_request = new MQTTRequest($settings['mqtt']);
-                    
-                    if ($schedules->$device->settings->device_type=="hpmon" || $schedules->$device->settings->device_type=="smartplug" || $schedules->$device->settings->device_type=="wifirelay") {
-                        
-                        if ($result = json_decode($mqtt_request->request("$basetopic/$device/in/state","","$basetopic/$device/out/state"))) {
-                            $state->ctrl_mode = $result->ctrlmode;
-                            $timer_parts = explode(" ",$result->timer);
-                            
-                            $dateTimeZone = new DateTimeZone($timezone);
-                            $date = new DateTime("now", $dateTimeZone);
-                            $timeOffset = $dateTimeZone->getOffset($date) / 3600;
-                            
-                            $state->timer_start1 = conv_time($timer_parts[0],$timeOffset);
-                            $state->timer_stop1 = conv_time($timer_parts[1],$timeOffset);
-                            $state->timer_start2 = conv_time($timer_parts[2],$timeOffset);
-                            $state->timer_stop2 = conv_time($timer_parts[3],$timeOffset);
-                            $state->voltage_output = $result->vout*1;
-                            return $state;
-                        } else {
-                            return false;
-                        }
-                            
-                    } else if ($schedules->$device->settings->device_type=="openevse") {
-                        
-                        $valid = true;
-                        
-                        // Get OpenEVSE timer state
-                        if ($result = $mqtt_request->request("$basetopic/$device/rapi/in/\$GD","","$basetopic/$device/rapi/out")) {
-                            $ret = explode(" ",substr($result,4,11));
-                            if (count($ret)==4) {
-                                $state->timer_start1 = ((int)$ret[0])+((int)$ret[1]/60);
-                                $state->timer_stop1 = ((int)$ret[2])+((int)$ret[3]/60);
-                                $state->timer_start2 = 0;
-                                $state->timer_stop2 = 0;
-                            } else {
-                                $valid = false;
-                            }
-                        } else {
-                            $valid = false;
-                        }
-                        
-                        // Get OpenEVSE state
-                        if ($result = $mqtt_request->request("$basetopic/$device/rapi/in/\$GS","","$basetopic/$device/rapi/out")) {
-                            $ret = explode(" ",$result);
-                            if ($ret[1]==254) {
-                                if ($state->timer_start1==0 && $state->timer_stop1==0) {
-                                    $state->ctrl_mode = "off";
-                                } else {
-                                    $state->ctrl_mode = "timer";
-                                }
-                            } 
-                            else if ($ret[1]==1 || $ret[1]==3) {
-                                if ($state->timer_start1==0 && $state->timer_stop1==0) {
-                                    $state->ctrl_mode = "on";
-                                } else {
-                                    $state->ctrl_mode = "timer";
-                                }
-                            }
-                        } else {
-                            $valid = false;
-                        }
-                        
-                        if ($valid) return $state; else return false;
-                    }
+                    return $device_class[$schedules->$device->settings->device_type]->get_state($mqtt_request,$device,$timezone);
                 }
             }   
         
@@ -371,24 +234,4 @@ function demandshaper_controller()
     }   
     
     return array('content'=>'#UNDEFINED#');
-}
-
-function conv_time($time,$timeOffset) {
-    $h = floor($time*0.01);
-    $m = (($time*0.01) - $h)/0.6;
-    $t = $h+$m+$timeOffset;
-    if ($t<0.0) $t += 24.0;
-    if ($t>=24.0) $t -= 24.0;
-    return $t;
-}
-
-function schedule_log($message){
-    if ($fh = @fopen("/var/log/emoncms/demandshaper.log","a")) {
-        $now = microtime(true);
-        $micro = sprintf("%03d",($now - ($now >> 0)) * 1000);
-        $now = DateTime::createFromFormat('U', (int)$now); // Only use UTC for logs
-        $now = $now->format("Y-m-d H:i:s").".$micro";
-        @fwrite($fh,$now." | ".$message."\n");
-        @fclose($fh);
-    }
 }

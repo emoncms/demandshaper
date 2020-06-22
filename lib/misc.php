@@ -29,6 +29,15 @@ function time_conv($t,$timeOffset){
     return $t;
 }
 
+function conv_time($time,$timeOffset) {
+    $h = floor($time*0.01);
+    $m = (($time*0.01) - $h)/0.6;
+    $t = $h+$m+$timeOffset;
+    if ($t<0.0) $t += 24.0;
+    if ($t>=24.0) $t -= 24.0;
+    return $t;
+}
+
 function time_conv_dec_str($t,$div="") {
     $h = floor($t); 
     $m = round(($t-$h)*60);

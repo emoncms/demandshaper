@@ -38,7 +38,50 @@ class openevse
     public function handle_state_response($schedule,$message,$timezone) {
         return $schedule;
     }
-    
+
+    public function get_state($mqtt_request,$device,$timezone) {
+        $valid = true;
+        $state = new stdClass;
+        
+        // Get OpenEVSE timer state
+        if ($result = $mqtt_request->request($this->basetopic."/$device/rapi/in/\$GD","",$this->basetopic."/$device/rapi/out")) {
+            $ret = explode(" ",substr($result,4,11));
+            if (count($ret)==4) {
+                $state->timer_start1 = ((int)$ret[0])+((int)$ret[1]/60);
+                $state->timer_stop1 = ((int)$ret[2])+((int)$ret[3]/60);
+                $state->timer_start2 = 0;
+                $state->timer_stop2 = 0;
+            } else {
+                $valid = false;
+            }
+        } else {
+            $valid = false;
+        }
+
+        // Get OpenEVSE state
+        if ($result = $mqtt_request->request($this->basetopic."/$device/rapi/in/\$GS","",$this->basetopic."/$device/rapi/out")) {
+            $ret = explode(" ",$result);
+            if ($ret[1]==254) {
+                if ($state->timer_start1==0 && $state->timer_stop1==0) {
+                    $state->ctrl_mode = "off";
+                } else {
+                    $state->ctrl_mode = "timer";
+                }
+            } 
+            else if ($ret[1]==1 || $ret[1]==3) {
+                if ($state->timer_start1==0 && $state->timer_stop1==0) {
+                    $state->ctrl_mode = "on";
+                } else {
+                    $state->ctrl_mode = "timer";
+                }
+            }
+        } else {
+            $valid = false;
+        }
+
+        if ($valid) return $state; else return false;
+    }
+        
     /*
     public function timeleft_based_on_soc($schedule) {
         if ((time()-$last_soc_update)>600 && isset($schedule->settings->openevsecontroltype) && $schedule->settings->openevsecontroltype!='time') {
