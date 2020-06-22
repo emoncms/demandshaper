@@ -46,30 +46,19 @@ function demandshaper_controller()
     }
         
     switch ($route->action)
-    {  
+    {
         case "":
             $route->format = "html";
             if ($session["write"]) {
-                $apikey = $user->get_apikey_write($session["userid"]);
-                return view("Modules/demandshaper/view.php", array("remoteaccess"=>$remoteaccess, "apikey"=>$apikey, "forecast_list"=>$forecast_list));
-            } else {
-                // redirect to login
-                return "";
+                return view("Modules/demandshaper/view2.php", array("forecast_list"=>$forecast_list));
             }
             break;
-        
+
         case "forecastviewer":
             $route->format = "html";
-            //if ($session["write"]) {
+            if ($session["write"]) {
                 return view("Modules/demandshaper/forecast_view.php", array("forecast_list"=>$forecast_list));
-            //}
-            break;
-
-        case "view":
-            $route->format = "html";
-            //if ($session["write"]) {
-                return view("Modules/demandshaper/view2.php", array("forecast_list"=>$forecast_list));
-            //}
+            }
             break;
 
         case "forecast-list":
@@ -104,18 +93,20 @@ function demandshaper_controller()
             break;
             
         case "save": 
-            if (isset($_POST['schedule']) || isset($_GET['schedule'])) {
-                $schedule = json_decode(prop('schedule'));
-                
-                if (!isset($schedule->settings->device)) return array("content"=>"Missing device parameter in schedule object");
-                $device = $schedule->settings->device;
-                
-                $schedules = $demandshaper->get($session["userid"]); 
-                $schedules->$device = $schedule;
-                $demandshaper->set($session["userid"],$schedules);
-                $redis->rpush("demandshaper:trigger",$session["userid"]); 
+            if ($session["write"]) {
+                if (isset($_POST['schedule']) || isset($_GET['schedule'])) {
+                    $schedule = json_decode(prop('schedule'));
+                    
+                    if (!isset($schedule->settings->device)) return array("content"=>"Missing device parameter in schedule object");
+                    $device = $schedule->settings->device;
+                    
+                    $schedules = $demandshaper->get($session["userid"]); 
+                    $schedules->$device = $schedule;
+                    $demandshaper->set($session["userid"],$schedules);
+                    $redis->rpush("demandshaper:trigger",$session["userid"]); 
+                    return $schedules;
+                }
             }
-            return $schedules;
             break;
             
         case "get":
