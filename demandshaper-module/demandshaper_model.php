@@ -135,7 +135,7 @@ class DemandShaper
             }
         }
         
-        if (!$schedules || !is_object($schedules)) $schedules = new stdClass();
+        if (!$schedules || !is_object($schedules) || $schedules==null) $schedules = new stdClass();
         
         foreach ($schedules as $device=>$schedule) {
             if (!isset($schedules->$device->runtime)) {
@@ -143,8 +143,16 @@ class DemandShaper
                 $schedules->$device->runtime->timeleft = 0;
                 $schedules->$device->runtime->periods = array();
             }
-        }        
-        
+            
+            if (!isset($schedules->$device->settings->device)) $schedules->$device->settings->device = false;
+            if (!isset($schedules->$device->settings->device_type)) $schedules->$device->settings->device_type = false;
+            if (!isset($schedules->$device->settings->ctrlmode)) $schedules->$device->settings->ctrlmode = false;
+            
+            if ($schedules->$device->settings->device===false) {
+                $log->info("DELETE: ".$device);
+                unset($schedules->$device);
+            }
+        }
         
         return $schedules;
     }

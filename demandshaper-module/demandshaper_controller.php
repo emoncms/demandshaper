@@ -91,7 +91,7 @@ function demandshaper_controller()
                 $interruptible = (int) post('interruptible');
 
                 // Run schedule
-                require_once "$linked_modules_dir/demandshaper/scheduler2.php";
+                require_once "$linked_modules_dir/demandshaper/lib/scheduler2.php";
                 $combined = forecast_calc_min_max($combined);
                 if ($interruptible) {
                     return schedule_interruptible($combined,$period,$end,"Europe/London");
@@ -122,7 +122,7 @@ function demandshaper_controller()
                 $route->format = "json";
                 
                 if (isset($_POST['schedule']) || isset($_GET['schedule'])) {
-                    include "$linked_modules_dir/demandshaper/scheduler.php";
+                    include "$linked_modules_dir/demandshaper/lib/scheduler.php";
                     
                     $save = 1;
                     if (isset($_GET['save']) && $_GET['save']==0) $save = 0;
