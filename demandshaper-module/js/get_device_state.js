@@ -3,7 +3,7 @@
 // used to provide user feedback to confirm that schedule has been transfered to device
 // --------------------------------------------------------------------------------------------   
 function get_device_state() {
-    $.ajax({ url: path+"demandshaper/get-state?device="+schedule.settings.device_name,
+    $.ajax({ url: path+"demandshaper/get-state?device="+schedule.settings.device,
         dataType: 'json',
         async: true,
         success: function(result) {

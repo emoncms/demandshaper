@@ -36,6 +36,15 @@ var forecast_builder = {
         $(forecast_builder.list_element).change(function(){
             var forecast_key = $(forecast_builder.list_element).val();
             var forecast_item = {"name":forecast_key,"weight":1.0};
+            
+            for (var z in forecast_list[forecast_key].params) {
+                var default_val = "";
+                if (forecast_list[forecast_key].params[z].default!=undefined) {
+                    default_val = forecast_list[forecast_key].params[z].default;
+                }
+                forecast_item[z] = default_val;
+            }
+            
             forecast_builder.config.push(forecast_item);
             forecast_builder.draw_table();
             on_change_callback();

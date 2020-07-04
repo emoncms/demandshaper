@@ -114,5 +114,8 @@
   </div> <!-- node-scheduler -->
 </div> <!-- table -->
 </div>
-<script>var forecast_list = <?php echo json_encode($forecast_list); ?>;</script>
-<script language="javascript" type="text/javascript" src="<?php echo $path; ?>Modules/demandshaper/view.js"></script>
+<script>
+var forecast_list = <?php echo json_encode($forecast_list); ?>;
+var schedule = <?php echo json_encode($schedule); ?>;
+</script>
+<script language="javascript" type="text/javascript" src="<?php echo $path; ?>Modules/demandshaper/js/main.js"></script>

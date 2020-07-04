@@ -29,12 +29,14 @@ function demandshaper_controller()
     $remoteaccess = false;
     
     require_once "$linked_modules_dir/demandshaper/lib/misc.php";
-    
-    include "Modules/demandshaper/demandshaper_model.php";
-    $demandshaper = new DemandShaper($mysqli,$redis);
-    
+
     require_once "Modules/device/device_model.php";
     $device = new Device($mysqli,$redis);
+
+    include "Modules/demandshaper/demandshaper_model.php";
+    $demandshaper = new DemandShaper($mysqli,$redis,$device);
+    
+
     
     if ($session['userid']) $timezone = $user->get_timezone($session['userid']);
     
@@ -50,7 +52,20 @@ function demandshaper_controller()
         case "":
             $route->format = "html";
             if ($session["write"]) {
-                return view("Modules/demandshaper/view2.php", array("forecast_list"=>$forecast_list));
+                $schedules = $demandshaper->get($session["userid"]);
+                if (isset($_GET['device'])) {
+                    $device = $_GET['device'];
+                    if (isset($schedules->$device)) {
+                        return view("Modules/demandshaper/Views/main.php", array("forecast_list"=>$forecast_list,"schedule"=>$schedules->$device));
+                    }
+                }
+            }
+            break;
+
+        case "add-device":
+            $route->format = "html";
+            if ($session["write"]) {
+                return view("Modules/demandshaper/Views/add_device.php", array());
             }
             break;
 
@@ -128,7 +143,7 @@ function demandshaper_controller()
         case "list":
             if (!$remoteaccess && $session["read"]) {
                 $route->format = "json";
-                return $demandshaper->get_list($device,$session['userid']);
+                return $demandshaper->get_list($session['userid']);
             }
             break;
 

@@ -69,8 +69,11 @@ $mqtt_client->onMessage('message');
 require("Modules/user/user_model.php");
 $user = new User($mysqli,$redis);
 
+require_once "Modules/device/device_model.php";
+$device = new Device($mysqli,$redis);
+
 require "Modules/demandshaper/demandshaper_model.php";
-$demandshaper = new DemandShaper($mysqli,$redis);
+$demandshaper = new DemandShaper($mysqli,$redis,$device);
 $forecast_list = $demandshaper->get_forecast_list();
 
 require_once "Modules/input/input_model.php";

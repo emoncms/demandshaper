@@ -18,21 +18,24 @@ class DemandShaper
 {
     private $mysqli;
     private $redis;
+    private $device;
     private $log;
+    private $dir;
+    private $default_device;
     
-    public function __construct($mysqli,$redis)
+    public function __construct($mysqli,$redis,$device)
     {
         $this->log = new EmonLogger(__FILE__);
         $this->mysqli = $mysqli;
         $this->redis = $redis;
+        $this->device = $device;
+        
+        global $linked_modules_dir;
+        $this->dir = $linked_modules_dir;
     }
     
-    public function get_list($device,$userid) {
-        $devices_all = $device->get_list($userid);
-        
-        if ($schedules = $this->redis->get("demandshaper:schedules:$userid")) {
-            $schedules = json_decode($schedules);
-        }
+    public function get_devices($userid) {
+        $devices_all = $this->device->get_list($userid);
         
         $devices = array();
         foreach ($devices_all as $d) {
@@ -44,6 +47,16 @@ class DemandShaper
             $name = $d["nodeid"];
             if (in_array($d['type'],array("emonth")))
                 $devices[$name] = array("id"=>$d["id"]*1,"type"=>$d["type"]);
+        }
+        
+        return $devices;
+    }
+    
+    public function get_list($userid) {
+        $devices = $this->get_devices($userid);
+        
+        if ($schedules = $this->redis->get("demandshaper:schedules:$userid")) {
+            $schedules = json_decode($schedules);
         }
         
         foreach ($devices as $name=>$device) {
@@ -113,48 +126,75 @@ class DemandShaper
     public function get($userid)
     {
         $userid = (int) $userid;
+
+        $devices = new stdClass();
+        $this->default_device = $this->load_default();
         
-        // Attempt first to load from cache
-        $schedulesjson = $this->redis->get("demandshaper:schedules:$userid");
-        
-        if ($schedulesjson) {
-            $schedules = json_decode($schedulesjson);
+        // Load schedules from demandshaper cache or mysql
+        $demandshaper_devices = new stdClass();
+        if ($demandshaper_devices_json = $this->redis->get("demandshaper:schedules:$userid")) {
+            $demandshaper_devices = json_decode($demandshaper_devices_json);
         } else {
-            // Load from mysql
             $result = $this->mysqli->query("SELECT schedules FROM demandshaper WHERE `userid`='$userid'");
-            if ($row = $result->fetch_object()) {
-                $schedules = json_decode($row->schedules);
-                foreach ($schedules as $device=>$schedule) {
-                    $schedules->$device->runtime = new stdClass();
-                    $schedules->$device->runtime->timeleft = 0;
-                    $schedules->$device->runtime->periods = array();
+            if ($row = $result->fetch_object()) $demandshaper_devices = json_decode($row->schedules);
+        }
+        if (!$demandshaper_devices || !is_object($demandshaper_devices) || $demandshaper_devices==null) $demandshaper_devices = new stdClass();
+        
+        // Load device list from device module
+        $device_module_devices = $this->get_devices($userid);
+        
+        // Copy over device schedules from demandshaper table
+        foreach ($device_module_devices as $device_key=>$device) {
+            if (isset($demandshaper_devices->$device_key)) {
+                // Validate existing saved device: provides a way of upgrading the format
+                $devices->$device_key = $this->validate_device($demandshaper_devices->$device_key,$device_key,$device["type"]);
+            }
+        }
+
+        // Create new device schedule templates if they dont yet exist in the demandshaper table
+        foreach ($device_module_devices as $device_key=>$device) {      
+            if (!isset($demandshaper_devices->$device_key)) {
+                $new_device = json_decode(json_encode($this->default_device));
+                $new_device->settings->device_type = $device["type"];     
+                $new_device->settings->device = $device_key;
+                $new_device->settings->device_name = $device_key;
+                // Copy over forecast settings from last device
+                if ($last_device = end($devices)) {
+                    $new_device->settings->forecast_config = $last_device->settings->forecast_config;
                 }
-                $this->redis->set("demandshaper:schedules:$userid",json_encode($schedules));
-            } else {
-                $schedules = new stdClass();
+                $devices->$device_key = $new_device;  
+            }
+        }
+        // This will only write to disk if the content has changed
+        $this->set($userid,$devices);
+        
+        return $devices;
+    }
+    
+    public function validate_device($input,$device_key,$device_type) {
+    
+        $output = json_decode(json_encode($this->default_device));
+        
+        if (isset($input->settings)) {
+            foreach ($output->settings as $key=>$val) {
+                if (isset($input->settings->$key)) $output->settings->$key = $input->settings->$key;
+            }
+        }
+
+        if (isset($input->runtime)) {
+            foreach ($output->runtime as $key=>$val) {
+                if (isset($input->runtime->$key)) $output->runtime->$key = $input->runtime->$key;
             }
         }
         
-        if (!$schedules || !is_object($schedules) || $schedules==null) $schedules = new stdClass();
+        $output->settings->device_type = $device_type;     
+        $output->settings->device = $device_key;
         
-        foreach ($schedules as $device=>$schedule) {
-            if (!isset($schedules->$device->runtime)) {
-                $schedules->$device->runtime = new stdClass();
-                $schedules->$device->runtime->timeleft = 0;
-                $schedules->$device->runtime->periods = array();
-            }
-            
-            if (!isset($schedules->$device->settings->device)) $schedules->$device->settings->device = false;
-            if (!isset($schedules->$device->settings->device_type)) $schedules->$device->settings->device_type = false;
-            if (!isset($schedules->$device->settings->ctrlmode)) $schedules->$device->settings->ctrlmode = false;
-            
-            if ($schedules->$device->settings->device===false) {
-                $log->info("DELETE: ".$device);
-                unset($schedules->$device);
-            }
-        }
-        
-        return $schedules;
+        return $output;
+    }
+    
+    public function load_default() {
+        return json_decode(file_get_contents($this->dir."/demandshaper/demandshaper-module/default.json"));
     }
         
     public function fetch_ovms_v2($vehicleid,$carpass) {
@@ -199,7 +239,6 @@ class DemandShaper
     }
     
     public function get_combined_forecast($config) {
-        global $linked_modules_dir;
         
         $params = new stdClass();
         $params->timezone = "Europe/London";
@@ -217,8 +256,8 @@ class DemandShaper
         $combined = false;
         foreach ($config as $config_item) {
             $name = $config_item->name;
-            if (file_exists("$linked_modules_dir/demandshaper/forecasts/$name.php")) {
-                require_once "$linked_modules_dir/demandshaper/forecasts/$name.php";
+            if (file_exists($this->dir."/demandshaper/forecasts/$name.php")) {
+                require_once $this->dir."/demandshaper/forecasts/$name.php";
                 
                 // Copy over params
                 $fn = "get_list_entry_$name";
@@ -245,7 +284,20 @@ class DemandShaper
                 }
             }
         }
+        
+        // Return a flat profile if none specified
+        if ($combined==false) {
+            $combined = new stdClass();
+            $combined->start = $params->start;
+            $combined->end = $params->end; 
+            $combined->interval = $params->interval;
+            $combined->profile = array();
+            $combined->optimise = MIN;
+            for ($td=0; $td<$profile_length; $td++) {
+                $combined->profile[$td] = 1;
+            }
+        }
+        
         return $combined;
     }
-
 }

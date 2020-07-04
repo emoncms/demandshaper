@@ -1,5 +1,5 @@
 // User defined forecast config
-var schedule_str = false; // localStorage.getItem('schedule');
+/*var schedule_str = false; // localStorage.getItem('schedule');
 
 if (!schedule_str) {
     
@@ -15,7 +15,7 @@ if (!schedule_str) {
             end_timestamp:0,
             interruptible: 0,
             runone:0,
-            forecast_config: [{"name":"octopusagile","gsp_id":"D","weight":1.0}]
+            forecast_config: [{"name":"energylocal","club":"bethesda","weight":1.0}]
         },
         // Runtime change often and are saved only to redis
         runtime: {
@@ -27,6 +27,7 @@ if (!schedule_str) {
 } else {
     schedule = JSON.parse(schedule_str);
 }
+*/
 
 var get_device_state_timeout = false;
 
