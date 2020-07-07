@@ -69,10 +69,10 @@ function demandshaper_controller()
             }
             break;
 
-        case "forecastviewer":
+        case "forecast_test":
             $route->format = "html";
             if ($session["write"]) {
-                return view("Modules/demandshaper/forecast_view.php", array("forecast_list"=>$forecast_list));
+                return view("Modules/demandshaper/Views/forecast_test.php", array("forecast_list"=>$forecast_list));
             }
             break;
 

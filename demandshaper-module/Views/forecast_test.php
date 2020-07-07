@@ -61,7 +61,7 @@ if (!forecast_config_str) {
 var forecast_list = <?php echo json_encode($forecast_list); ?>;
 
 // Note: forecast_list and forecast_config objects are in the global scope and are modified by the forecast_builder
-forecast_builder.init("#forecasts","#forecast_list",function(){
+forecast_builder.init("#forecasts","#forecast_list",forecast_config,function(){
     // fires on change of forecast config
     $("#forecast_config_json").html(JSON.stringify(forecast_config));
     localStorage.setItem("forecast_config",JSON.stringify(forecast_config));
