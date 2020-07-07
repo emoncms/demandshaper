@@ -36,7 +36,7 @@ class openevse
     public function on($device) {
         $device = $this->basetopic."/$device";
         
-        if (!isset($this->last_ctrlmode[$device])) $this->last_ctrlmode[$device] = "on";
+        if (!isset($this->last_ctrlmode[$device])) $this->last_ctrlmode[$device] = "";
         $this->last_timer[$device] = "00 00 00 00";
 
         if ($this->last_ctrlmode[$device]!="on") {
@@ -49,13 +49,13 @@ class openevse
     public function off($device) {
         $device = $this->basetopic."/$device";
 
-        if (!isset($this->last_ctrlmode[$device])) $this->last_ctrlmode[$device] = "off";
+        if (!isset($this->last_ctrlmode[$device])) $this->last_ctrlmode[$device] = "";
         $this->last_timer[$device] = "00 00 00 00";
         
         if ($this->last_ctrlmode[$device]!="off") {
             $this->last_ctrlmode[$device] = "off";
             $this->mqtt_client->publish("$device/rapi/in/\$ST","00 00 00 00",0);
-            $this->mqtt_client->publish("$device/rapi/in/\$FS","",0);  
+            $this->mqtt_client->publish("$device/rapi/in/\$FS","",0);
         }
     }
     
@@ -64,7 +64,7 @@ class openevse
         $this->last_ctrlmode[$device] = "timer";
         
         $timer_str = time_conv_dec_str($s1," ")." ".time_conv_dec_str($e1," ");
-        if (!isset($this->last_timer[$device])) $this->last_timer[$device] = $timer_str;
+        if (!isset($this->last_timer[$device])) $this->last_timer[$device] = "";
         
         if ($timer_str!=$this->last_timer[$device]) {
             $this->last_timer[$device] = $timer_str;

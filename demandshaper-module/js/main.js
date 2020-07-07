@@ -1,4 +1,5 @@
 var get_device_state_timeout = false;
+var last_submit = 0;
 
 update_input_UI();
 
@@ -197,17 +198,23 @@ function update_output_UI() {
 }
 
 function save_schedule() {
-    $.ajax({
-        type: 'POST',
-        data: "schedule="+JSON.stringify(schedule),
-        url: path+"demandshaper/save", 
-        dataType: 'text', 
-        async: true, 
-        success: function(result) {
-            clearTimeout(get_device_state_timeout)
-            get_device_state_timeout = setTimeout(function(){ get_device_state(); },1000);
+    
+    last_submit = (new Date()).getTime();
+    setTimeout(function(){
+        if (((new Date()).getTime()-last_submit)>1900) {
+            $.ajax({
+                type: 'POST',
+                data: "schedule="+JSON.stringify(schedule),
+                url: path+"demandshaper/save", 
+                dataType: 'text', 
+                async: true, 
+                success: function(result) {
+                    clearTimeout(get_device_state_timeout)
+                    get_device_state_timeout = setTimeout(function(){ get_device_state(); },1000);
+                }
+            });
         }
-    });
+    },2000);
 }
 
 function on_UI_change() {

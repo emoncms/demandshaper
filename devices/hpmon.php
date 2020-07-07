@@ -14,9 +14,7 @@ class hpmon extends emonesp {
         
         $device = $this->basetopic."/$device";
         
-        if (!isset($this->last_flowT[$device])) {
-            $this->last_flowT[$device] = $flowT;
-        }
+        if (!isset($this->last_flowT[$device])) $this->last_flowT[$device] = "";
         
         if ($flowT!=$this->last_flowT[$device]) {
             $this->last_flowT[$device] = $flowT;
