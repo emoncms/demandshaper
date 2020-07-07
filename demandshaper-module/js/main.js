@@ -1,34 +1,3 @@
-// User defined forecast config
-/*var schedule_str = false; // localStorage.getItem('schedule');
-
-if (!schedule_str) {
-    
-    schedule = {
-        // Settings are persisted to mysql database
-        settings: {
-            device: "smartplug1272",
-            device_type: "smartplug",
-            device_name: "smartplug1272",
-            ctrlmode: "smart",
-            period:3,
-            end:8,
-            end_timestamp:0,
-            interruptible: 0,
-            runone:0,
-            forecast_config: [{"name":"energylocal","club":"bethesda","weight":1.0}]
-        },
-        // Runtime change often and are saved only to redis
-        runtime: {
-            periods: [],
-            timeleft: 3*3600
-        }
-    };
-    
-} else {
-    schedule = JSON.parse(schedule_str);
-}
-*/
-
 var get_device_state_timeout = false;
 
 update_input_UI();
@@ -44,6 +13,12 @@ forecast_builder.init("#forecasts","#forecast_list",schedule.settings.forecast_c
         });
     });
 });
+
+var fn_name = schedule.settings.device_type+"_events";
+if (window[fn_name]!=undefined) window[fn_name]();
+
+update_UI_from_input_values();
+setInterval(update_UI_from_input_values,5000);
 
 // -----------------------------------------------------------------------------------------------
 
@@ -100,6 +75,11 @@ function calc_schedule(callback) {
 // UPDATE CONTROLS UI 
 // These are user interface items that are not the result of the schedule calculation
 function update_input_UI() {
+
+    $("#devicename").html(jsUcfirst(schedule.settings.device_name));
+    $(".title-icon").html('<svg class="icon '+schedule.settings.device_type+'"><use xlink:href="#icon-'+schedule.settings.device_type+'"></use></svg>');
+    $(".custom-name").html(" "+schedule.settings.device_name);
+
     // 1st row: Update ctrlmode buttons
     var ctrlmode_btn = $("#mode button[mode="+schedule.settings.ctrlmode+"]");
     ctrlmode_btn.addClass('active').siblings().removeClass('active');
@@ -127,6 +107,18 @@ function update_input_UI() {
     $("#period input[type=time]").val(timestr(schedule.settings.period,false));
     $("#end input[type=time]").val(timestr(schedule.settings.end,false));
     $(".scheduler-checkbox[name='interruptible']").attr("state",schedule.settings.interruptible);
+    
+    var fn_name = "update_input_UI_"+schedule.settings.device_type;
+    if (window[fn_name]!=undefined) window[fn_name]();
+}
+
+function update_UI_from_input_values(){
+    $.ajax({ url: path+"input/get/"+schedule.settings.device, dataType: 'json', async: true, success: function(inputs) {
+        if (inputs!=null) {
+            var fn_name = schedule.settings.device_type+"_update_UI_from_input_values";
+            if (window[fn_name]!=undefined) window[fn_name](inputs);
+        }
+    }});
 }
 
 // UPDATE OUTPUT ELEMENTS
@@ -205,7 +197,6 @@ function update_output_UI() {
 }
 
 function save_schedule() {
-    localStorage.setItem("schedule",JSON.stringify(schedule));
     $.ajax({
         type: 'POST',
         data: "schedule="+JSON.stringify(schedule),
@@ -213,9 +204,6 @@ function save_schedule() {
         dataType: 'text', 
         async: true, 
         success: function(result) {
-            console.log(result);
-            
-            
             clearTimeout(get_device_state_timeout)
             get_device_state_timeout = setTimeout(function(){ get_device_state(); },1000);
         }
@@ -276,9 +264,12 @@ $(".scheduler-checkbox").click(function(){
     schedule.settings[name] = state;
     
     on_UI_change();
-}); 
+});
 
-// -----------------------------------------------------------------------------------------------
+$(".config-device").click(function(){
+    //$(".scheduler-controls").toggle();
+    $(".scheduler-config").parent().toggle();
+});
 
 // MISC FUNCTIONS
 function timestr(hour,type){

@@ -16,13 +16,25 @@ defined('EMONCMS_EXEC') or die('Restricted access');
 
 class DemandShaper
 {
+    // Private
     private $mysqli;
     private $redis;
     private $device;
     private $log;
     private $dir;
-    private $default_device;
+    private $default_device = false;
     
+    // Public
+    public $device_class_list = false;
+    public $device_class = false;
+    
+    /**
+     * Construct
+     *
+     * @param class $mysqli mysql instance
+     * @param class $redis redis instance
+     * @param class $device device class
+    */
     public function __construct($mysqli,$redis,$device)
     {
         $this->log = new EmonLogger(__FILE__);
@@ -32,22 +44,63 @@ class DemandShaper
         
         global $linked_modules_dir;
         $this->dir = $linked_modules_dir;
+        $this->device_class_list = $this->device_class_scan();
     }
-    
+
+    /**
+     * Scan for supported device types
+     * e.g: smartplug, wifirelay etc.
+    */
+    public function device_class_scan() {
+        // Scan and auto load device classes
+        $device_class_list = array();
+        $devices_dir = $this->dir."/demandshaper/devices";
+        $dir = scandir($devices_dir);
+        for ($i=2; $i<count($dir); $i++) {
+            $name_ext = explode(".",$dir[$i]);
+            if (count($name_ext)==2) {
+                if ($name_ext[1]=="php") $device_class_list[] = $name_ext[0];
+            }
+        }
+        return $device_class_list;
+    }
+
+    /**
+     * Load device classes (MQTT control, default device specific settings)
+     *
+     * @param class $mqtt_client MQTT instance
+     * @param string $mqtt_basetopic MQTT base topic
+    */
+    public function load_device_classes($mqtt_client,$mqtt_basetopic) {
+        // Scan and auto load device classes
+        $this->device_class = array();
+        foreach ($this->device_class_list as $device_type) {
+            require $this->dir."/demandshaper/devices/$device_type.php";
+            $this->device_class[$device_type] = new $device_type($mqtt_client,$mqtt_basetopic);
+        }
+        return $this->device_class;
+    }
+
+    /**
+     * get_devices
+     * used to populate sidebar menu and used below
+     *
+     * @param integer $userid
+    */    
     public function get_devices($userid) {
         $devices_all = $this->device->get_list($userid);
         
         $devices = array();
         foreach ($devices_all as $d) {
             $name = $d["nodeid"];
-            if (in_array($d['type'],array("openevse","smartplug","hpmon","wifirelay")))
+            if (in_array($d['type'],$this->device_class_list))
                 $devices[$name] = array("id"=>$d["id"]*1,"type"=>$d["type"]);
         }
-        foreach ($devices_all as $d) {
-            $name = $d["nodeid"];
-            if (in_array($d['type'],array("emonth")))
-                $devices[$name] = array("id"=>$d["id"]*1,"type"=>$d["type"]);
-        }
+        // foreach ($devices_all as $d) {
+        //     $name = $d["nodeid"];
+        //     if (in_array($d['type'],array("emonth")))
+        //         $devices[$name] = array("id"=>$d["id"]*1,"type"=>$d["type"]);
+        // }
         
         return $devices;
     }
@@ -69,8 +122,10 @@ class DemandShaper
         return $devices;
     }
     
+    // -------------------------------------------------------------------------------
+    
     public function set($userid,$schedules)
-    {
+    {   
         // Basic validation
         $userid = (int) $userid;
         
@@ -94,11 +149,11 @@ class DemandShaper
                 unset($last_schedules_to_disk->$device->runtime);
             }
         }
-        
+                
         if (json_encode($schedules_to_disk)!=json_encode($last_schedules_to_disk)) {
         
             $schedules_to_disk = json_encode($schedules_to_disk);
-        
+            
             $result = $this->mysqli->query("SELECT `userid` FROM demandshaper WHERE `userid`='$userid'");
             if ($result->num_rows) {
                 $stmt = $this->mysqli->prepare("UPDATE demandshaper SET `schedules`=? WHERE `userid`=?");
@@ -128,8 +183,7 @@ class DemandShaper
         $userid = (int) $userid;
 
         $devices = new stdClass();
-        $this->default_device = $this->load_default();
-        
+                
         // Load schedules from demandshaper cache or mysql
         $demandshaper_devices = new stdClass();
         if ($demandshaper_devices_json = $this->redis->get("demandshaper:schedules:$userid")) {
@@ -154,9 +208,7 @@ class DemandShaper
         // Create new device schedule templates if they dont yet exist in the demandshaper table
         foreach ($device_module_devices as $device_key=>$device) {      
             if (!isset($demandshaper_devices->$device_key)) {
-                $new_device = json_decode(json_encode($this->default_device));
-                $new_device->settings->device_type = $device["type"];     
-                $new_device->settings->device = $device_key;
+                $new_device = $this->validate_device(false,$device_key,$device["type"]); // creates a new device
                 $new_device->settings->device_name = $device_key;
                 // Copy over forecast settings from last device
                 if ($last_device = end($devices)) {
@@ -166,13 +218,17 @@ class DemandShaper
             }
         }
         // This will only write to disk if the content has changed
-        $this->set($userid,$devices);
+        // $this->set($userid,$devices);
         
         return $devices;
     }
     
     public function validate_device($input,$device_key,$device_type) {
-    
+
+        // Only load first time validate_device is called
+        if (!$this->default_device) $this->load_default_device();
+        if (!$this->device_class) $this->load_device_classes(false,false);
+            
         $output = json_decode(json_encode($this->default_device));
         
         if (isset($input->settings)) {
@@ -189,39 +245,30 @@ class DemandShaper
         
         $output->settings->device_type = $device_type;     
         $output->settings->device = $device_key;
+        // if ($output->settings->device_name=="default") $output->settings->device_name = $device_key;
+        
+        // Device specific settings
+        if (isset($this->device_class[$device_type])) {
+            $device_specific_settings = $this->device_class[$device_type]->default_settings();
+            foreach ($device_specific_settings as $key=>$default_val) {
+                if (isset($input->settings->$key)) {
+                    $output->settings->$key = $input->settings->$key;
+                } else {
+                    $output->settings->$key = $default_val;
+                }
+            }
+        }
         
         return $output;
     }
     
-    public function load_default() {
-        return json_decode(file_get_contents($this->dir."/demandshaper/demandshaper-module/default.json"));
+    public function load_default_device() {
+        $this->default_device = json_decode(file_get_contents($this->dir."/demandshaper/demandshaper-module/default.json"));
+        return $this->default_device;
     }
+
+    // -------------------------------------------------------------------------------
         
-    public function fetch_ovms_v2($vehicleid,$carpass) {
-        $csv_str = http_request("GET","https://dexters-web.de/api/call?fn.name=ovms/export&fn.vehicleid=$vehicleid&fn.carpass=$carpass&fn.format=csv&fn.types=D,S&fn.last=1",array());
-        $csv_lines = explode("\n",$csv_str);
-
-        $data = array("soc"=>20);
-        if (count($csv_lines)>6) {
-            $headings1 = explode(",",$csv_lines[1]);
-            $data1 = explode(",",$csv_lines[2]);
-
-            $headings2 = explode(",",$csv_lines[4]);
-            $data2 = explode(",",$csv_lines[5]);
-
-            for ($i=0; $i<count($headings1); $i++) {
-                if (is_numeric($data1[$i])) $data1[$i] *= 1;
-                $data[$headings1[$i]] = $data1[$i];
-            }
-
-            for ($i=0; $i<count($headings2); $i++) {
-                if (is_numeric($data2[$i])) $data2[$i] *= 1;
-                $data[$headings2[$i]] = $data2[$i];
-            }
-        }
-        return $data;
-    }
-
     public function get_forecast_list() {
         global $linked_modules_dir;
         $forecast_list = array();
@@ -299,5 +346,32 @@ class DemandShaper
         }
         
         return $combined;
+    }
+    
+    // -------------------------------------------------------------------------------
+    
+    public function fetch_ovms_v2($vehicleid,$carpass) {
+        $csv_str = http_request("GET","https://dexters-web.de/api/call?fn.name=ovms/export&fn.vehicleid=$vehicleid&fn.carpass=$carpass&fn.format=csv&fn.types=D,S&fn.last=1",array());
+        $csv_lines = explode("\n",$csv_str);
+
+        $data = array("soc"=>20);
+        if (count($csv_lines)>6) {
+            $headings1 = explode(",",$csv_lines[1]);
+            $data1 = explode(",",$csv_lines[2]);
+
+            $headings2 = explode(",",$csv_lines[4]);
+            $data2 = explode(",",$csv_lines[5]);
+
+            for ($i=0; $i<count($headings1); $i++) {
+                if (is_numeric($data1[$i])) $data1[$i] *= 1;
+                $data[$headings1[$i]] = $data1[$i];
+            }
+
+            for ($i=0; $i<count($headings2); $i++) {
+                if (is_numeric($data2[$i])) $data2[$i] *= 1;
+                $data[$headings2[$i]] = $data2[$i];
+            }
+        }
+        return $data;
     }
 }

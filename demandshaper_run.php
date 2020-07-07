@@ -75,16 +75,10 @@ $device = new Device($mysqli,$redis);
 require "Modules/demandshaper/demandshaper_model.php";
 $demandshaper = new DemandShaper($mysqli,$redis,$device);
 $forecast_list = $demandshaper->get_forecast_list();
+$device_class = $demandshaper->load_device_classes($mqtt_client,$settings['mqtt']['basetopic']);
 
 require_once "Modules/input/input_model.php";
 $input = new Input($mysqli,$redis,false);
-
-// Scan and auto load device classes
-$device_class = array();
-foreach (device_class_scan($linked_modules_dir) as $device_type) {
-    require "$linked_modules_dir/demandshaper/devices/$device_type.php";
-    $device_class[$device_type] = new $device_type($mqtt_client,$settings['mqtt']['basetopic']);
-}
 
 $redis->del("demandshaper:trigger");
 
@@ -128,11 +122,7 @@ while(true)
         }
         
         foreach($users as $userid)
-        {
-            if (isset($settings['mqtt']['multiuser']) && $settings['mqtt']['multiuser']) {
-                $device_class[$device_type]->set_basetopic($settings['mqtt']['basetopic']."/".$userid);
-            }
-            
+        {            
             $log->info("processing:$userid");
             // Get time of start of day
             $timezone = $user->get_timezone($userid);
@@ -149,6 +139,12 @@ while(true)
             foreach ($schedules as $sid=>$schedule)
             {                   
                 $device = $schedule->settings->device;
+                $device_type = $schedule->settings->device_type;
+
+                if (isset($settings['mqtt']['multiuser']) && $settings['mqtt']['multiuser']) {
+                    $device_class[$device_type]->set_basetopic($settings['mqtt']['basetopic']."/".$userid);
+                }
+                
                 $log->info(date("Y-m-d H:i:s")." Schedule:$device ".$schedule->settings->ctrlmode);
                 $log->info("  end timestamp: ".$schedule->settings->end_timestamp);
                 
@@ -260,13 +256,15 @@ while(true)
         while ($row = $result->fetch_object()) {
             $userid = $row->userid;
             
-            if (isset($settings['mqtt']['multiuser']) && $settings['mqtt']['multiuser']) {
-                $device_class[$device_type]->set_basetopic($settings['mqtt']['basetopic']."/".$userid);
-            }
-            
             $schedules = $demandshaper->get($userid);
             foreach ($schedules as $schedule) {
                 if ($schedule->settings->device) {
+                    $device_type = $schedule->settings->device_type;
+
+                    if (isset($settings['mqtt']['multiuser']) && $settings['mqtt']['multiuser']) {
+                        $device_class[$device_type]->set_basetopic($settings['mqtt']['basetopic']."/".$userid);
+                    }
+                
                     $device_class[$device_type]->send_state_request($schedule->settings->device);
                 }
             }

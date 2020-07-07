@@ -1,96 +1,121 @@
-function openevse_update_ui() {
+function update_input_UI_openevse() {
     $(".openevse").show();
 
-    $('.input[name="openevsecontroltype"]').val(schedule.settings.openevsecontroltype);
-    $('.input[name="batterycapacity"]').val(schedule.settings.batterycapacity);
-    $('.input[name="chargerate"]').val(schedule.settings.chargerate);
-    $('.input[name="balpercentage"]').val(schedule.settings.balpercentage * 100);
-    $('.input[name="baltime"]').val(Math.round(schedule.settings.baltime * 60));
-
-    if (schedule.settings.openevsecontroltype=="socinput" || schedule.settings.openevsecontroltype=="socovms") {
-
-        battery.capacity = schedule.settings.batterycapacity;
-        battery.charge_rate = schedule.settings.chargerate;
-        battery.end_soc = schedule.settings.ev_target_soc;
-        battery.soc = schedule.settings.ev_soc;
-        battery.balpercentage = schedule.settings.balpercentage;
-        battery.baltime = schedule.settings.baltime;
-
-        $("#battery_bound").show();
-        battery.init("battery");
-        battery.draw();
-        
+    if (schedule.settings.soc_source=="input" || schedule.settings.soc_source=="ovms") {
         $("#run_period").hide();
         $("#run_period").parent().addClass('span2').removeClass('span4');
         $(".openevse-balancing").show();
+        $("#battery_bound").show();
+        if (schedule.settings.soc_source=="ovms") $(".ovms-options").show();
+
+        battery.capacity = schedule.settings.battery_capacity
+        battery.charge_rate = schedule.settings.charge_rate
+        battery.target_soc = schedule.settings.target_soc
+        battery.soc = schedule.settings.current_soc
+        battery.balpercentage = schedule.settings.balpercentage
+        battery.baltime = schedule.settings.baltime
+        battery.init("battery");
+        battery.draw();
+        
     } else {
-        $("#battery_bound").hide();
         $("#run_period").show();
         $("#run_period").parent().addClass('span4').removeClass('span2');
-        $(".openevse-balancing").hide();
-    }
-
-    if (schedule.settings.openevsecontroltype=="socovms") {
-        $(".ovms-options").show();
-        $('.input[name="vehicleid"]').val(schedule.settings.ovms_vehicleid);
-        $('.input[name="carpass"]').val(schedule.settings.ovms_carpass);
-    } else {
+        $(".openevse-balancing").hide(); 
+        $("#battery_bound").hide(); 
         $(".ovms-options").hide();
+    }
+    
+    $(".input[name=soc_source]").val(schedule.settings.soc_source);
+    $(".input[name=battery_capacity]").val(schedule.settings.battery_capacity);
+    $(".input[name=charge_rate]").val(schedule.settings.charge_rate);
+    $(".input[name=balpercentage]").val(schedule.settings.balpercentage*100);
+    $(".input[name=baltime]").val(schedule.settings.baltime);
+    $(".input[name=ovms_vehicleid]").val(schedule.settings.ovms_vehicleid);
+    $(".input[name=ovms_carpass]").val(schedule.settings.ovms_carpass);
+}
+
+function openevse_update_UI_from_input_values(inputs) {
+    if (inputs.amp!=undefined) $("#charge_current").html((inputs.amp.value*0.001).toFixed(1));
+    if (inputs.temp1!=undefined) $("#openevse_temperature").html((inputs.temp1.value*0.1).toFixed(1));
+
+    if (schedule.settings.soc_source=='input' && inputs.soc!=undefined) {
+        var last_soc = parseFloat(schedule.settings.current_soc)
+        schedule.settings.current_soc = inputs.soc.value*0.01;
+        schedule.settings.period = ((schedule.settings.target_soc-schedule.settings.current_soc)*schedule.settings.battery_capacity)/schedule.settings.charge_rate;
+        if (schedule.settings.current_soc!=last_soc) on_UI_change();
     }
 }
 
+function openevse_fetch_ovms_soc(callback) {
+    if (schedule.settings.ovms_vehicleid!='' && schedule.settings.ovms_carpass!='') {
+        $.ajax({ 
+            url: path+"demandshaper/ovms?vehicleid="+schedule.settings.ovms_vehicleid+"&carpass="+schedule.settings.ovms_carpass, 
+            dataType: 'json', async: true, success: function(ovms_result){
+                var last_soc = parseFloat(schedule.settings.current_soc)                        
+                schedule.settings.current_soc = ovms_result.soc*0.01;
+                schedule.settings.period = ((schedule.settings.target_soc-schedule.settings.current_soc)*schedule.settings.battery_capacity)/schedule.settings.charge_rate;
+                
+                var changed = false;
+                if (schedule.settings.current_soc!=last_soc) changed = true;
+                callback(changed);      
+            }
+        });
+    }
+}
 
 function openevse_events() {
+    // Load current SOC at startup
+    if (schedule.settings.soc_source=="ovms") {
+        openevse_fetch_ovms_soc(function(changed){
+            if (changed) on_UI_change();
+        });
+    }
 
-    $("#battery").on("bchange",function() { 
-        battery_change();
-    });
-    
-    function battery_change() {
-        console.log("battery_change");
-        
-        battery.period = Math.round(battery.period/resolution_hours)*resolution_hours
+    $("#battery").on("bchange",function() {
         schedule.settings.period = battery.period
-        schedule.settings.ev_target_soc = battery.end_soc
+        schedule.settings.target_soc = battery.target_soc
         schedule.runtime.timeleft = schedule.settings.period * 3600;
-        
-        if (mode=="on") {
-            var now = new Date();
-            var now_hours = (now.getHours() + (now.getMinutes()/60));
-            schedule.settings.end = Math.round((now_hours+schedule.settings.period)/resolution_hours)*resolution_hours;
-        }
-        calc_schedule();
-    }   
+        on_UI_change();
+    });  
 
-    $('.input[name="openevsecontroltype"]').change(function(){
-        schedule.settings.openevsecontroltype =  $(this).val();
-        calc_schedule();
+    $('.input[name="soc_source"]').change(function(){
+        schedule.settings.soc_source =  $(this).val();
+        
+        if (schedule.settings.soc_source=="ovms") {
+            openevse_fetch_ovms_soc(function(changed){
+                on_UI_change();
+            });
+        } else {
+            on_UI_change();
+        }
     });
     
     $('.input[name="batterycapacity"]').change(function(){
-        var batterycapacity = $(this).val();
-        schedule.settings.batterycapacity = batterycapacity*1.0;
-        if (schedule.settings.batterycapacity<0.0) schedule.settings.batterycapacity = 0.0;
-        calc_schedule();
+        var battery_capacity = $(this).val();
+        schedule.settings.battery_capacity = battery_capacity*1.0;
+        if (schedule.settings.battery_capacity<0.0) schedule.settings.battery_capacity = 0.0;
+        on_UI_change();
     });
 
-    $('.input[name="chargerate"]').change(function(){
-        var chargerate = $(this).val();
-        schedule.settings.chargerate = chargerate*1.0;
-        if (schedule.settings.chargerate<0.0) schedule.settings.chargerate = 0.0;
-        calc_schedule();
+    $('.input[name="charge_rate"]').change(function(){
+        var charge_rate = $(this).val();
+        schedule.settings.charge_rate = charge_rate*1.0;
+        if (schedule.settings.charge_rate<0.0) schedule.settings.charge_rate = 0.0;
+        on_UI_change();
     });
     
-    $('.input[name="vehicleid"]').change(function(){
-        var vehicleid = $(this).val();
-        schedule.settings.ovms_vehicleid = vehicleid;
-        calc_schedule();
+    $('.input[name="ovms_vehicleid"]').change(function(){
+        schedule.settings.ovms_vehicleid = $(this).val();
+        openevse_fetch_ovms_soc(function(changed){
+            on_UI_change();
+        });
     });
 
-    $('.input[name="carpass"]').change(function(){
-        var carpass = $(this).val();
-        schedule.settings.ovms_carpass = carpass;
-        calc_schedule();
+    $('.input[name="ovms_carpass"]').change(function(){
+        schedule.settings.ovms_carpass = $(this).val();
+        openevse_fetch_ovms_soc(function(changed){
+            on_UI_change();
+        });
     });
 
     $('.input[name="balpercentage"]').change(function(){
@@ -98,7 +123,7 @@ function openevse_events() {
         schedule.settings.balpercentage = (balpercentage * 0.01);
         if (schedule.settings.balpercentage<0.0) schedule.settings.balpercentage = 0.0;
         if (schedule.settings.balpercentage>1.0) schedule.settings.balpercentage = 1.0;
-        calc_schedule();
+        on_UI_change();
     });
 
     $('.input[name="baltime"]').change(function(){
@@ -106,6 +131,6 @@ function openevse_events() {
         schedule.settings.baltime = baltime / 60;
         if (schedule.settings.baltime<0.0) schedule.settings.baltime = 0.0;
         if (schedule.settings.baltime>24.0) schedule.settings.baltime = 24.0;
-        calc_schedule();
+        on_UI_change();
     });
 }

@@ -259,7 +259,7 @@ body {padding:0}
     margin-top:-2px;
 }
 
-.delete-device {
+.config-device {
     padding-top:12px;
     padding-right:15px;
     padding-left:15px;
@@ -358,7 +358,7 @@ body {padding:0}
 }
 
 .param_name {
-    font-weight:bold;
+    font-weight:normal;
     display:inline-block;
     width:120px;
 }
@@ -366,4 +366,12 @@ body {padding:0}
 .weight {
     width:50px;
     margin-bottom:0;
+}
+
+.scheduler-config select {
+    margin-bottom:0px;
+}
+
+.scheduler-config input {
+    margin-bottom:0px;
 }

@@ -8,6 +8,11 @@ class emonesp
         $this->mqtt_client = $mqtt_client;
         $this->basetopic = $basetopic;
     }
+
+    public function default_settings() {
+        $defaults = new stdClass();
+        return $defaults;
+    }
     
     public function set_basetopic($basetopic) {
         $this->basetopic = $basetopic;

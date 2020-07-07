@@ -9,6 +9,20 @@ class openevse
         $this->basetopic = $basetopic;
     }
     
+    public function default_settings() {
+        $defaults = new stdClass();
+        $defaults->soc_source = "ovms"; // time, input
+        $defaults->battery_capacity = 40.0;
+        $defaults->charge_rate = 7.5;
+        $defaults->target_soc = 0.8;
+        $defaults->current_soc = 0.2;
+        $defaults->balpercentage = 0.9;
+        $defaults->baltime = 2.0;
+        $defaults->ovms_vehicleid = "";
+        $defaults->ovms_carpass = "";
+        return $defaults;
+    }
+    
     public function set_basetopic($basetopic) {
         $this->basetopic = $basetopic;
     }

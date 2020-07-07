@@ -117,9 +117,9 @@ function demandshaper_controller()
                     
                     $schedules = $demandshaper->get($session["userid"]); 
                     $schedules->$device = $schedule;
-                    $demandshaper->set($session["userid"],$schedules);
+                    $result = $demandshaper->set($session["userid"],$schedules);
                     $redis->rpush("demandshaper:trigger",$session["userid"]); 
-                    return $schedules;
+                    return $result;
                 }
             }
             break;
@@ -186,16 +186,11 @@ function demandshaper_controller()
                 $device = $_GET['device'];
                 $schedules = $demandshaper->get($session["userid"]);
                 if (isset($schedules->$device)) {
-                
-                    $device_class = array();
-                    foreach (device_class_scan($linked_modules_dir) as $device_type) {
-                        require "$linked_modules_dir/demandshaper/devices/$device_type.php";
-                        $device_class[$device_type] = new $device_type(false,$settings['mqtt']['basetopic']);
-                    }
-                
                     include "Modules/demandshaper/MQTTRequest.php";
                     $mqtt_request = new MQTTRequest($settings['mqtt']);
-                    return $device_class[$schedules->$device->settings->device_type]->get_state($mqtt_request,$device,$timezone);
+                    
+                    $demandshaper->device_class[$schedules->$device->settings->device_type]->set_basetopic($settings['mqtt']['basetopic']);
+                    return $demandshaper->device_class[$schedules->$device->settings->device_type]->get_state($mqtt_request,$device,$timezone);
                 }
             }   
         
