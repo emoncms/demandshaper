@@ -9,6 +9,7 @@
 <script language="javascript" type="text/javascript" src="<?php echo $path; ?>Modules/demandshaper/js/get_device_state.js?v=<?php echo $v; ?>"></script>
 <script language="javascript" type="text/javascript" src="<?php echo $path; ?>Modules/demandshaper/js/battery.js?v=<?php echo $v; ?>"></script>
 <script language="javascript" type="text/javascript" src="<?php echo $path; ?>Modules/demandshaper/js/openevse.js?v=<?php echo $v; ?>"></script>
+<script language="javascript" type="text/javascript" src="<?php echo $path; ?>Modules/demandshaper/js/hpmon.js?v=<?php echo $v; ?>"></script>
 <div id="scheduler-top"></div>
 
 <div id="scheduler-outer">
@@ -30,6 +31,20 @@
             <p>Charge Current <span id="charge_current">0</span>A<br><span style="font-weight:normal; font-size:12px">Temperature <span id="openevse_temperature">10</span>C</span></p>
             <div id="battery_bound" style="width:100%" class="hide">
                 <canvas id="battery"></canvas>
+            </div>
+          </div>
+          
+          <div class="heatpumpmonitor hide">
+            <div class="row" style="max-width:700px; margin: 0 auto;">
+              <div class="span4 offset2" style="margin-bottom:20px"><br>
+                <p>Flow Temperature <span id="heatpump_flowT"></span>C<br><span style="font-weight:normal; font-size:12px">Heat Output <span id="heatpump_heat">0</span>W</span></p>
+              </div>
+              <div class="span4" style="margin-bottom:20px">
+                <p>Target Temperature</p>
+                <div id="flowT" class="btn-group input-temperature">
+                  <button>-</button><input type="text" val="0" style="width:60px"><button>+</button>
+                </div>
+              </div>
             </div>
           </div>
           <!---------------------------------------------------------------------------------------------------------------------------->

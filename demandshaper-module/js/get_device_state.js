@@ -45,7 +45,10 @@ function get_device_state() {
                 
                 if (schedule.settings.device_type=="hpmon") {
                     schedule_voltage_output = Math.round((schedule.settings.flowT - 7.14)/0.0371);
-                    if (schedule_voltage_output != result.voltage_output) state_matched = false;
+                    if (schedule_voltage_output != result.voltage_output) {
+                        state_matched = false;
+                        console.log("vout: "+schedule_voltage_output+"!="+result.voltage_output);
+                    }
                 }
                 
                 if (state_matched) {

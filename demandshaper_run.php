@@ -201,6 +201,10 @@ while(true)
                     }
                     else if ($schedule->settings->ctrlmode=="on") $device_class[$device_type]->on($device);
                     else if ($schedule->settings->ctrlmode=="off") $device_class[$device_type]->off($device);
+                    
+                    if (isset($schedule->settings->flowT)) {
+                        $device_class[$device_type]->set_flowT($device,$schedule->settings->flowT);
+                    }
                 }
                 
                 // -----------------------------------------------------------------------

@@ -1,8 +1,8 @@
 <?php
 class emonesp
 {
-    private $mqtt_client = false;
-    private $basetopic = "";
+    public $mqtt_client = false;
+    public $basetopic = "";
 
     public function __construct($mqtt_client,$basetopic) {
         $this->mqtt_client = $mqtt_client;
