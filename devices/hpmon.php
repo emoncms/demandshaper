@@ -2,6 +2,8 @@
 
 class hpmon extends emonesp {
 
+    private $last_flowT = array();
+
     public function default_settings() {
         $defaults = new stdClass();
         $defaults->flowT = 30.0;
@@ -9,7 +11,17 @@ class hpmon extends emonesp {
     }
     
     public function set_flowT($device,$flowT) {
-        $vout = round(($flowT-7.14)/0.0371);
-        $this->mqtt_client->publish($this->basetopic."/$device/in/vout",$vout,0);
+        
+        $device = $this->basetopic."/$device";
+        
+        if (!isset($this->last_flowT[$device])) {
+            $this->last_flowT[$device] = $flowT;
+        }
+        
+        if ($flowT!=$this->last_flowT[$device]) {
+            $this->last_flowT[$device] = $flowT;
+            $vout = round(($flowT-7.14)/0.0371);
+            $this->mqtt_client->publish("$device/in/vout",$vout,0);
+        }
     }
 }

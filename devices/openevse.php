@@ -3,6 +3,8 @@ class openevse
 {
     private $mqtt_client = false;
     private $basetopic = "";
+    private $last_ctrlmode = array();
+    private $last_timer = array();
 
     public function __construct($mqtt_client,$basetopic) {
         $this->mqtt_client = $mqtt_client;
@@ -32,17 +34,42 @@ class openevse
     }
 
     public function on($device) {
-        $this->mqtt_client->publish($this->basetopic."/$device/rapi/in/\$ST","00 00 00 00",0);
-        $this->mqtt_client->publish($this->basetopic."/$device/rapi/in/\$FE","",0);
+        $device = $this->basetopic."/$device";
+        
+        if (!isset($this->last_ctrlmode[$device])) $this->last_ctrlmode[$device] = "on";
+        $this->last_timer[$device] = "00 00 00 00";
+
+        if ($this->last_ctrlmode[$device]!="on") {
+            $this->last_ctrlmode[$device] = "on";
+            $this->mqtt_client->publish("$device/rapi/in/\$ST","00 00 00 00",0);
+            $this->mqtt_client->publish("$device/rapi/in/\$FE","",0);
+        }
     }
     
     public function off($device) {
-        $this->mqtt_client->publish($this->basetopic."/$device/rapi/in/\$ST","00 00 00 00",0);
-        $this->mqtt_client->publish($this->basetopic."/$device/rapi/in/\$FS","",0);
+        $device = $this->basetopic."/$device";
+
+        if (!isset($this->last_ctrlmode[$device])) $this->last_ctrlmode[$device] = "off";
+        $this->last_timer[$device] = "00 00 00 00";
+        
+        if ($this->last_ctrlmode[$device]!="off") {
+            $this->last_ctrlmode[$device] = "off";
+            $this->mqtt_client->publish("$device/rapi/in/\$ST","00 00 00 00",0);
+            $this->mqtt_client->publish("$device/rapi/in/\$FS","",0);  
+        }
     }
     
     public function timer($device,$s1,$e1,$s2,$e2) {
-        $this->mqtt_client->publish($this->basetopic."/$device/rapi/in/\$ST",time_conv_dec_str($s1," ")." ".time_conv_dec_str($e1," "),0);
+        $device = $this->basetopic."/$device";
+        $this->last_ctrlmode[$device] = "timer";
+        
+        $timer_str = time_conv_dec_str($s1," ")." ".time_conv_dec_str($e1," ");
+        if (!isset($this->last_timer[$device])) $this->last_timer[$device] = $timer_str;
+        
+        if ($timer_str!=$this->last_timer[$device]) {
+            $this->last_timer[$device] = $timer_str;
+            $this->mqtt_client->publish("$device/rapi/in/\$ST",$timer_str,0);
+        }
     }
     
     public function send_state_request($device) {
