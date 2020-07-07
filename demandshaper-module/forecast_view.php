@@ -2,7 +2,7 @@
 <script language="javascript" type="text/javascript" src="<?php echo $path; ?>Lib/flot/jquery.flot.min.js"></script>
 <script language="javascript" type="text/javascript" src="<?php echo $path; ?>Lib/flot/jquery.flot.time.min.js"></script>
 <script language="javascript" type="text/javascript" src="<?php echo $path; ?>Lib/flot/date.format.min.js"></script>
-<script language="javascript" type="text/javascript" src="<?php echo $path; ?>Modules/demandshaper/forecast_builder.js"></script>
+<script language="javascript" type="text/javascript" src="<?php echo $path; ?>Modules/demandshaper/js/forecast_builder.js"></script>
 <h3>Forecast Viewer</h3>
 
 <div class="input-prepend input-append">
