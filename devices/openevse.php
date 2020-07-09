@@ -5,6 +5,7 @@ class openevse
     private $basetopic = "";
     private $last_ctrlmode = array();
     private $last_timer = array();
+    private $last_soc_update = 0;
 
     public function __construct($mqtt_client,$basetopic) {
         $this->mqtt_client = $mqtt_client;
@@ -43,6 +44,7 @@ class openevse
             $this->last_ctrlmode[$device] = "on";
             $this->mqtt_client->publish("$device/rapi/in/\$ST","00 00 00 00",0);
             $this->mqtt_client->publish("$device/rapi/in/\$FE","",0);
+            schedule_log("$device switch on");
         }
     }
     
@@ -56,6 +58,7 @@ class openevse
             $this->last_ctrlmode[$device] = "off";
             $this->mqtt_client->publish("$device/rapi/in/\$ST","00 00 00 00",0);
             $this->mqtt_client->publish("$device/rapi/in/\$FS","",0);
+            schedule_log("$device switch off");
         }
     }
     
@@ -69,6 +72,7 @@ class openevse
         if ($timer_str!=$this->last_timer[$device]) {
             $this->last_timer[$device] = $timer_str;
             $this->mqtt_client->publish("$device/rapi/in/\$ST",$timer_str,0);
+            schedule_log("$device set timer $timer_str");
         }
     }
     
@@ -122,23 +126,23 @@ class openevse
 
         if ($valid) return $state; else return false;
     }
-        
-    /*
-    public function timeleft_based_on_soc($schedule) {
-        if ((time()-$last_soc_update)>600 && isset($schedule->settings->openevsecontroltype) && $schedule->settings->openevsecontroltype!='time') {
-            $last_soc_update = time();
+
+    public function auto_update_timeleft($schedule) {
+        /*
+        if ((time()-$this->last_soc_update)>600 && $schedule->settings->soc_source!='time') {
+            $this->last_soc_update = time();
             
-            if ($schedule->settings->openevsecontroltype=='socinput') {
+            if ($schedule->settings->soc_source=='socinput') {
                 if ($feedid = $input->exists_nodeid_name($userid,$device,"soc")) {
                     $schedule->settings->ev_soc = $input->get_last_value($feedid)*0.01;
-                    $log->error("Recalculating EVSE schedule based on emoncms input: ".$schedule->settings->ev_soc);
+                    schedule_log("Recalculating EVSE schedule based on emoncms input: ".$schedule->settings->ev_soc);
                 }
             }
-            else if ($schedule->settings->openevsecontroltype=='socovms') {
+            else if ($schedule->settings->soc_source=='socovms') {
                 if ($schedule->settings->ovms_vehicleid!='' && $schedule->settings->ovms_carpass!='') {
                     $ovms = $demandshaper->fetch_ovms_v2($schedule->settings->ovms_vehicleid,$schedule->settings->ovms_carpass);
                     if (isset($ovms['soc'])) $schedule->settings->ev_soc = $ovms['soc']*0.01;
-                    $log->error("Recalculating EVSE schedule based on ovms: ".$schedule->settings->ev_soc);
+                    schedule_log("Recalculating EVSE schedule based on ovms: ".$schedule->settings->ev_soc);
 
                 }
             }
@@ -150,8 +154,8 @@ class openevse
             }
                     
             $schedule->runtime->timeleft = $schedule->settings->period * 3600;
-            $log->error("EVSE timeleft: ".$schedule->runtime->timeleft);                                    
-        }
+            schedule_log("EVSE timeleft: ".$schedule->runtime->timeleft);                                    
+        }*/
         return $schedule;
-    }*/    
+    }
 }

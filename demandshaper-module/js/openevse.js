@@ -29,7 +29,7 @@ function update_input_UI_openevse() {
     $(".input[name=battery_capacity]").val(schedule.settings.battery_capacity);
     $(".input[name=charge_rate]").val(schedule.settings.charge_rate);
     $(".input[name=balpercentage]").val(schedule.settings.balpercentage*100);
-    $(".input[name=baltime]").val(schedule.settings.baltime);
+    $(".input[name=baltime]").val(schedule.settings.baltime*60);
     $(".input[name=ovms_vehicleid]").val(schedule.settings.ovms_vehicleid);
     $(".input[name=ovms_carpass]").val(schedule.settings.ovms_carpass);
 }
@@ -90,7 +90,7 @@ function openevse_events() {
         }
     });
     
-    $('.input[name="batterycapacity"]').change(function(){
+    $('.input[name="battery_capacity"]').change(function(){
         var battery_capacity = $(this).val();
         schedule.settings.battery_capacity = battery_capacity*1.0;
         if (schedule.settings.battery_capacity<0.0) schedule.settings.battery_capacity = 0.0;

@@ -122,4 +122,8 @@ class emonesp
             return false;
         }
     }
+    
+    public function auto_update_timeleft($schedule) {
+        return $schedule;
+    }
 }

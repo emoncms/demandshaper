@@ -20,6 +20,7 @@ class hpmon extends emonesp {
             $this->last_flowT[$device] = $flowT;
             $vout = round(($flowT-7.14)/0.0371);
             $this->mqtt_client->publish("$device/in/vout",$vout,0);
+            schedule_log("$device set voltage output $vout");
         }
     }
 }

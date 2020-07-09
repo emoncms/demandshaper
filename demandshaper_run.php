@@ -226,6 +226,10 @@ while(true)
                 if (!isset($schedule->runtime->started) || $schedule->settings->interruptible) {
                     
                     if ($schedule->settings->ctrlmode=="smart") {
+                    
+                        // Automatic update of time left for schedule e.g take into account updated battery SOC of electric car, home battery, device
+                        $schedule = $device_class[$device_type]->auto_update_timeleft($schedule);
+                    
                         // 1. Compile combined forecast
                         $combined = $demandshaper->get_combined_forecast($schedule->settings->forecast_config);
                         // 2. Calculate forecast min/max 
