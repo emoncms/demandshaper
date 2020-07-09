@@ -1,6 +1,7 @@
 var get_device_state_timeout = false;
 var last_submit = 0;
 var profile_graph_data = [];
+var previousPoint = null;
 
 $(document).ready(function() {
     update_input_UI();
@@ -325,6 +326,42 @@ $(".config-device").click(function(){
     //$(".scheduler-controls").toggle();
     $(".scheduler-config").parent().toggle();
 });
+
+$("#placeholder").bind("plothover", function (event, pos, item) {
+    if (item) {
+        if (previousPoint != item.datapoint) {
+            previousPoint = item.datapoint;
+            $("#tooltip").remove();
+            tooltip(item.pageX+40,item.pageY,item.datapoint[1], "#DDDDDD");
+        }
+    } else {
+        $("#tooltip").remove();
+        previousPoint = null;
+    }
+});
+
+function tooltip(x, y, contents, bgColour)
+{
+    var offset = 15; // use higher values for a little spacing between `x,y` and tooltip
+    var elem = $('<div id="tooltip">' + contents + '</div>').css({
+        position: 'absolute',
+        display: 'none',
+        'font-weight':'bold',
+        border: '1px solid rgb(255, 221, 221)',
+        padding: '2px',
+        'background-color': bgColour,
+        opacity: '0.8'
+    }).appendTo("body").fadeIn(200);
+
+    var elemY = y - elem.height() - offset;
+    var elemX = x - elem.width()  - offset;
+    if (elemY < 0) { elemY = 0; } 
+    if (elemX < 0) { elemX = 0; } 
+    elem.css({
+        top: elemY,
+        left: elemX
+    });
+};
 
 // MISC FUNCTIONS
 function timestr(hour,type){
