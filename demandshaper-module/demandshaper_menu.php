@@ -23,7 +23,7 @@ if ($session['write']) {
     foreach ($devices as $name=>$d) {
         $menu['sidebar']['demandshaper'][] = array(
             'icon' => $d["type"],
-            'text' => ucfirst($devices[$name]['custom_name']),
+            'text' => ucfirst($devices[$name]['device_name']),
             'path' => "demandshaper?device=".$name,
             'order'=> $o
         );

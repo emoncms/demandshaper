@@ -21,6 +21,19 @@ function hpmon_update_UI_from_input_values(inputs) {
     }
 }
 
+function schedule_info_hpmon(signal_type,mean,peak) {
+    switch(signal_type) {
+      case "co2":
+        $("#schedule-info").html("CO2 intensity: "+Math.round(mean)+" gCO2/kWh, "+Math.round(mean/3.8)+" gCO2/kWh Heat @ COP 3.8");
+        break;
+      case "price":
+        $("#schedule-info").html(mean.toFixed(1)+" p/kWh, "+(mean/3.8).toFixed(1)+" p/kWh Heat @ COP 3.8"); 
+        break;
+      default:
+        $("#schedule-info").html("Average: "+mean.toFixed(1)+", "+Math.round(100.0*(1.0-(mean/peak)))+"% reduction vs peak");
+    }
+}
+
 function hpmon_events() {
     $(".input-temperature button").click(function() {
         var name = $(this).parent().attr("id");

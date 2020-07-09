@@ -1,26 +1,28 @@
 var get_device_state_timeout = false;
 var last_submit = 0;
+var profile_graph_data = [];
 
-update_input_UI();
+$(document).ready(function() {
+    update_input_UI();
 
-// Note: forecast_list and forecast_config objects are in the global scope and are modified by the forecast_builder
-forecast_builder.init("#forecasts","#forecast_list",schedule.settings.forecast_config,function(){
-    
-    // fires on change of forecast config    
-    get_forecast(function(){
-        calc_schedule(function() {
-            save_schedule();
-            update_output_UI();
+    // Note: forecast_list and forecast_config objects are in the global scope and are modified by the forecast_builder
+    forecast_builder.init("#forecasts","#forecast_list",schedule.settings.forecast_config,function(){
+        
+        // fires on change of forecast config    
+        get_forecast(function(){
+            calc_schedule(function() {
+                save_schedule();
+                update_output_UI();
+            });
         });
     });
+
+    var fn_name = schedule.settings.device_type+"_events";
+    if (window[fn_name]!=undefined) window[fn_name]();
+
+    update_UI_from_input_values();
+    setInterval(update_UI_from_input_values,5000);
 });
-
-var fn_name = schedule.settings.device_type+"_events";
-if (window[fn_name]!=undefined) window[fn_name]();
-
-update_UI_from_input_values();
-setInterval(update_UI_from_input_values,5000);
-
 // -----------------------------------------------------------------------------------------------
 
 // FETCH COMBINED FORECAST 
@@ -77,7 +79,7 @@ function calc_schedule(callback) {
 // These are user interface items that are not the result of the schedule calculation
 function update_input_UI() {
 
-    $("#devicename").html(jsUcfirst(schedule.settings.device_name));
+    $(".device_name").html(jsUcfirst(schedule.settings.device_name));
     $(".title-icon").html('<svg class="icon '+schedule.settings.device_type+'"><use xlink:href="#icon-'+schedule.settings.device_type+'"></use></svg>');
     $(".custom-name").html(" "+schedule.settings.device_name);
 
@@ -111,6 +113,9 @@ function update_input_UI() {
     
     var fn_name = "update_input_UI_"+schedule.settings.device_type;
     if (window[fn_name]!=undefined) window[fn_name]();
+    
+    $(".device_name").val(schedule.settings.device_name);
+    $("#ip_address").html("IP Address: <a href='http://"+schedule.settings.ip+"'>"+schedule.settings.ip+"</a>");
 }
 
 function update_UI_from_input_values(){
@@ -146,6 +151,12 @@ function update_output_UI() {
     }
     $("#schedule-output").html(out);
     $("#timeleft").html(Math.round(schedule.runtime.timeleft/60)+" mins left to run");
+
+    // Used for description below graph
+    var sum = 0;
+    var sum_n = 0;
+    var peak = 0;
+    var lowest = 0;
         
     // Convert to flot format
     graph_profile = [];
@@ -153,7 +164,11 @@ function update_output_UI() {
     
     var i=0;
     for (var time=forecast.start; time<forecast.end; time+=forecast.interval) {
-    
+
+        var value = forecast.profile[i];
+        if (value>peak) peak = value;
+        if (value<lowest) lowest = value;
+
         var active = false;
         for (var p in schedule.runtime.periods) {
             if (time>=schedule.runtime.periods[p].start[0] && time<schedule.runtime.periods[p].end[0]) active = true;
@@ -163,12 +178,36 @@ function update_output_UI() {
     
         if (active) {
             graph_active.push([time*1000,forecast.profile[i]]);
+            sum += value; sum_n++;
         } else {
             graph_profile.push([time*1000,forecast.profile[i]]); 
         }
         
         i++;
     }
+    
+    profile_graph_data = [{data:graph_profile,color:"#aaa"},{data:graph_active,color:"#ea510e"}];
+    draw_profile_graph();
+   
+    var mean = 0;
+    if (sum_n>0) mean = sum/sum_n;
+   
+    var signal_type = "other"; // need to work out what kind of signal we are using
+    var fn_name = "schedule_info_"+schedule.settings.device_type;
+    if (window[fn_name]!=undefined) {
+        window[fn_name](signal_type,mean,peak);
+    } else {
+        if (signal_type=="co2") {
+            $("#schedule-info").html("CO2 intensity: "+Math.round(mean)+" gCO2/kWh, "+Math.round(100.0*(1.0-(mean/peak)))+"% reduction vs peak");
+        } else if (signal_type=="price") {
+            $("#schedule-info").html("Average cost: "+mean.toFixed(1)+"p/kWh, "+Math.round(100.0*(1.0-(mean/peak)))+"% reduction vs peak");
+        } else {
+            $("#schedule-info").html("Average: "+mean.toFixed(1)+", "+Math.round(100.0*(1.0-(mean/peak)))+"% reduction vs peak");
+        }
+    }
+}
+
+function draw_profile_graph(){
 
     var options = {
         xaxis: { 
@@ -189,11 +228,11 @@ function update_output_UI() {
         },
         bars: { show: true, barWidth:1800*1000*0.8, lineWidth:0 }
     };
-
+    
     var width = $("#placeholder_bound").width();
     if (width>0) {
         $("#placeholder").width(width);
-        $.plot($('#placeholder'), [{data:graph_profile,color:"#aaa"},{data:graph_active,color:"#ea510e"}], options);
+        $.plot($('#placeholder'), profile_graph_data, options);
     }
 }
 
@@ -225,10 +264,19 @@ function on_UI_change() {
     });
 }
 
+$(window).resize(function(){
+    draw_profile_graph();
+});
+
 // -----------------------------------------------------------------------------------------------
 
 $("#mode button").click(function() {
     schedule.settings.ctrlmode = $(this).attr("mode");
+    on_UI_change();
+});
+
+$(".device_name").change(function() {
+    schedule.settings.device_name = $(this).val();
     on_UI_change();
 });
 

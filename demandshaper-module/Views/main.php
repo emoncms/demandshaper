@@ -1,4 +1,4 @@
-<?php global $path; $v=2; ?>
+<?php global $path; $v=3; ?>
 <link rel="stylesheet" href="<?php echo $path; ?>Modules/demandshaper/demandshaper.css?v=<?php echo $v; ?>">
 
 <script language="javascript" type="text/javascript" src="<?php echo $path; ?>Lib/flot/jquery.flot.min.js"></script>
@@ -70,9 +70,6 @@
                 <div name="interruptible" state=0 class="scheduler-checkbox" style="margin:0 auto"></div>
               </div>
             </div>
-            
-            <br>
-          
           </div>
           <!---------------------------------------------------------------------------------------------------------------------------->
           <div class="timer hide">
@@ -123,16 +120,20 @@
           <div id="placeholder_bound" style="width:100%; height:300px">
             <div id="placeholder" style="height:300px"></div>
           </div><br>
-          <div id="schedule-co2" style="font-size:14px; color:#888;"></div>
+          <div id="schedule-info" style="font-size:14px; color:#888;"></div>
         </div> <!-- schedule-controls -->
       </div> <!-- schedule-inner2 -->
-      <div id="ip_address">IP Address: 192.168.1.20</div>
+      <div id="ip_address">IP Address: ---</div>
     </div> <!-- scheduler-inner -->
     
     <div class="scheduler-inner hide" style="background-color:#eaeaea; font-weight:normal">
         <div class="scheduler-config" style="text-align:left">
-        
+
           <div style="border: 1px solid #ccc; padding:10px; background-color:#f0f0f0;">
+          <div style="display:inline-block; width:200px">Device name:</div><input class="device_name" type="text" style="width:150px">   
+          </div>
+        
+          <div style="border: 1px solid #ccc; padding:10px; margin-top:10px; background-color:#f0f0f0;">
             <p><b>Forecast Settings</b></p>   
             <table class="table" style="margin-bottom:0px">
               <tr><th>Forecast name</th><th>Parameters</th><th>Weight</th><th></th></tr>
@@ -162,4 +163,4 @@
 var forecast_list = <?php echo json_encode($forecast_list); ?>;
 var schedule = <?php echo json_encode($schedule); ?>;
 </script>
-<script language="javascript" type="text/javascript" src="<?php echo $path; ?>Modules/demandshaper/js/main.js"></script>
+<script language="javascript" type="text/javascript" src="<?php echo $path; ?>Modules/demandshaper/js/main.js?v=<?php echo $v; ?>"></script>

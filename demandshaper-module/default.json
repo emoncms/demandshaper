@@ -9,7 +9,8 @@
         "end_timestamp":0,
         "interruptible": 0,
         "runone":0,
-        "forecast_config": [{"name":"energylocal","club":"bethesda","weight":1.0}]
+        "forecast_config": [{"name":"energylocal","club":"bethesda","weight":1.0}],
+        "ip":""
     },
     "runtime": {
         "periods": [],

@@ -113,9 +113,9 @@ class DemandShaper
         }
         
         foreach ($devices as $name=>$device) {
-             $devices[$name]['custom_name'] = $name;
-             if (isset($schedules->$name) && isset($schedules->$name->settings) && isset($schedules->$name->settings->name)) {
-                 $devices[$name]['custom_name'] = $schedules->$name->settings->name;
+             $devices[$name]['device_name'] = $name;
+             if (isset($schedules->$name) && isset($schedules->$name->settings) && isset($schedules->$name->settings->device_name)) {
+                 $devices[$name]['device_name'] = $schedules->$name->settings->device_name;
              }
         }
         
