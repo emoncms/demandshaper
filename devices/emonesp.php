@@ -4,6 +4,10 @@ class emonesp
     public $mqtt_client = false;
     public $basetopic = "";
 
+    public $last_ctrlmode = array();
+    public $last_timer = array();    
+    public $last_flowT = array();
+
     public function __construct($mqtt_client,$basetopic) {
         $this->mqtt_client = $mqtt_client;
         $this->basetopic = $basetopic;
@@ -25,18 +29,41 @@ class emonesp
     }
 
     public function on($device) {
-        $this->mqtt_client->publish($this->basetopic."/$device/in/ctrlmode","On",0);
+        $device = $this->basetopic."/$device";
+        
+        if (!isset($this->last_ctrlmode[$device])) $this->last_ctrlmode[$device] = "";
+
+        if ($this->last_ctrlmode[$device]!="on") {
+            $this->last_ctrlmode[$device] = "on";
+            $this->mqtt_client->publish("$device/in/ctrlmode","On",0);
+            schedule_log("$device switch on");
+        }
     }
     
     public function off($device) {
-        $this->mqtt_client->publish($this->basetopic."/$device/in/ctrlmode","Off",0);
+        $device = $this->basetopic."/$device";
+        
+        if (!isset($this->last_ctrlmode[$device])) $this->last_ctrlmode[$device] = "";
+
+        if ($this->last_ctrlmode[$device]!="off") {
+            $this->last_ctrlmode[$device] = "off";
+            $this->mqtt_client->publish("$device/in/ctrlmode","Off",0);
+            schedule_log("$device switch off");
+        }
     }
     
     public function timer($device,$s1,$e1,$s2,$e2) {
-        $this->mqtt_client->publish($this->basetopic."/$device/in/ctrlmode","Timer",0);
+        $device = $this->basetopic."/$device";
+        $this->last_ctrlmode[$device] = "timer";
         
         $timer_str = time_conv_dec_str($s1)." ".time_conv_dec_str($e1)." ".time_conv_dec_str($s2)." ".time_conv_dec_str($e2);
-        $this->mqtt_client->publish($this->basetopic."/$device/in/timer",$timer_str,0);
+        if (!isset($this->last_timer[$device])) $this->last_timer[$device] = "";
+        
+        if ($timer_str!=$this->last_timer[$device]) {
+            $this->last_timer[$device] = $timer_str;
+            $this->mqtt_client->publish($this->basetopic."/$device/in/timer",$timer_str,0);
+            schedule_log("$device set timer $timer_str");
+        }
     }
     
     public function send_state_request($device) {
@@ -64,6 +91,7 @@ class emonesp
 
             if (isset($p->vout)) {
                 $schedule->settings->flowT = ($p->vout*0.0371)+7.14;
+                $this->last_flowT[$this->basetopic."/$device"] = $schedule->settings->flowT;
             }
             
             if (isset($p->timer)) {
@@ -86,6 +114,7 @@ class emonesp
         
         else if ($message->topic==$this->basetopic."/$device/out/vout") {
             $schedule->flowT = ($p*0.0371)+7.14;
+            $this->last_flowT = $schedule->flowT;
         }
         
         else if ($message->topic==$this->basetopic."/$device/out/timer") {
@@ -95,7 +124,7 @@ class emonesp
             $schedule->settings->timer_start2 = time_conv($timer[2],$timeOffset);
             $schedule->settings->timer_stop2 = time_conv($timer[3],$timeOffset);
         
-            $schedule->settings->flowT = ($timer[4]*0.0371)+7.14;
+            $schedule->settings->flowT[$this->basetopic."/$device"] = ($timer[4]*0.0371)+7.14;
         }
     
         return $schedule;

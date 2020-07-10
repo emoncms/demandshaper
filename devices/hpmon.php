@@ -2,7 +2,7 @@
 
 class hpmon extends emonesp {
 
-    private $last_flowT = array();
+    public $last_flowT = array();
 
     public function default_settings() {
         $defaults = new stdClass();
