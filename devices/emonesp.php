@@ -126,6 +126,16 @@ class emonesp
         
             $schedule->settings->flowT[$this->basetopic."/$device"] = ($timer[4]*0.0371)+7.14;
         }
+        
+        // ----------------------------------------------------------------------
+        
+        if ($message->topic==$this->basetopic."/$device/in/ctrlmode") {
+            $ctrlmode = strtolower($message->payload);
+            if ($ctrlmode!=$schedule->settings->ctrlmode) {
+                $schedule->settings->ctrlmode = $ctrlmode;
+                schedule_log("$device external script correction of ctrlmode to $ctrlmode");
+            }
+        }
     
         return $schedule;
     }
