@@ -361,33 +361,32 @@ while(true)
                                 // -------------------------------------------------------------------
                                 // Recalculate based on car SOC
                                 // -------------------------------------------------------------------
-                                if ($schedule->settings->device_type=="openevse" && (time()-$last_soc_update)>600) {
+                                if ($schedule->settings->device_type=="openevse" && (time()-$last_soc_update)>600 && isset($schedule->settings->openevsecontroltype) && $schedule->settings->openevsecontroltype!='time') {
                                     $last_soc_update = time();
-                                    if (isset($schedule->settings->openevsecontroltype)) {
-                                        if ($schedule->settings->openevsecontroltype=='socinput') {
-                                            if ($feedid = $input->exists_nodeid_name($userid,$device,"soc")) {
-                                                $schedule->settings->ev_soc = $input->get_last_value($feedid)*0.01;
-                                                $log->error("Recalculating EVSE schedule based on emoncms input: ".$schedule->settings->ev_soc);
-                                            }
+                                    
+                                    if ($schedule->settings->openevsecontroltype=='socinput') {
+                                        if ($feedid = $input->exists_nodeid_name($userid,$device,"soc")) {
+                                            $schedule->settings->ev_soc = $input->get_last_value($feedid)*0.01;
+                                            $log->info("Recalculating EVSE schedule based on emoncms input: ".$schedule->settings->ev_soc);
                                         }
-                                        else if ($schedule->settings->openevsecontroltype=='socovms') {
-                                            if ($schedule->settings->ovms_vehicleid!='' && $schedule->settings->ovms_carpass!='') {
-                                                $ovms = $demandshaper->fetch_ovms_v2($schedule->settings->ovms_vehicleid,$schedule->settings->ovms_carpass);
-                                                if (isset($ovms['soc'])) $schedule->settings->ev_soc = $ovms['soc']*0.01;
-                                                $log->error("Recalculating EVSE schedule based on ovms: ".$schedule->settings->ev_soc);
-
-                                            }
-                                        }
-                                        $kwh_required = ($schedule->settings->ev_target_soc-$schedule->settings->ev_soc)*$schedule->settings->batterycapacity;
-                                        $schedule->settings->period = $kwh_required/$schedule->settings->chargerate;      
-                                        
-                                        if (isset($schedule->settings->balpercentage) && $schedule->settings->balpercentage < $schedule->settings->ev_target_soc) {
-                                            $schedule->settings->period += $schedule->settings->baltime;
-                                        }
-                                              
-                                        $schedule->runtime->timeleft = $schedule->settings->period * 3600;
-                                        $log->error("EVSE timeleft: ".$schedule->runtime->timeleft);
                                     }
+                                    else if ($schedule->settings->openevsecontroltype=='socovms') {
+                                        if ($schedule->settings->ovms_vehicleid!='' && $schedule->settings->ovms_carpass!='') {
+                                            $ovms = $demandshaper->fetch_ovms_v2($schedule->settings->ovms_vehicleid,$schedule->settings->ovms_carpass);
+                                            if (isset($ovms['soc'])) $schedule->settings->ev_soc = $ovms['soc']*0.01;
+                                            $log->info("Recalculating EVSE schedule based on ovms: ".$schedule->settings->ev_soc);
+
+                                        }
+                                    }
+                                    $kwh_required = ($schedule->settings->ev_target_soc-$schedule->settings->ev_soc)*$schedule->settings->batterycapacity;
+                                    $schedule->settings->period = $kwh_required/$schedule->settings->chargerate;      
+                                    
+                                    if (isset($schedule->settings->balpercentage) && $schedule->settings->balpercentage < $schedule->settings->ev_target_soc) {
+                                        $schedule->settings->period += $schedule->settings->baltime;
+                                    }
+                                            
+                                    $schedule->runtime->timeleft = $schedule->settings->period * 3600;
+                                    $log->info("EVSE timeleft: ".$schedule->runtime->timeleft);                                    
                                 }
                                 // -------------------------------------------------------------------
                             
@@ -458,7 +457,7 @@ while(true)
     try { $mqtt_client->loop(); } catch (Exception $e) { }
     
     // Dont loop to fast
-    sleep(0.1);
+    usleep(100000);
 }
 
 function connect($r, $message) {
