@@ -241,7 +241,7 @@ function get_forecast($redis,$signal,$timezone) {
 // SCHEDULE
 // -------------------------------------------------------------------------------------------------------
 
-function schedule_smart($forecast,$timeleft,$end,$interruptible,$resolution,$timezone)
+function schedule_smart($forecast,$timeleft,$end,$interruptible,$resolution,$timezone,$rununtilcompleteby)
 {
     $debug = 0;
     
@@ -349,8 +349,15 @@ function schedule_smart($forecast,$timeleft,$end,$interruptible,$resolution,$tim
         }
         $end_hour = $start_hour;
         $tend = $tstart;
-        
+                
+        if($rununtilcompleteby) {
+            // if selected to run until complete by, let end time loop run until complete by
+            $period = 24;
+        }
+
         for ($i=0; $i<$period*($divisions/24); $i++) {
+            if (!isset($profile[$pos+$i])) break;
+
             $profile[$pos+$i][3] = 1;
             $end_hour+=$resolution/3600;
             $tend+=$resolution;
@@ -358,7 +365,7 @@ function schedule_smart($forecast,$timeleft,$end,$interruptible,$resolution,$tim
             // dont allow to run past end time
             if ($tend==$end_timestamp) break;
         }
-        
+    
         $periods = array();
         if ($period>0) {
             $periods[] = array("start"=>array($tstart,$start_hour), "end"=>array($tend,$end_hour));

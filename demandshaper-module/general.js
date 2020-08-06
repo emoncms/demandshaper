@@ -27,6 +27,7 @@ function load_device(device_id, device_name, device_type)
             period:3,
             end:8,
             interruptible:0,
+            rununtilcompleteby:0,
             // Timer mode
             timer_start1:0,
             timer_stop1:0,
@@ -173,7 +174,7 @@ function load_device(device_id, device_name, device_type)
             
             if (js_calc) {
                 if (schedule.settings.ctrlmode=="smart") {
-                    schedule.runtime.periods = schedule_smart(forecast,schedule.settings.period*3600,schedule.settings.end,schedule.settings.interruptible,resolution)
+                    schedule.runtime.periods = schedule_smart(forecast,schedule.settings.period*3600,schedule.settings.end,schedule.settings.interruptible,resolution,schedule.settings.rununtilcompleteby)
                 } else if (schedule.settings.ctrlmode=="timer") {
                     schedule.runtime.periods = schedule_timer(forecast,schedule.settings.timer_start1,schedule.settings.timer_stop1,schedule.settings.timer_start2,schedule.settings.timer_stop2,resolution)
                 } else {
@@ -265,7 +266,8 @@ function load_device(device_id, device_name, device_type)
             $(".weekly-scheduler[day="+i+"]").attr("val",schedule.settings.repeat[i]);
         }
         
-        $(".scheduler-checkbox[name='interruptible']").attr("state",schedule.settings.interruptible);
+        $(".scheduler-checkbox[name='interruptible']").attr("state", schedule.settings.interruptible);
+        $(".scheduler-checkbox[name='rununtilcompleteby']").attr("state",schedule.settings.rununtilcompleteby);
         
         draw_forecast_category_select(); 
         draw_forecast_select(forecast_list[schedule.settings.signal].category);

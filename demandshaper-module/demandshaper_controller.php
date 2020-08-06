@@ -78,6 +78,7 @@ function demandshaper_controller()
                     if (!isset($schedule->settings->end)) return array("content"=>"Missing end parameter in schedule object");
                     if (!isset($schedule->settings->period)) return array("content"=>"Missing period parameter in schedule object");
                     if (!isset($schedule->settings->interruptible)) return array("content"=>"Missing interruptible parameter in schedule object");
+                    if (!isset($schedule->settings->rununtilcompleteby)) return array("content"=>"Missing rununtilcompleteby parameter in schedule object");
                     if (!isset($schedule->settings->runonce)) return array("content"=>"Missing runonce parameter in schedule object");
                     if ($schedule->settings->runonce) $schedule->settings->runonce = time();
                     $device = $schedule->settings->device;
@@ -114,7 +115,7 @@ function demandshaper_controller()
                     
                     if ($schedule->settings->ctrlmode=="smart") {
                         $forecast = get_forecast($redis,$schedule->settings->signal,$timezone);
-                        $schedule->runtime->periods = schedule_smart($forecast,$schedule->runtime->timeleft,$schedule->settings->end,$schedule->settings->interruptible,900,$timezone);
+                        $schedule->runtime->periods = schedule_smart($forecast,$schedule->runtime->timeleft,$schedule->settings->end,$schedule->settings->interruptible,900,$timezone,$schedule->settings->rununtilcompleteby);
                         $schedule_log_output = "smart ".($schedule->runtime->timeleft/3600)." ".$schedule->settings->end;
                         
                     } else if ($schedule->settings->ctrlmode=="timer") {
