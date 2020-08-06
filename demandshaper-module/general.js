@@ -435,6 +435,7 @@ function load_device(device_id, device_name, device_type)
         var sum = 0;
         var sum_n = 0;
         var peak = 0;
+        var lowest = 0;
         var active = 0;
         available = [];
         unavailable = [];
@@ -444,6 +445,7 @@ function load_device(device_id, device_name, device_type)
             var value = profile[z][1];
             
             if (value>peak) peak = value;
+            if (value<lowest) lowest = value;
             
             active = false;
             for (var p in periods) {
@@ -460,6 +462,8 @@ function load_device(device_id, device_name, device_type)
             unavailable.push([time,value]);
         }
         
+        options.yaxis.min = lowest;
+
         // Display CO2 in window
         var out = "";
         if (sum_n>0) {
