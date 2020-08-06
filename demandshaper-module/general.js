@@ -11,6 +11,10 @@ function load_device(device_id, device_name, device_type)
     // $(".device-name").html(" ("+device_name+")");
     
     $(".node-scheduler").attr("node",device_name);
+
+    if (device_type=="openevse") {
+        $("#mode button[mode='disabled']").show();        
+    }
     
     // -------------------------------------------------------------------------
     // Defaults
@@ -243,6 +247,7 @@ function load_device(device_id, device_name, device_type)
         if (schedule.settings.ctrlmode=="smart") { $(".smart").show(); $(".timer").hide(); $(".repeat").show(); }
         if (schedule.settings.ctrlmode=="on") { $(".smart").hide(); $(".timer").hide(); $(".repeat").hide(); }
         if (schedule.settings.ctrlmode=="off") { $(".smart").hide(); $(".timer").hide(); $(".repeat").hide(); }
+        if (schedule.settings.ctrlmode=="disabled") { $(".smart").hide(); $(".timer").hide(); $(".repeat").hide(); }
         
         // var elapsed = Math.round((new Date()).getTime()*0.001 - schedule.settings.last_update_from_device);
         // $("#last_update_from_device").html(elapsed+"s ago");
@@ -645,6 +650,9 @@ function load_device(device_id, device_name, device_type)
           case "off":
             $(this).addClass("red").siblings().removeClass('red').removeClass('green');
             break;
+          case "disabled":
+            $(this).addClass("red").siblings().removeClass('red').removeClass('green');
+            break;            
           case "timer":
             // if (schedule.settings.period==0) schedule.settings.period = last_period;
             // if (schedule.settings.end==0) schedule.settings.end = 8.0;

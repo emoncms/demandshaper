@@ -227,6 +227,7 @@ while(true)
                         
                         if ($schedule->settings->ctrlmode=="on") $status = 1;
                         if ($schedule->settings->ctrlmode=="off") $status = 0;
+                        if ($schedule->settings->ctrlmode=="disabled") $status = -1;
 
                         if ($status) {
                             $log->info("  status: ON");
@@ -283,6 +284,9 @@ while(true)
                                     $timer[$device] = time_conv_dec_str($s1)." ".time_conv_dec_str($e1)." ".time_conv_dec_str($s2)." ".time_conv_dec_str($e2);
                                 }
                                 if ($device_type=="openevse") {
+                                    // in case it was disabled before
+                                    $mqtt_client->publish("$basetopic/$device/rapi/in/\$FE","",0);
+
                                     $api = "rapi/in/\$ST";
                                     $timer[$device] = time_conv_dec_str($s1," ")." ".time_conv_dec_str($e1," ");
                                 }
@@ -303,6 +307,7 @@ while(true)
                                 if ($ctrlmode=="on") $ctrlmode_status = "On";
                                 if ($ctrlmode=="smart") $ctrlmode_status = "Timer";
                                 if ($ctrlmode=="timer") $ctrlmode_status = "Timer";
+                                if ($ctrlmode=="disabled") $ctrlmode_status = "Disabled";
                                 
                                 if ($device_type=="smartplug" || $device_type=="hpmon" || $device_type=="wifirelay") {
                                     $mqtt_client->publish("$basetopic/$device/in/ctrlmode",$ctrlmode_status,0);
@@ -310,7 +315,7 @@ while(true)
                                 }
 
                                 if ($device_type=="openevse") {
-                                    if ($ctrlmode=="on" || $ctrlmode=="off") {
+                                    if ($ctrlmode=="on" || $ctrlmode=="off" || $ctrlmode=="disabled") {
                                         $mqtt_client->publish("$basetopic/$device/rapi/in/\$ST","00 00 00 00",0);
                                     }
                                     if ($ctrlmode=="on") {
@@ -320,6 +325,10 @@ while(true)
                                     if ($ctrlmode=="off") {
                                         $mqtt_client->publish("$basetopic/$device/rapi/in/\$FS","",0);
                                         schedule_log("$device turning OFF");
+                                    }
+                                    if ($ctrlmode=="disabled") {
+                                        $mqtt_client->publish("emon/$device/rapi/in/\$FD","",0);
+                                        schedule_log("$device turning DISABLED");
                                     }
                                 }
                             }
@@ -523,6 +532,7 @@ function message($message)
                 if (isset($p->ctrlmode)) {
                     if ($p->ctrlmode=="On") $schedules->$device->settings->ctrlmode = "on";
                     if ($p->ctrlmode=="Off") $schedules->$device->settings->ctrlmode = "off";
+                    if ($p->ctrlmode=="Disabled") $schedules->$device->settings->ctrlmode = "disabled";
                     if ($p->ctrlmode=="Timer" && $schedules->$device->settings->ctrlmode!="smart") $schedules->$device->settings->ctrlmode = "timer";
                 }
   
@@ -545,6 +555,7 @@ function message($message)
             else if ($message->topic=="$basetopic/$device/out/ctrlmode") {
                 if ($p=="On") $schedules->$device->settings->ctrlmode = "on";
                 if ($p=="Off") $schedules->$device->settings->ctrlmode = "off";
+                if ($p=="Disabled") $schedules->$device->settings->ctrlmode = "disabled";
                 if ($p=="Timer" && $schedules->$device->settings->ctrlmode!="smart") $schedules->$device->settings->ctrlmode = "timer";
                 $demandshaper->set($userid,$schedules);
             }

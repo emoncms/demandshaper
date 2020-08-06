@@ -257,12 +257,14 @@ function demandshaper_controller()
                                     $state->ctrl_mode = "timer";
                                 }
                             } 
-                            else if ($ret[1]==1 || $ret[1]==3) {
+                            else if ($ret[1]==1 || $ret[1]==2 || $ret[1]==3) {
                                 if ($state->timer_start1==0 && $state->timer_stop1==0) {
                                     $state->ctrl_mode = "on";
                                 } else {
                                     $state->ctrl_mode = "timer";
                                 }
+                            } else if ($ret[1]==255) {
+                                $state->ctrl_mode = "disabled";
                             }
                         } else {
                             $valid = false;
