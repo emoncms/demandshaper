@@ -61,7 +61,7 @@ class emonesp
         
         if ($timer_str!=$this->last_timer[$device]) {
             $this->last_timer[$device] = $timer_str;
-            $this->mqtt_client->publish($this->basetopic."/$device/in/timer",$timer_str,0);
+            $this->mqtt_client->publish("$device/in/timer",$timer_str,0);
             schedule_log("$device set timer $timer_str");
         }
     }
