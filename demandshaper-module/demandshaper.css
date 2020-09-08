@@ -260,10 +260,10 @@ body {padding:0}
 }
 
 .config-device {
-    padding-top:12px;
-    padding-right:15px;
-    padding-left:15px;
-    padding-bottom:8px;
+    padding-top:3px;
+    padding-right:5px;
+    padding-left:5px;
+    padding-bottom:0px;
     cursor:pointer;
     float:right;
 }

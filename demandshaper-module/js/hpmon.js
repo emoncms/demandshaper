@@ -21,12 +21,12 @@ function hpmon_update_UI_from_input_values(inputs) {
     }
 }
 
-function schedule_info_hpmon(signal_type,mean,peak) {
-    switch(signal_type) {
-      case "co2":
+function schedule_info_hpmon(forecast_units,mean,peak) {
+    switch(forecast_units) {
+      case "gco2":
         $("#schedule-info").html("CO2 intensity: "+Math.round(mean)+" gCO2/kWh, "+Math.round(mean/3.8)+" gCO2/kWh Heat @ COP 3.8");
         break;
-      case "price":
+      case "pkwh":
         $("#schedule-info").html(mean.toFixed(1)+" p/kWh, "+(mean/3.8).toFixed(1)+" p/kWh Heat @ COP 3.8"); 
         break;
       default:

@@ -13,7 +13,6 @@
 <div id="scheduler-top"></div>
 
 <div id="scheduler-outer">
-  <div class="config-device"><i class="icon-wrench icon-white"></i></div>
   <div class="node-scheduler-title"><span class="title-icon"></span><span class="custom-name"></span><span class="device-name"></span> <span class='device-state-message'></span></div>
   <div class="node-scheduler" node="">
     <div class="scheduler-inner">
@@ -123,8 +122,14 @@
           <div id="schedule-info" style="font-size:14px; color:#888;"></div>
         </div> <!-- schedule-controls -->
       </div> <!-- schedule-inner2 -->
-      <div id="ip_address">IP Address: ---</div>
+
+        
     </div> <!-- scheduler-inner -->
+    
+    <div class="scheduler-inner" style="background-color:#eaeaea; font-weight:normal">
+      <div class="config-device"><i class="icon-wrench" title="Configure device"></i></div>
+      <div id="ip_address">IP Address: ---</div>
+    </div>
     
     <div class="scheduler-inner hide" style="background-color:#eaeaea; font-weight:normal">
         <div class="scheduler-config" style="text-align:left">
@@ -139,7 +144,12 @@
               <tr><th>Forecast name</th><th>Parameters</th><th>Weight</th><th></th></tr>
               <tbody id="forecasts"></tbody>
             </table>
-            <div class="input-prepend input-append"><span class="add-on">Add forecast</span><select id="forecast_list"></select></div>   
+            <div class="input-prepend input-append"><span class="add-on">Add forecast</span><select id="forecast_list"></select></div><br>
+            <div class="input-prepend input-append" style="margin-bottom:0px"><span class="add-on">Schedule info</span><select class="forecast_units" style="width:120px">
+              <option value="generic">Generic</option>
+              <option value="pkwh">p/kWh</option>
+              <option value="gco2">gCO2</option>
+            </select></div>   
           </div>
           
           <div class="openevse hide" style="border: 1px solid #ccc; padding:10px; margin-top:10px; background-color:#f0f0f0">

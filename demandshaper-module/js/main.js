@@ -83,6 +83,7 @@ function update_input_UI() {
     $(".device_name").html(jsUcfirst(schedule.settings.device_name));
     $(".title-icon").html('<svg class="icon '+schedule.settings.device_type+'"><use xlink:href="#icon-'+schedule.settings.device_type+'"></use></svg>');
     $(".custom-name").html(" "+schedule.settings.device_name);
+    $(".forecast_units").val(schedule.settings.forecast_units);
 
     // 1st row: Update ctrlmode buttons
     var ctrlmode_btn = $("#mode button[mode="+schedule.settings.ctrlmode+"]");
@@ -192,15 +193,16 @@ function update_output_UI() {
    
     var mean = 0;
     if (sum_n>0) mean = sum/sum_n;
+    
+    console.log(schedule.settings.forecast_units)
    
-    var signal_type = "other"; // need to work out what kind of signal we are using
     var fn_name = "schedule_info_"+schedule.settings.device_type;
     if (window[fn_name]!=undefined) {
-        window[fn_name](signal_type,mean,peak);
+        window[fn_name](schedule.settings.forecast_units,mean,peak);
     } else {
-        if (signal_type=="co2") {
+        if (schedule.settings.forecast_units=="gco2") {
             $("#schedule-info").html("CO2 intensity: "+Math.round(mean)+" gCO2/kWh, "+Math.round(100.0*(1.0-(mean/peak)))+"% reduction vs peak");
-        } else if (signal_type=="price") {
+        } else if (schedule.settings.forecast_units=="pkwh") {
             $("#schedule-info").html("Average cost: "+mean.toFixed(1)+"p/kWh, "+Math.round(100.0*(1.0-(mean/peak)))+"% reduction vs peak");
         } else {
             $("#schedule-info").html("Average: "+mean.toFixed(1)+", "+Math.round(100.0*(1.0-(mean/peak)))+"% reduction vs peak");
@@ -319,6 +321,11 @@ $(".scheduler-checkbox").click(function(){
     $(this).attr("state",state);
     schedule.settings[name] = state;
     
+    on_UI_change();
+});
+
+$(".forecast_units").change(function() {
+    schedule.settings.forecast_units = $(this).val();
     on_UI_change();
 });
 

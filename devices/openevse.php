@@ -128,34 +128,36 @@ class openevse
     }
 
     public function auto_update_timeleft($schedule) {
-        /*
+        
         if ((time()-$this->last_soc_update)>600 && $schedule->settings->soc_source!='time') {
             $this->last_soc_update = time();
             
-            if ($schedule->settings->soc_source=='socinput') {
+            /*if ($schedule->settings->soc_source=='socinput') {
                 if ($feedid = $input->exists_nodeid_name($userid,$device,"soc")) {
-                    $schedule->settings->ev_soc = $input->get_last_value($feedid)*0.01;
-                    schedule_log("Recalculating EVSE schedule based on emoncms input: ".$schedule->settings->ev_soc);
+                    $schedule->settings->current_soc = $input->get_last_value($feedid)*0.01;
+                    schedule_log("Recalculating EVSE schedule based on emoncms input: ".$schedule->settings->current_soc);
                 }
             }
-            else if ($schedule->settings->soc_source=='socovms') {
+            else */
+            if ($schedule->settings->soc_source=='ovms') {
                 if ($schedule->settings->ovms_vehicleid!='' && $schedule->settings->ovms_carpass!='') {
+                    global $demandshaper;
                     $ovms = $demandshaper->fetch_ovms_v2($schedule->settings->ovms_vehicleid,$schedule->settings->ovms_carpass);
-                    if (isset($ovms['soc'])) $schedule->settings->ev_soc = $ovms['soc']*0.01;
-                    schedule_log("Recalculating EVSE schedule based on ovms: ".$schedule->settings->ev_soc);
+                    if (isset($ovms['soc'])) $schedule->settings->current_soc = $ovms['soc']*0.01;
+                    schedule_log("Recalculating EVSE schedule based on ovms: ".$schedule->settings->current_soc);
 
                 }
             }
-            $kwh_required = ($schedule->settings->ev_target_soc-$schedule->settings->ev_soc)*$schedule->settings->batterycapacity;
-            $schedule->settings->period = $kwh_required/$schedule->settings->chargerate;      
+            $kwh_required = ($schedule->settings->target_soc-$schedule->settings->current_soc)*$schedule->settings->battery_capacity;
+            $schedule->settings->period = $kwh_required/$schedule->settings->charge_rate;      
             
-            if (isset($schedule->settings->balpercentage) && $schedule->settings->balpercentage < $schedule->settings->ev_target_soc) {
+            if (isset($schedule->settings->balpercentage) && $schedule->settings->balpercentage < $schedule->settings->target_soc) {
                 $schedule->settings->period += $schedule->settings->baltime;
             }
                     
             $schedule->runtime->timeleft = $schedule->settings->period * 3600;
             schedule_log("EVSE timeleft: ".$schedule->runtime->timeleft);                                    
-        }*/
+        }
         return $schedule;
     }
 }

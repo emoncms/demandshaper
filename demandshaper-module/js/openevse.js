@@ -34,14 +34,14 @@ function update_input_UI_openevse() {
     $(".input[name=ovms_carpass]").val(schedule.settings.ovms_carpass);
 }
 
-function schedule_info_openevse(signal_type,mean,peak) {
-    switch(signal_type) {
-      case "co2":
+function schedule_info_openevse(forecast_units,mean,peak) {
+    switch(forecast_units) {
+      case "gco2":
         var co2_km = (mean / 4.0) / 1.6;
         var prc = 100-(100*(co2_km / 130));
         $("#schedule-info").html("Charge CO2 intensity: "+Math.round(mean)+" gCO2/kWh, "+Math.round(co2_km)+" gCO2/km, "+Math.round(prc)+"% <span title='Compared to 50 MPG Petrol car'>reduction</span>.");
         break;
-      case "price":
+      case "pkwh":
         var p_per_mile = (mean / 4.0);
         var prc = 100-(100*(p_per_mile / 10.0));
         $("#schedule-info").html("Cost: "+mean.toFixed(1)+"p/kWh, "+(p_per_mile).toFixed(1)+"p/mile, "+Math.round(100.0*(1.0-(mean/peak)))+"% reduction vs peak");
