@@ -230,6 +230,13 @@ function draw_profile_graph(){
         bars: { show: true, barWidth:1800*1000*0.8, lineWidth:0 }
     };
     
+    // Shade out time after end of schedule
+    if (schedule.settings.ctrlmode!="timer") {
+        var markings = [];
+        if (schedule.runtime.periods.length) markings.push({ color: "rgba(0,0,0,0.1)", xaxis: { from: schedule.settings.end_timestamp*1000 } });
+        options.grid.markings = markings;
+    }   
+    
     var width = $("#placeholder_bound").width();
     if (width>0) {
         $("#placeholder").width(width);
