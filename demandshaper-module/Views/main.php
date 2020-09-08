@@ -1,4 +1,4 @@
-<?php global $path; $v=3; ?>
+<?php global $path; $v=4; ?>
 <link rel="stylesheet" href="<?php echo $path; ?>Modules/demandshaper/demandshaper.css?v=<?php echo $v; ?>">
 
 <script language="javascript" type="text/javascript" src="<?php echo $path; ?>Lib/flot/jquery.flot.min.js"></script>

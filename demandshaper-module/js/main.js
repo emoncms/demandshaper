@@ -194,8 +194,6 @@ function update_output_UI() {
     var mean = 0;
     if (sum_n>0) mean = sum/sum_n;
     
-    console.log(schedule.settings.forecast_units)
-   
     var fn_name = "schedule_info_"+schedule.settings.device_type;
     if (window[fn_name]!=undefined) {
         window[fn_name](schedule.settings.forecast_units,mean,peak);
