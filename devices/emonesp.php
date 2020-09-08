@@ -54,7 +54,14 @@ class emonesp
     
     public function timer($device,$s1,$e1,$s2,$e2) {
         $device = $this->basetopic."/$device";
-        $this->last_ctrlmode[$device] = "timer";
+        
+        if (!isset($this->last_ctrlmode[$device])) $this->last_ctrlmode[$device] = "";
+
+        if ($this->last_ctrlmode[$device]!="timer") {
+            $this->last_ctrlmode[$device] = "timer";
+            $this->mqtt_client->publish("$device/in/ctrlmode","Timer",0);
+            schedule_log("$device timer mode");
+        }
         
         $timer_str = time_conv_dec_str($s1)." ".time_conv_dec_str($e1)." ".time_conv_dec_str($s2)." ".time_conv_dec_str($e2);
         if (!isset($this->last_timer[$device])) $this->last_timer[$device] = "";
