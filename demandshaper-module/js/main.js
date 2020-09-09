@@ -352,6 +352,42 @@ $("#placeholder").bind("plothover", function (event, pos, item) {
     }
 });
 
+// ----------------------------------
+
+$(".delete-device").click(function(){
+    $("#DeleteDeviceModal").modal();
+    $(".device-name").html(schedule.settings.device);
+});
+
+$("#delete-device-confirm").click(function(){
+    schedule.settings.ctrlmode = "off";
+    on_UI_change();
+    apikeystr = "";
+    // 1. Delete demandshaper schedule entry
+    $.ajax({ url: path+"demandshaper/delete?device="+schedule.settings.device+apikeystr, async: true, success: function(data) {
+        // 2. Delete device
+        $.ajax({ url: path+"device/delete.json", data: "id="+device_id+apikeystr, async: true, success: function(data) {
+            // 3. Delete device inputs
+            $.ajax({ url: path+"input/list.json"+apikeystr, async: true, success: function(data) {
+                // get list of device inputs
+                var device_inputs = [];
+                for (var z in data) {
+                   if (data[z].nodeid==schedule.settings.device) {
+                      device_inputs.push(1*data[z].id);
+                   }
+                }
+                console.log("Deleting inputs:");
+                console.log(device_inputs);
+                $.ajax({ url: path+"input/delete.json"+apikeystr, data: "inputids="+JSON.stringify(device_inputs), async: true, success: function(data){
+                    location.href = path+"demandshaper";
+                }});
+            }});
+        }});
+    }});
+});
+
+// ----------------------------------
+
 function tooltip(x, y, contents, bgColour)
 {
     var offset = 15; // use higher values for a little spacing between `x,y` and tooltip

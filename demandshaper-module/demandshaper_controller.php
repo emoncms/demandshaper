@@ -54,10 +54,19 @@ function demandshaper_controller()
             if ($session["write"]) {
                 $schedules = $demandshaper->get($session["userid"]);
                 if (isset($_GET['device'])) {
-                    $device = $_GET['device'];
-                    if (isset($schedules->$device)) {
-                        return view("Modules/demandshaper/Views/main.php", array("forecast_list"=>$forecast_list,"schedule"=>$schedules->$device));
-                    }
+                    $device_name = $_GET['device'];
+                } else {
+                    foreach ($schedules as $device_name=>$schedule) break;
+                    header("Location: $path/demandshaper?device=$device_name");
+                    exit();
+                }
+                
+                if (isset($schedules->$device_name)) {
+                    return view("Modules/demandshaper/Views/main.php", array(
+                        "forecast_list"=>$forecast_list,
+                        "schedule"=>$schedules->$device_name,
+                        "device_id"=>$device->exists_nodeid($session["userid"], $device_name)
+                    ));
                 }
             }
             break;

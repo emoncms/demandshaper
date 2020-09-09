@@ -13,6 +13,7 @@
 <div id="scheduler-top"></div>
 
 <div id="scheduler-outer">
+  <div class="delete-device"><i class="icon-trash icon-white"></i></div>
   <div class="node-scheduler-title"><span class="title-icon"></span><span class="custom-name"></span><span class="device-name"></span> <span class='device-state-message'></span></div>
   <div class="node-scheduler" node="">
     <div class="scheduler-inner">
@@ -169,8 +170,24 @@
     </div> <!-- scheduler-inner -->
   </div> <!-- node-scheduler -->
 </div> <!-- scheduler-outer -->
+
+<div id="DeleteDeviceModal" class="modal hide" tabindex="-1" role="dialog" aria-labelledby="DeleteDeviceModalLabel" aria-hidden="true" data-backdrop="static">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+        <h3 id="feedDeleteModalLabel">Delete Device: <span class='device-name'></span></h3>
+    </div>
+    <div class="modal-body">
+         <p>Are you sure you want to delete device <span class='device-name'></span>?</p>
+    </div>
+    <div class="modal-footer">
+        <button class="btn" data-dismiss="modal" aria-hidden="true"><?php echo _('Close'); ?></button>
+        <button id="delete-device-confirm" class="btn btn-danger"><?php echo _('Confirm'); ?></button>
+    </div>
+</div>
+
 <script>
 var forecast_list = <?php echo json_encode($forecast_list); ?>;
 var schedule = <?php echo json_encode($schedule); ?>;
+var device_id = <?php echo $device_id; ?>;
 </script>
 <script language="javascript" type="text/javascript" src="<?php echo $path; ?>Modules/demandshaper/js/main.js?v=<?php echo $v; ?>"></script>
