@@ -81,8 +81,6 @@ class emonesp
     
         $device = $schedule->settings->device;
         
-        $timeOffset = $this->get_time_offset($timezone);
-        
         if ($message->topic==$this->basetopic."/$device/out/state") {
             $p = json_decode($message->payload);
 
@@ -103,6 +101,7 @@ class emonesp
             
             if (isset($p->timer)) {
                 $timer = explode(" ",$p->timer);
+                $timeOffset = $this->get_time_offset($timezone);
                 $schedule->settings->timer_start1 = time_conv($timer[0],$timeOffset);
                 $schedule->settings->timer_stop1 = time_conv($timer[1],$timeOffset);
                 $schedule->settings->timer_start2 = time_conv($timer[2],$timeOffset);
@@ -110,28 +109,33 @@ class emonesp
             }
             
             $schedule->runtime->last_update_from_device = time();
+            return $schedule;
         }
         
         else if ($message->topic==$this->basetopic."/$device/out/ctrlmode") {
             if ($p=="On") $schedule->settings->ctrlmode = "on";
             if ($p=="Off") $schedule->settings->ctrlmode = "off";
             if ($p=="Timer" && $schedule->settings->ctrlmode!="smart") $schedule->settings->ctrlmode = "timer";
+            return $schedule;
 
         }
         
         else if ($message->topic==$this->basetopic."/$device/out/vout") {
             $schedule->flowT = ($p*0.0371)+7.14;
             $this->last_flowT = $schedule->flowT;
+            return $schedule;
         }
         
         else if ($message->topic==$this->basetopic."/$device/out/timer") {
             $timer = explode(" ",$p);
+            $timeOffset = $this->get_time_offset($timezone);
             $schedule->settings->timer_start1 = time_conv($timer[0],$timeOffset);
             $schedule->settings->timer_stop1 = time_conv($timer[1],$timeOffset);
             $schedule->settings->timer_start2 = time_conv($timer[2],$timeOffset);
             $schedule->settings->timer_stop2 = time_conv($timer[3],$timeOffset);
         
             $schedule->settings->flowT[$this->basetopic."/$device"] = ($timer[4]*0.0371)+7.14;
+            return $schedule;
         }
         
         // ----------------------------------------------------------------------
@@ -141,10 +145,11 @@ class emonesp
             if ($ctrlmode!=$schedule->settings->ctrlmode) {
                 $schedule->settings->ctrlmode = $ctrlmode;
                 schedule_log("$device external script correction of ctrlmode to $ctrlmode");
+                return $schedule;
             }
         }
     
-        return $schedule;
+        return false;
     }
     
     public function get_state($mqtt_request,$device,$timezone) {

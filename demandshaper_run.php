@@ -246,7 +246,7 @@ while(true)
                 }
                 $schedules->$sid = $schedule;
                 
-            } // foreach schedules 
+            } // foreach schedules
             $demandshaper->set($userid,$schedules);
         } // user list
         sleep(1.0);
@@ -332,7 +332,10 @@ function message($message)
     
     if ($userid && $device && isset($schedules->$device)) {
         $device_type = $schedules->$device->settings->device_type;
-        $schedules->$device = $device_class[$device_type]->handle_state_response($schedules->$device,$message,$user->get_timezone($userid));
-        $demandshaper->set($userid,$schedules);
+        $result = $device_class[$device_type]->handle_state_response($schedules->$device,$message,$user->get_timezone($userid));
+        if ($result) {
+            $schedules->$device = $result;
+            $demandshaper->set($userid,$schedules);
+        }
     }
 }

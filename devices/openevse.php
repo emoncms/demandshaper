@@ -81,7 +81,7 @@ class openevse
     }
     
     public function handle_state_response($schedule,$message,$timezone) {
-        return $schedule;
+        return false;
     }
 
     public function get_state($mqtt_request,$device,$timezone) {
