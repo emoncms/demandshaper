@@ -146,7 +146,7 @@ while(true)
                 }
                 
                 $log->info(date("Y-m-d H:i:s")." Schedule:$device ".$schedule->settings->ctrlmode);
-                $log->info("  end timestamp: ".$schedule->settings->end_timestamp);
+                $log->info("  end timestamp: ".$schedule->settings->end_timestamp." ".date("Y-m-d H:i:s",$schedule->settings->end_timestamp));
                 
                 // -----------------------------------------------------------------------
                 // Work out if schedule is running, status and decrease timeleft
@@ -176,6 +176,7 @@ while(true)
                     if ($schedule->runtime->timeleft<0) $schedule->runtime->timeleft = 0;
                 } else {
                     $log->info("  status: OFF");
+                    $log->info("  timeleft: ".$schedule->runtime->timeleft."s");
                 }
                 
                 // -----------------------------------------------------------------------
@@ -235,10 +236,10 @@ while(true)
                         // 2. Calculate forecast min/max 
                         $combined = forecast_calc_min_max($combined);
                         // 3. Calculate schedule
-                        if ($schedule->settings->interruptible) {
-                            $schedule->runtime->periods = schedule_interruptible($combined,$schedule->runtime->timeleft,$schedule->settings->end,$timezone);
+                        if ($schedule->settings->interruptible) {                            
+                            $schedule->runtime->periods = schedule_interruptible($combined,$schedule->runtime->timeleft,$schedule->settings->end_timestamp,$timezone);
                         } else {
-                            $schedule->runtime->periods = schedule_block($combined,$schedule->runtime->timeleft,$schedule->settings->end,$timezone);
+                            $schedule->runtime->periods = schedule_block($combined,$schedule->runtime->timeleft,$schedule->settings->end_timestamp,$timezone);
                         }
                     } 
                     $schedule = json_decode(json_encode($schedule));
