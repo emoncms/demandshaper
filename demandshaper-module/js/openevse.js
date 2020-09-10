@@ -3,6 +3,9 @@ function update_input_UI_openevse() {
 
     if (schedule.settings.soc_source=="input" || schedule.settings.soc_source=="ovms") {
         $("#run_period").hide();
+        $("#charge_energy_div").hide();
+        $("#charge_distance_div").hide();
+        
         $("#run_period").parent().addClass('span2').removeClass('span4');
         $(".openevse-balancing").show();
         $("#battery_bound").show();
@@ -18,11 +21,24 @@ function update_input_UI_openevse() {
         battery.draw();
         
     } else {
-        $("#run_period").show();
-        $("#run_period").parent().addClass('span4').removeClass('span2');
         $(".openevse-balancing").hide(); 
         $("#battery_bound").hide(); 
         $(".ovms-options").hide();
+        $("#run_period").parent().addClass('span4').removeClass('span2');
+        
+        if (schedule.settings.soc_source=="time") {
+            $("#run_period").show();
+            $("#charge_energy_div").hide();
+            $("#charge_distance_div").hide();
+        } else if (schedule.settings.soc_source=="energy") {
+            $("#run_period").hide();
+            $("#charge_energy_div").show();
+            $("#charge_distance_div").hide();
+        } else if (schedule.settings.soc_source=="distance") {
+            $("#run_period").hide();
+            $("#charge_energy_div").hide();
+            $("#charge_distance_div").show();
+        }    
     }
     
     $(".input[name=soc_source]").val(schedule.settings.soc_source);
@@ -32,6 +48,59 @@ function update_input_UI_openevse() {
     $(".input[name=baltime]").val(schedule.settings.baltime*60);
     $(".input[name=ovms_vehicleid]").val(schedule.settings.ovms_vehicleid);
     $(".input[name=ovms_carpass]").val(schedule.settings.ovms_carpass);
+    $(".input[name=car_economy]").val(schedule.settings.car_economy);
+    $(".input[name=charge_distance]").val(schedule.settings.charge_distance);
+    $(".input[name=charge_energy]").val(schedule.settings.charge_energy);  
+}
+
+function openevse_calc_modes(reset_timeleft) {
+    switch(schedule.settings.soc_source) {
+        case "time":
+            // 1. Start with charge period
+            // 2. Charge energy is time x charge rate
+            schedule.settings.charge_energy = schedule.settings.period * schedule.settings.charge_rate
+            // 3. Charge distance is energy x economy
+            schedule.settings.charge_distance = schedule.settings.charge_energy * schedule.settings.car_economy
+            // 4. Calculate target soc
+            schedule.settings.target_soc = schedule.settings.current_soc + (schedule.settings.charge_energy / schedule.settings.battery_capacity)
+            if (schedule.settings.target_soc>1.0) schedule.settings.target_soc = 1.0 
+        break;
+        case "energy":
+            // 1. Start with energy
+            // 2. Charge distance is energy x economy
+            schedule.settings.charge_distance = schedule.settings.charge_energy * schedule.settings.car_economy
+            // 3. Charge period is energy divided by charge rate
+            schedule.settings.period = schedule.settings.charge_energy / schedule.settings.charge_rate
+            // 4. Calculate target soc
+            schedule.settings.target_soc = schedule.settings.current_soc + (schedule.settings.charge_energy / schedule.settings.battery_capacity)
+            if (schedule.settings.target_soc>1.0) schedule.settings.target_soc = 1.0   
+        break;
+        case "distance":
+            // 1. Start with distance
+            // 2. Charge energy is distance divided by economy
+            schedule.settings.charge_energy = schedule.settings.charge_distance / schedule.settings.car_economy
+            // 3. Charge period is energy divided by charge rate
+            schedule.settings.period = schedule.settings.charge_energy / schedule.settings.charge_rate
+            // 4. Calculate target soc
+            schedule.settings.target_soc = schedule.settings.current_soc + (schedule.settings.charge_energy / schedule.settings.battery_capacity)
+            if (schedule.settings.target_soc>1.0) schedule.settings.target_soc = 1.0
+        break;
+        case "input":
+        case "ovms":
+            // 1. Start with current and target SOC
+            // 2. Charge energy
+            schedule.settings.charge_energy = (schedule.settings.target_soc-schedule.settings.current_soc)*schedule.settings.battery_capacity
+            // 3. Charge distance is energy x economy
+            schedule.settings.charge_distance = schedule.settings.charge_energy * schedule.settings.car_economy
+            // 4. Charge period is energy divided by charge rate
+            schedule.settings.period = schedule.settings.charge_energy / schedule.settings.charge_rate
+        break; 
+    }
+    
+    schedule.settings.charge_energy = 1.0*(schedule.settings.charge_energy.toFixed(2))
+    schedule.settings.charge_distance = 1.0*(schedule.settings.charge_distance.toFixed(1))
+    
+    if (reset_timeleft) schedule.runtime.timeleft = schedule.settings.period * 3600;
 }
 
 function schedule_info_openevse(forecast_units,mean,peak) {
@@ -58,9 +127,9 @@ function openevse_update_UI_from_input_values(inputs) {
     if (schedule.settings.soc_source=='input' && inputs.soc!=undefined) {
         var last_soc = parseFloat(schedule.settings.current_soc)
         schedule.settings.current_soc = inputs.soc.value*0.01;
-        schedule.settings.period = ((schedule.settings.target_soc-schedule.settings.current_soc)*schedule.settings.battery_capacity)/schedule.settings.charge_rate;
+        openevse_calc_modes(false);
         if (schedule.settings.current_soc!=last_soc) on_UI_change();
-    }
+    } 
 }
 
 function openevse_fetch_ovms_soc(callback) {
@@ -70,7 +139,7 @@ function openevse_fetch_ovms_soc(callback) {
             dataType: 'json', async: true, success: function(ovms_result){
                 var last_soc = parseFloat(schedule.settings.current_soc)                        
                 schedule.settings.current_soc = ovms_result.soc*0.01;
-                schedule.settings.period = ((schedule.settings.target_soc-schedule.settings.current_soc)*schedule.settings.battery_capacity)/schedule.settings.charge_rate;
+                openevse_calc_modes(false);
                 
                 var changed = false;
                 if (schedule.settings.current_soc!=last_soc) changed = true;
@@ -91,7 +160,7 @@ function openevse_events() {
     $("#battery").on("bchange",function() {
         schedule.settings.period = battery.period
         schedule.settings.target_soc = battery.target_soc
-        schedule.runtime.timeleft = schedule.settings.period * 3600;
+        openevse_calc_modes(true);
         on_UI_change();
     });  
 
@@ -100,9 +169,11 @@ function openevse_events() {
         
         if (schedule.settings.soc_source=="ovms") {
             openevse_fetch_ovms_soc(function(changed){
+                openevse_calc_modes(true);
                 on_UI_change();
             });
         } else {
+            openevse_calc_modes(true);
             on_UI_change();
         }
     });
@@ -111,6 +182,15 @@ function openevse_events() {
         var battery_capacity = $(this).val();
         schedule.settings.battery_capacity = battery_capacity*1.0;
         if (schedule.settings.battery_capacity<0.0) schedule.settings.battery_capacity = 0.0;
+        openevse_calc_modes(true);
+        on_UI_change();
+    });
+    
+    $('.input[name="car_economy"]').change(function(){
+        var car_economy = $(this).val();
+        schedule.settings.car_economy = car_economy*1.0;
+        if (schedule.settings.car_economy<0.0) schedule.settings.car_economy = 0.0;
+        openevse_calc_modes(true);
         on_UI_change();
     });
 
@@ -118,12 +198,14 @@ function openevse_events() {
         var charge_rate = $(this).val();
         schedule.settings.charge_rate = charge_rate*1.0;
         if (schedule.settings.charge_rate<0.0) schedule.settings.charge_rate = 0.0;
+        openevse_calc_modes(true);
         on_UI_change();
     });
     
     $('.input[name="ovms_vehicleid"]').change(function(){
         schedule.settings.ovms_vehicleid = $(this).val();
         openevse_fetch_ovms_soc(function(changed){
+            openevse_calc_modes(true);
             on_UI_change();
         });
     });
@@ -131,6 +213,7 @@ function openevse_events() {
     $('.input[name="ovms_carpass"]').change(function(){
         schedule.settings.ovms_carpass = $(this).val();
         openevse_fetch_ovms_soc(function(changed){
+            openevse_calc_modes(true);
             on_UI_change();
         });
     });
@@ -140,6 +223,7 @@ function openevse_events() {
         schedule.settings.balpercentage = (balpercentage * 0.01);
         if (schedule.settings.balpercentage<0.0) schedule.settings.balpercentage = 0.0;
         if (schedule.settings.balpercentage>1.0) schedule.settings.balpercentage = 1.0;
+        openevse_calc_modes(true);
         on_UI_change();
     });
 
@@ -148,6 +232,28 @@ function openevse_events() {
         schedule.settings.baltime = baltime / 60;
         if (schedule.settings.baltime<0.0) schedule.settings.baltime = 0.0;
         if (schedule.settings.baltime>24.0) schedule.settings.baltime = 24.0;
+        openevse_calc_modes(true);
+        on_UI_change();
+    });
+
+    $("#period input[type=time]").change(function() {
+        // period is set in main.js
+        openevse_calc_modes(true);
+    });
+    
+    $('.input[name="charge_distance"]').change(function(){
+        var charge_distance = $(this).val()*1.0;
+        if (charge_distance<0) charge_distance = 0;
+        schedule.settings.charge_distance = charge_distance;
+        openevse_calc_modes(true);
+        on_UI_change();
+    });
+    
+    $('.input[name="charge_energy"]').change(function(){
+        var charge_energy = $(this).val()*1.0;
+        if (charge_energy<0) charge_energy = 0;
+        schedule.settings.charge_energy = charge_energy;
+        openevse_calc_modes(true);
         on_UI_change();
     });
 }

@@ -14,13 +14,16 @@ class openevse
     
     public function default_settings() {
         $defaults = new stdClass();
-        $defaults->soc_source = "ovms"; // time, input
+        $defaults->soc_source = "ovms"; // time, energy, distance, input, ovms
         $defaults->battery_capacity = 40.0;
         $defaults->charge_rate = 7.5;
         $defaults->target_soc = 0.8;
         $defaults->current_soc = 0.2;
         $defaults->balpercentage = 0.9;
         $defaults->baltime = 2.0;
+        $defaults->car_economy = 4.0;
+        $defaults->charge_energy = 0.0;
+        $defaults->charge_distance = 0.0;
         $defaults->ovms_vehicleid = "";
         $defaults->ovms_carpass = "";
         return $defaults;
