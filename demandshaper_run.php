@@ -206,6 +206,10 @@ while(true)
                     if (isset($schedule->settings->flowT)) {
                         $device_class[$device_type]->set_flowT($device,$schedule->settings->flowT);
                     }
+
+                    if (isset($schedule->settings->divert_mode)) {
+                        $device_class[$device_type]->set_divert_mode($device,$schedule->settings->divert_mode);
+                    }
                 }
                 
                 // -----------------------------------------------------------------------

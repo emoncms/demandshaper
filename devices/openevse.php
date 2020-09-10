@@ -26,6 +26,7 @@ class openevse
         $defaults->charge_distance = 0.0;
         $defaults->ovms_vehicleid = "";
         $defaults->ovms_carpass = "";
+        $defaults->divert_mode = 0;
         return $defaults;
     }
     
@@ -76,6 +77,21 @@ class openevse
             $this->last_timer[$device] = $timer_str;
             $this->mqtt_client->publish("$device/rapi/in/\$ST",$timer_str,0);
             schedule_log("$device set timer $timer_str");
+        }
+    }
+    
+    public function set_divert_mode($device,$mode) {
+        $device = $this->basetopic."/$device";
+        
+        $mode = (int) $mode;
+        $mode += 1;
+        
+        if (!isset($this->last_divert_mode[$device])) $this->last_divert_mode[$device] = "";
+
+        if ($this->last_divert_mode[$device]!=$mode) {
+            $this->last_divert_mode[$device] = $mode;
+            $this->mqtt_client->publish("$device/divertmode/set",$mode,0);
+            schedule_log("$device divert mode $mode");
         }
     }
     

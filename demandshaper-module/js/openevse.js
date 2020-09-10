@@ -51,6 +51,9 @@ function update_input_UI_openevse() {
     $(".input[name=car_economy]").val(schedule.settings.car_economy);
     $(".input[name=charge_distance]").val(schedule.settings.charge_distance);
     $(".input[name=charge_energy]").val(schedule.settings.charge_energy);  
+    
+    $(".scheduler-checkbox[name='divert_mode']").parent().show();
+    $(".scheduler-checkbox[name='divert_mode']").attr("state",schedule.settings.divert_mode);
 }
 
 function openevse_calc_modes(reset_timeleft) {

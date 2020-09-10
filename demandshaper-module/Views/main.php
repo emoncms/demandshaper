@@ -51,7 +51,7 @@
           <div class="smart">
           
             <div class="row" style="max-width:700px; margin: 0 auto;">
-              <div class="span4" style="margin-bottom:0px">
+              <div class="span4" style="margin-bottom:8px">
                 <div id="run_period">
                   <p>Run period:</p>
                   <div id="period" class="btn-group input-time">
@@ -71,15 +71,19 @@
                   </div>
                 </div>
               </div>
-              <div class="span4" style="margin-bottom:0px">
+              <div class="span4" style="margin-bottom:8px">
                 <p>Complete by:</p>
                 <div id="end" class="btn-group input-time">
                   <button>-</button><input type="time" val="00:00"><button>+</button>
                 </div>
               </div>
-              <div class="span4" style="margin-bottom:20px">
+              <div class="span4" style="margin-bottom:8px">
                 <p>Ok to interrupt:</p>
                 <div name="interruptible" state=0 class="scheduler-checkbox" style="margin:0 auto"></div>
+              </div>
+              <div class="span4 hide" style="margin-bottom:8px">
+                <p>Eco mode:</p>
+                <div name="divert_mode" state=0 class="scheduler-checkbox" style="margin:0 auto"></div>
               </div>
             </div>
           </div>
