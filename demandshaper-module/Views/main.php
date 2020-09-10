@@ -1,4 +1,9 @@
-<?php global $path; $v=8; ?>
+<?php 
+$v=8;
+global $path; 
+$emoncmspath = $path;
+if ($remoteaccess) $emoncmspath .= "remoteaccess/";
+?>
 <link rel="stylesheet" href="<?php echo $path; ?>Modules/demandshaper/demandshaper.css?v=<?php echo $v; ?>">
 
 <script language="javascript" type="text/javascript" src="<?php echo $path; ?>Lib/flot/jquery.flot.min.js"></script>
@@ -204,6 +209,7 @@
 </div>
 
 <script>
+var emoncmspath = "<?php echo $emoncmspath; ?>";
 var forecast_list = <?php echo json_encode($forecast_list); ?>;
 var schedule = <?php echo json_encode($schedule); ?>;
 var device_id = <?php echo $device_id; ?>;

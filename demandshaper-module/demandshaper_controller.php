@@ -36,8 +36,6 @@ function demandshaper_controller()
     include "Modules/demandshaper/demandshaper_model.php";
     $demandshaper = new DemandShaper($mysqli,$redis,$device);
     
-
-    
     if ($session['userid']) $timezone = $user->get_timezone($session['userid']);
     
     $forecast_list = $demandshaper->get_forecast_list();
@@ -63,6 +61,7 @@ function demandshaper_controller()
                 
                 if (isset($schedules->$device_name)) {
                     return view("Modules/demandshaper/Views/main.php", array(
+                        "remoteaccess"=>$remoteaccess,
                         "forecast_list"=>$forecast_list,
                         "schedule"=>$schedules->$device_name,
                         "device_id"=>$device->exists_nodeid($session["userid"], $device_name)
@@ -74,7 +73,9 @@ function demandshaper_controller()
         case "add-device":
             $route->format = "html";
             if ($session["write"]) {
-                return view("Modules/demandshaper/Views/add_device.php", array());
+                return view("Modules/demandshaper/Views/add_device.php", array(
+                    "remoteaccess"=>$remoteaccess
+                ));
             }
             break;
 
@@ -117,7 +118,7 @@ function demandshaper_controller()
             break;
             
         case "save": 
-            if ($session["write"]) {
+            if (!$remoteaccess && $session["write"]) {
                 if (isset($_POST['schedule']) || isset($_GET['schedule'])) {
                     $schedule = json_decode(prop('schedule'));
                     
