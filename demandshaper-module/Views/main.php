@@ -65,7 +65,7 @@
                   </div>
                 </div>
                 <div id="charge_distance_div" class="hide">
-                  <p>Distance:</p>
+                  <p>Distance (<span id="charge_distance_units">miles</span>):</p>
                   <div class="btn-group input-time">
                     <button>-</button><input class="input" name="charge_distance" type="text" val="0" style="width:30px; text-align:center"><button>+</button>
                   </div>
@@ -82,8 +82,8 @@
                 <div name="interruptible" state=0 class="scheduler-checkbox" style="margin:0 auto"></div>
               </div>
               <div class="span4 hide" style="margin-bottom:8px">
-                <p>Eco mode:</p>
-                <div name="divert_mode" state=0 class="scheduler-checkbox" style="margin:0 auto"></div>
+                <p title="Solar PV Divert">Eco mode:</p>
+                <div title="Solar PV Divert" name="divert_mode" state=0 class="scheduler-checkbox" style="margin:0 auto"></div>
               </div>
             </div>
           </div>
@@ -175,7 +175,8 @@
               <tr><td>Control based on:</td><td><select class="input" name="soc_source"><option value="time">Charge time</option><option value="energy">Charge energy</option><option value="distance">Travel distance</option><option value="input">Battery charge level (Input)</option><option value="ovms">Battery charge level (OVMS)</option></select></td></tr>
               <tr><td>Useable Battery Capacity:</td><td><input class="input" name="battery_capacity" type="text" style="width:80px"/> kWh</td></tr>
               <tr><td>AC Charge Rate:</td><td><input class="input" name="charge_rate" type="text" style="width:80px"/> kW</td></tr>
-              <tr><td>Car economy:</td><td><input class="input" name="car_economy" type="text" style="width:80px"/> miles/kWh</td></tr>
+              <tr><td>Car economy:</td><td><input class="input" name="car_economy" type="text" style="width:80px"/> <span id="car_economy_units">miles/kWh</span></td></tr>
+              <tr><td>Distance units:</td><td><select class="input" name="distance_units" style="width:100px"><option>miles</option><option>km</option></td></tr>
               <tr class="openevse-balancing hide"><td>Balancing Percentage::</td><td><input class="input" name="balpercentage" type="text" style="width:80px"/> %</td></tr>
               <tr class="openevse-balancing hide"><td>Balancing Time:</td><td><input class="input" name="baltime" type="text" style="width:80px"/> Mins</td></tr>
               <tr class="ovms-options hide"><td>OVMS Vehicle ID:</td><td><input class="input" name="ovms_vehicleid" type="text" style="width:80px"/></td></tr>

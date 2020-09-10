@@ -24,6 +24,7 @@ class openevse
         $defaults->car_economy = 4.0;
         $defaults->charge_energy = 0.0;
         $defaults->charge_distance = 0.0;
+        $defaults->distance_units = "miles";
         $defaults->ovms_vehicleid = "";
         $defaults->ovms_carpass = "";
         $defaults->divert_mode = 0;

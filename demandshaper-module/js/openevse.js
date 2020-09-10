@@ -1,6 +1,6 @@
 function update_input_UI_openevse() {
     $(".openevse").show();
-
+    
     if (schedule.settings.soc_source=="input" || schedule.settings.soc_source=="ovms") {
         $("#run_period").hide();
         $("#charge_energy_div").hide();
@@ -50,10 +50,21 @@ function update_input_UI_openevse() {
     $(".input[name=ovms_carpass]").val(schedule.settings.ovms_carpass);
     $(".input[name=car_economy]").val(schedule.settings.car_economy);
     $(".input[name=charge_distance]").val(schedule.settings.charge_distance);
+    if (schedule.settings.distance_units=="miles") {
+        $("#car_economy_units").html("miles/kWh");
+        $("#charge_distance_units").html("miles");
+    } else {
+        $("#car_economy_units").html("km/kWh");
+        $("#charge_distance_units").html("km"); 
+    }
+        
+    $(".input[name=distance_units]").val(schedule.settings.distance_units);  
     $(".input[name=charge_energy]").val(schedule.settings.charge_energy);  
     
     $(".scheduler-checkbox[name='divert_mode']").parent().show();
     $(".scheduler-checkbox[name='divert_mode']").attr("state",schedule.settings.divert_mode);
+    
+    if (schedule.settings.ctrlmode=="timer") $("#battery_bound").hide();
 }
 
 function openevse_calc_modes(reset_timeleft) {
@@ -249,6 +260,12 @@ function openevse_events() {
         if (charge_distance<0) charge_distance = 0;
         schedule.settings.charge_distance = charge_distance;
         openevse_calc_modes(true);
+        on_UI_change();
+    });
+
+    $('.input[name="distance_units"]').change(function(){
+        var distance_units = $(this).val();
+        schedule.settings.distance_units = distance_units;
         on_UI_change();
     });
     
