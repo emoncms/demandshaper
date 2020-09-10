@@ -1,4 +1,4 @@
-<?php global $path; $v=7; ?>
+<?php global $path; $v=8; ?>
 <link rel="stylesheet" href="<?php echo $path; ?>Modules/demandshaper/demandshaper.css?v=<?php echo $v; ?>">
 
 <script language="javascript" type="text/javascript" src="<?php echo $path; ?>Lib/flot/jquery.flot.min.js"></script>
@@ -41,8 +41,8 @@
               </div>
               <div class="span4" style="margin-bottom:20px">
                 <p>Target Temperature</p>
-                <div id="flowT" class="btn-group input-temperature">
-                  <button>-</button><input type="text" val="0" style="width:60px"><button>+</button>
+                <div id="flowT" class="btn-group">
+                  <button>-</button><input class="input" name="flowT" type="text" val="0" style="width:60px"><button>+</button>
                 </div>
               </div>
             </div>
@@ -60,13 +60,13 @@
                 </div>
                 <div id="charge_energy_div" class="hide">
                   <p>Energy (kWh):</p>
-                  <div class="btn-group input-time">
+                  <div id="charge_energy" class="btn-group">
                     <button>-</button><input class="input" name="charge_energy" type="text" val="0" style="width:30px; text-align:center"><button>+</button>
                   </div>
                 </div>
                 <div id="charge_distance_div" class="hide">
                   <p>Distance (<span id="charge_distance_units">miles</span>):</p>
-                  <div class="btn-group input-time">
+                  <div id="charge_distance" class="btn-group">
                     <button>-</button><input class="input" name="charge_distance" type="text" val="0" style="width:30px; text-align:center"><button>+</button>
                   </div>
                 </div>

@@ -276,4 +276,27 @@ function openevse_events() {
         openevse_calc_modes(true);
         on_UI_change();
     });
+    
+    $("#charge_distance button").click(function() {
+        var type = $(this).html();
+        if (type=="+") {
+            schedule.settings.charge_distance += 1.0;
+        } else if (type=="-") {
+            schedule.settings.charge_distance -= 1.0;
+        }
+        openevse_calc_modes(true);
+        on_UI_change();
+    });
+    
+    $("#charge_energy button").click(function() {
+        var type = $(this).html();
+        if (type=="+") {
+            schedule.settings.charge_energy += 1.0;
+        } else if (type=="-") {
+            schedule.settings.charge_energy -= 1.0;
+        }
+        openevse_calc_modes(true);
+        on_UI_change();
+    });
+    
 }

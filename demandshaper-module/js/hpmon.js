@@ -35,19 +35,18 @@ function schedule_info_hpmon(forecast_units,mean,peak) {
 }
 
 function hpmon_events() {
-    $(".input-temperature button").click(function() {
-        var name = $(this).parent().attr("id");
+
+    $("#flowT button").click(function() {
         var type = $(this).html();
-        
         if (type=="+") {
-            schedule.settings[name] += 1.0;
+            schedule.settings.flowT += 1.0;
         } else if (type=="-") {
-            schedule.settings[name] -= 1.0;
+            schedule.settings.flowT -= 1.0;
         }
         on_UI_change();
     });
 
-    $(".input-temperature input[type=text]").change(function() {
+    $(".input[name=flowT]").change(function() {
         var name = $(this).parent().attr("id");
         var tempstr = $(this).val();
         tempstr = tempstr.replace("C","");
