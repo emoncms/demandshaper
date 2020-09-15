@@ -29,9 +29,15 @@ function demandshaper_controller()
     $remoteaccess = false;
     
     require_once "$linked_modules_dir/demandshaper/lib/misc.php";
-
-    require_once "Modules/device/device_model.php";
-    $device = new Device($mysqli,$redis);
+    
+    if (!$remoteaccess) {
+        require_once "Modules/device/device_model.php";
+        $device = new Device($mysqli,$redis);
+    } else {
+        $device = false;
+        require_once "Modules/remoteaccess/RemoteAccess.php";
+        $remoteaccess_class = new RemoteAccess($session["username"]);
+    }
 
     include "Modules/demandshaper/demandshaper_model.php";
     $demandshaper = new DemandShaper($mysqli,$redis,$device);
@@ -50,7 +56,11 @@ function demandshaper_controller()
         case "":
             $route->format = "html";
             if ($session["write"]) {
-                $schedules = $demandshaper->get($session["userid"]);
+                if ($remoteaccess) {
+                    $schedules = $remoteaccess_class->request("demandshaper","schedules","",array("userid"=>$session["userid"]),1.5);
+                } else {
+                    $schedules = $demandshaper->get($session["userid"]);
+                }
                 if (isset($_GET['device'])) {
                     $device_name = $_GET['device'];
                 } else {
@@ -64,7 +74,7 @@ function demandshaper_controller()
                         "remoteaccess"=>$remoteaccess,
                         "forecast_list"=>$forecast_list,
                         "schedule"=>$schedules->$device_name,
-                        "device_id"=>$device->exists_nodeid($session["userid"], $device_name)
+                        "device_id"=>0 // NEED TO FIX $device->exists_nodeid($session["userid"], $device_name)
                     ));
                 }
             }
@@ -199,7 +209,7 @@ function demandshaper_controller()
                     include "Modules/demandshaper/MQTTRequest.php";
                     $mqtt_request = new MQTTRequest($settings['mqtt']);
                     
-                    $demandshaper->device_class[$schedules->$device->settings->device_type]->set_basetopic($settings['mqtt']['basetopic']);
+                    $demandshaper->device_class[$schedules->$device->settings->device_type]->set_basetopic($basetopic);
                     return $demandshaper->device_class[$schedules->$device->settings->device_type]->get_state($mqtt_request,$device,$timezone);
                 }
             }   

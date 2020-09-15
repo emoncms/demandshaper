@@ -11,19 +11,30 @@ if ($session['write']) {
         'data'=> array('sidebar' => '#sidebar_demandshaper')
     );
 
-    require_once "Modules/device/device_model.php";
-    $device = new Device($mysqli,$redis);
+    $remoteaccess = false;
 
-    require_once "Modules/demandshaper/demandshaper_model.php";
-    $demandshaper = new DemandShaper($mysqli,$redis,$device);
-    
-    $devices = $demandshaper->get_list($session['userid']);
+    if (!$remoteaccess) {
+        require_once "Modules/device/device_model.php";
+        $device = new Device($mysqli,$redis);
+
+        require_once "Modules/demandshaper/demandshaper_model.php";
+        $demandshaper = new DemandShaper($mysqli,$redis,$device);
+        
+        $devices = $demandshaper->get_list($session['userid']);
+        $devices = json_decode(json_encode($devices));
+
+    } else {
+        require_once "Modules/remoteaccess/RemoteAccess.php";
+        $remoteaccess = new RemoteAccess($session["username"]);
+        $devices = $remoteaccess->request("demandshaper","list","",array(),1.5);
+        if ($devices=="API Timeout") $devices = array();
+    }
     
     $o=0;
     foreach ($devices as $name=>$d) {
         $menu['sidebar']['demandshaper'][] = array(
-            'icon' => $d["type"],
-            'text' => ucfirst($devices[$name]['device_name']),
+            'icon' => $d->type,
+            'text' => ucfirst($devices->$name->device_name),
             'path' => "demandshaper?device=".$name,
             'order'=> $o
         );
