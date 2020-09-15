@@ -65,5 +65,3 @@ while 1:
 # Close
 mqttc.loop_stop()
 mqttc.disconnect()
-
-

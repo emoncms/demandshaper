@@ -143,9 +143,14 @@ class emonesp
         if ($message->topic==$this->basetopic."/$device/in/ctrlmode") {
             $ctrlmode = strtolower($message->payload);
             if ($ctrlmode!=$schedule->settings->ctrlmode) {
-                $schedule->settings->ctrlmode = $ctrlmode;
-                schedule_log("$device external script correction of ctrlmode to $ctrlmode");
-                return $schedule;
+                if ($schedule->settings->ctrlmode=="smart" && $ctrlmode=="timer") {
+                    // do not update if ctrlmode is smart and timer mismatch
+                    return false;
+                } else {
+                    $schedule->settings->ctrlmode = $ctrlmode;
+                    schedule_log("$device external script correction of ctrlmode to $ctrlmode");
+                    return $schedule;
+                }
             }
         }
     
