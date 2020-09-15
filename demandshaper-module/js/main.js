@@ -279,7 +279,11 @@ $(window).resize(function(){
 // -----------------------------------------------------------------------------------------------
 
 $("#mode button").click(function() {
+    var last_ctrlmode = schedule.settings.ctrlmode
     schedule.settings.ctrlmode = $(this).attr("mode");
+    if (schedule.settings.ctrlmode!=last_ctrlmode) {
+        schedule.runtime.timeleft = schedule.settings.period * 3600;
+    }
     on_UI_change();
 });
 
