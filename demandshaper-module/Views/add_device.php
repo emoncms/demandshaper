@@ -10,43 +10,15 @@ Part of the OpenEnergyMonitor project:
 http://openenergymonitor.org
 
 */
-
-global $path;
-
-$device = "";
-if (isset($_GET['device'])) $device = $_GET['device'];
-
 $v=2;
-
+global $path;
 $emoncmspath = $path;
-if ($remoteaccess) $emoncmspath .= "remoteaccess/";
-
+// if ($remoteaccess) $emoncmspath .= "remoteaccess/";
+if (isset($_GET['apikey'])) $apikeystr = "&apikey=".$_GET['apikey']; else $apikeystr = "";
 ?>
 
-<script>
-var emoncmspath = "<?php echo $emoncmspath; ?>";
-var device_name = "<?php echo $device; ?>";
-var devices = {};
-
-var apikeystr = "&apikey=<?php echo $apikey; ?>";
-
-var forecast_list = <?php echo json_encode($forecast_list); ?>;
-
-</script>
-<style>
-    #icon-list svg {
-        opacity: .7
-    }
-}
-</style>
-<!--[if IE]><script language="javascript" type="text/javascript" src="<?php echo $path;?>Lib/flot/excanvas.min.js"></script><![endif]-->
-<script language="javascript" type="text/javascript" src="<?php echo $path; ?>Lib/flot/jquery.flot.min.js"></script>
-<script language="javascript" type="text/javascript" src="<?php echo $path; ?>Lib/flot/jquery.flot.time.min.js"></script>
-<script language="javascript" type="text/javascript" src="<?php echo $path; ?>Lib/flot/date.format.min.js"></script>
-<script language="javascript" type="text/javascript" src="<?php echo $path;?>Modules/vis/visualisations/common/vis.helper.js"></script>
-
+<style>#icon-list svg { opacity: .7; }</style>
 <link rel="stylesheet" href="<?php echo $path; ?>Modules/demandshaper/demandshaper.css?v=<?php echo $v; ?>">
-<script type="text/javascript" src="<?php echo $path; ?>Modules/demandshaper/battery.js?v=<?php echo $v; ?>"></script>
 
   <div id="scheduler-top"></div>
   
@@ -55,7 +27,7 @@ var forecast_list = <?php echo json_encode($forecast_list); ?>;
       <button class="btn btn-small auth-check-btn auth-check-allow">Allow</button>
   </div>
 
-  <div id="wizard" class="hide">
+  <div id="wizard">
       
       <h2>Demand Shaper Module</h2>
       <p>Schedule your smart devices to run at the best time using cost, carbon<br>and local renewable power availability forecasts for the day ahead.</p>
@@ -141,72 +113,53 @@ var forecast_list = <?php echo json_encode($forecast_list); ?>;
   </div>
   </div>
 
-  <?php
-      if (strpos($device,"emonth")!==false) {
-          include "Modules/demandshaper/emonth.php";
-      } else {
-          include "Modules/demandshaper/general.php";
-      }
-  ?>
-
-  <script>
-
-  device_id = false
-  device_type = false
-  device_loaded = false
-  
-  update_sidebar();
-  setInterval(update_sidebar,10000);
-  function update_sidebar() {
-      $.ajax({ url: emoncmspath+"demandshaper/list"+apikeystr, dataType: 'json', async: true, success: function(result) {
-          devices = result;
-          
-          // Build menu
-          // var out = "";
-          for (var name in devices) {
-          //  out += "<li><a href='"+path+"demandshaper?node="+name+"'><span class='icon-"+devices[name].type+"'></span>"+ucfirst(name)+"</a></li>";
-          //  select first device if device is not defined
-              if (!device_name) device_name = name;
-          }
-
-          // out += "<li id='add-device' style='border-top:1px solid #aaa; cursor:pointer'><a><i class='icon-plus icon-white'></i> Add Device</a></li>";
-          // $(".sidenav-menu").html(out);
-          
-          if (!device_loaded) {
-              if (device_name && devices[device_name]!=undefined) {
-                  hide_device_finder();
-                  
-                  device_id = devices[device_name].id;
-                  device_type = devices[device_name].type;
-                  
-                  $("#wizard").hide();
-                  load_device(device_id, device_name, device_type);
-              } else {
-                  show_device_finder();
-              }
-          }
-      }});
-  }
-
-  function ucfirst(string) {
-      return string.charAt(0).toUpperCase() + string.slice(1);
-  }
-  </script>
-
 <script>
 var emoncmspath = "<?php echo $emoncmspath; ?>";
+var apikeystr = "<?php echo $apikeystr; ?>";
+
+// Initiate auth request check: sends a UDP broadcast on local network
+auth_check();
+clearInterval(auth_check_interval);
+auth_check_interval = setInterval(auth_check,5000);
+
+// Detect new configured device and redirect
+var devices = false;
+detect_new_device();
+setInterval(detect_new_device,5000);
+
+function detect_new_device() {
+    $.ajax({ url: emoncmspath+"demandshaper/list"+apikeystr, dataType: 'json', async: true, success: function(result) {
+        console.log(result);
+        
+        // First run devices var is false, populate with known devices
+        if (devices===false) {
+            devices = [];
+            for (var device_key in result) {
+                devices.push(device_key)
+            }
+        }
+        
+        // If we subsequently find a new device auto redirect to device view
+        for (var device_key in result) {
+            if (devices.indexOf(device_key)==-1) {
+                window.location = emoncmspath+"demandshaper?device="+device_key;
+            }
+        }
+        
+    }});
+}
+
 // -------------------------------------------------------------------------------------------------------
 // Device authentication transfer
 // -------------------------------------------------------------------------------------------------------
 var auth_check_interval = false;
+
 function auth_check(){
     $.ajax({ url: emoncmspath+"device/authcheck.json"+apikeystr, dataType: 'json', async: true, success: function(data) {
         if (typeof data.ip !== "undefined") {
             $("#auth-check-ip").html(data.ip);
             $("#auth-check").show();
             $("#table").css("margin-top","0");
-            // $("#no-devices-found-title").html("Device Found");
-            // $("#no-devices-found-checking").html("Click Allow to pair device");
         } else {
             $("#table").css("margin-top","3rem");
             $("#auth-check").hide();
@@ -218,26 +171,8 @@ $(".auth-check-allow").click(function(){
     var ip = $("#auth-check-ip").html();
     $.ajax({ url: emoncmspath+"device/authallow.json?ip="+ip+apikeystr, dataType: 'json', async: true, success: function(data) {
         $("#auth-check").hide();
-        // $("#no-devices-found-checking").html("Please wait for device to connect");
     }});
 });
-
-$("#add-device").click(function(event){
-    event.preventDefault();
-    show_device_finder();
-});
-
-function show_device_finder() {
-    $("#scheduler-outer").hide();
-    $("#wizard").show();
-    auth_check();
-    clearInterval(auth_check_interval);
-    auth_check_interval = setInterval(auth_check,5000);
-}
-
-function hide_device_finder() {
-    clearInterval(auth_check_interval);
-}
 
 $(".wizard-option-l1").click(function(){
    var name = $(this).attr("name");
@@ -250,4 +185,5 @@ $(".wizard-option-l2").click(function(){
    $(".wizard-option-l3[name="+name+"]").slideToggle();
    $(".wizard-option-l3[name!="+name+"]").slideUp();
 });
+
 </script>

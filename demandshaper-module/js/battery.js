@@ -19,7 +19,7 @@ var battery = {
     touchdown: false,
     pad: 10,
     soc: 0.2,
-    end_soc: 0.8,
+    target_soc: 0.8,
     capacity: 20.0,
     charge_rate: 3.8,
     events_loaded: false,
@@ -31,6 +31,8 @@ var battery = {
         
         // Dimentions
         battery.width = $("#"+element+"_bound").width()-5;
+        
+        console.log(battery.width)
         if (battery.width>400) battery.width = 400;
         battery.height = battery.width*0.44;
         $("#"+element+"_bound").css("height",battery.height);
@@ -49,9 +51,9 @@ var battery = {
         // Limits
         if (battery.soc<0.0) battery.soc = 0.0;
         if (battery.soc>1.0) battery.soc = 1.0;
-        if (battery.end_soc<0.0) battery.end_soc = 0.0;
-        if (battery.end_soc>1.0) battery.end_soc = 1.0;
-        if (battery.end_soc<battery.soc) battery.end_soc = battery.soc;
+        if (battery.target_soc<0.0) battery.target_soc = 0.0;
+        if (battery.target_soc>1.0) battery.target_soc = 1.0;
+        if (battery.target_soc<battery.soc) battery.target_soc = battery.soc;
                 
         // ctx
         var c = document.getElementById(battery.element);  
@@ -69,7 +71,7 @@ var battery = {
         //ctx.fillRect(pad*0.5,pad*0.5,batteryWidth+pad,75+pad);   
         ctx.roundRect(pad*0.5,pad*0.5,batteryWidth+pad,75+pad, 5).fill(); //or .fill() for a filled rect 
         ctx.fillStyle = "rgba(0,255,0,0.1)";
-        ctx.fillRect(pad,pad,batteryWidth*battery.end_soc,75);
+        ctx.fillRect(pad,pad,batteryWidth*battery.target_soc,75);
         ctx.fillStyle = "rgba(0,255,0,0.4)";
         ctx.fillRect(pad,pad,batteryWidth*battery.soc,75);
         
@@ -88,17 +90,16 @@ var battery = {
         ctx.fillStyle = "#666";
         ctx.fillText(Math.round(battery.soc*100)+'%',pad+(batteryWidth*battery.soc),pad + 100);
      
-        if (battery.end_soc>0.95) ctx.textAlign = "right";
-        if (battery.end_soc>battery.soc+0.05) {
+        if (battery.target_soc>0.95) ctx.textAlign = "right";
+        if (battery.target_soc>battery.soc+0.05) {
             ctx.fillStyle = "#666";
-            ctx.fillText(Math.round(battery.end_soc*100)+'%',pad+(batteryWidth*battery.end_soc),pad + 100);
+            ctx.fillText(Math.round(battery.target_soc*100)+'%',pad+(batteryWidth*battery.target_soc),pad + 100);
         }
         
-        var kwh = (battery.end_soc - battery.soc) * battery.capacity;
+        var kwh = (battery.target_soc - battery.soc) * battery.capacity;
         var time_left = kwh / battery.charge_rate;
-        console.log("Time Left: " + time_left);
         // Add on balancing time if balancing percentage is lower than end SOC
-        if (battery.balpercentage < battery.end_soc) {
+        if (battery.balpercentage < battery.target_soc) {
             time_left += battery.baltime;
             console.log("Balancing required Time to be added: " + battery.baltime + " - New Time Left: " + time_left);
         }
@@ -164,7 +165,7 @@ var battery = {
             var lx = battery.x;
             battery.x = Math.round(mx/batteryDiv)*batteryDiv;
             if (battery.x!=lx) {
-                battery.end_soc = battery.x/batteryWidth
+                battery.target_soc = battery.x/batteryWidth
                 battery.draw();
             }
         }
