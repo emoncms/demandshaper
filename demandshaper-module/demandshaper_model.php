@@ -363,13 +363,17 @@ class DemandShaper
             $data2 = explode(",",$csv_lines[5]);
 
             for ($i=0; $i<count($headings1); $i++) {
-                if (is_numeric($data1[$i])) $data1[$i] *= 1;
-                $data[$headings1[$i]] = $data1[$i];
+                if (isset($data1[$i])) {
+                    if (is_numeric($data1[$i])) $data1[$i] *= 1;
+                    $data[$headings1[$i]] = $data1[$i];
+                }
             }
 
             for ($i=0; $i<count($headings2); $i++) {
-                if (is_numeric($data2[$i])) $data2[$i] *= 1;
-                $data[$headings2[$i]] = $data2[$i];
+                if (isset($data2[$i])) {
+                    if (is_numeric($data2[$i])) $data2[$i] *= 1;
+                    $data[$headings2[$i]] = $data2[$i];
+                }
             }
         }
         return $data;
