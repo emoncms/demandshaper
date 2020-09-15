@@ -139,6 +139,7 @@ function openevse_update_UI_from_input_values(inputs) {
     if (inputs.temp1!=undefined) $("#openevse_temperature").html((inputs.temp1.value*0.1).toFixed(1));
 
     if (schedule.settings.soc_source=='input' && inputs.soc!=undefined) {
+
         var last_soc = parseFloat(schedule.settings.current_soc)
         schedule.settings.current_soc = inputs.soc.value*0.01;
         openevse_calc_modes(false);

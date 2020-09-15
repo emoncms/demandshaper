@@ -152,20 +152,19 @@ class openevse
         if ((time()-$this->last_soc_update)>600 && $schedule->settings->soc_source!='time') {
             $this->last_soc_update = time();
             
-            /*if ($schedule->settings->soc_source=='socinput') {
+            if ($schedule->settings->soc_source=='input') {
+                global $input;
                 if ($feedid = $input->exists_nodeid_name($userid,$device,"soc")) {
                     $schedule->settings->current_soc = $input->get_last_value($feedid)*0.01;
                     schedule_log("Recalculating EVSE schedule based on emoncms input: ".$schedule->settings->current_soc);
                 }
             }
-            else */
-            if ($schedule->settings->soc_source=='ovms') {
+            else if ($schedule->settings->soc_source=='ovms') {
                 if ($schedule->settings->ovms_vehicleid!='' && $schedule->settings->ovms_carpass!='') {
                     global $demandshaper;
                     $ovms = $demandshaper->fetch_ovms_v2($schedule->settings->ovms_vehicleid,$schedule->settings->ovms_carpass);
                     if (isset($ovms['soc'])) $schedule->settings->current_soc = $ovms['soc']*0.01;
                     schedule_log("Recalculating EVSE schedule based on ovms: ".$schedule->settings->current_soc);
-
                 }
             }
             $kwh_required = ($schedule->settings->target_soc-$schedule->settings->current_soc)*$schedule->settings->battery_capacity;
