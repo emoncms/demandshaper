@@ -9,6 +9,17 @@ Developed as part of the CydYnni EnergyLocal project, see:
 
 ![demandshaper.png](images/demandshaper.png?v=1)
 
+## Supported forecasts
+
+- [Octopus Agile](https://octopus.energy/agile)
+- [CarbonIntensity UK Grid](https://www.carbonintensity.org.uk/)
+- [Energy Local day ahead forecasts](https://energylocal.org.uk)
+- [Nordpool](https://www.nordpoolgroup.com/)
+- [Solcast Solar Forecast](https://solcast.com)
+- [ClimaCell Solar Forecast](https://www.climacell.co)
+
+**New in v2:** Multiple forecasts can now be combined such as the Solcast Solar Forecast with the Octopus Agile forecast to allow optimisation of both on-site solar and import from Octopus Agile overnight.
+
 ## Requirements
 
 - Emoncms Core
