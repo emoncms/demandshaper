@@ -53,19 +53,19 @@ The module contains custom interfaces for applications such as EV charging where
 ## Developer Guide
 
 1. [Architecture](docs/architecture.md)
-2. [Add a new forecast](docs/add-a-new-forecast.md)
+2. [Add a new forecast](docs/adding-a-new-forecast.md)
 3. [Parsing forecasts](docs/forecasts/intro.md)
-4. [Add a new device](docs/add-a-new-device.md)
+4. [Add a new device](docs/adding-a-new-device.md)
 5. [The schedule object](docs/schedule-object.md)
 6. [Testing using the CLI scripts](docs/using-cli-tools.md)
 
 **Parsed Forecast Examples**
 
-- [Octopus Agile](docs/forecasts/octopusagile)
-- [CarbonIntensity UK Grid](docs/forecasts/carbonintensity)
-- [Energy Local day ahead forecasts](docs/forecasts/energylocal)
-- [Nordpool](docs/forecasts/nordpool)
-- [ClimaCell Solar Forecast](docs/forecasts/climacell)
+- [Octopus Agile](docs/forecasts/octopusagile.md)
+- [CarbonIntensity UK Grid](docs/forecasts/carbonintensity.md)
+- [Energy Local day ahead forecasts](docs/forecasts/energylocal.md)
+- [Nordpool](docs/forecasts/nordpool.md)
+- [ClimaCell Solar Forecast](docs/forecasts/climacell.md)
 
 ## Security
 
