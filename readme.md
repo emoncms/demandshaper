@@ -18,52 +18,21 @@ Developed as part of the CydYnni EnergyLocal project, see:
 - MQTT Mosquitto broker and MQTT emoncms setup as per emonSD image
 - Redis
 
----
+## Install
 
-## Option 1: Install full emoncms system including demandshaper module
+The DemandShaper module is pre-installed on the emonSD image that is shipped with OpenEnergyMonitor EmonPi and EmonBase devices. If you dont have a EmonPi or EmonBase but do have a spare RaspberryPi, the easiest way to use the DemandShaper module is to download the latest emonSD SD card image so that you have the full Emoncms stack. Alternatively it is possible to build the Emoncms stack from scratch (useful for non-Pi systems e.g a cloud VM) using EmonScripts, or if you already have an manual Emoncms installation see steps for manual installation below.
 
-Just run our automated emoncms installation script on a target system of choice, see:
+**Option 1: Use pre-built emonSD SD card image for a RaspberryPi
 
+Download the latest image here:<br>
+https://github.com/openenergymonitor/emonpi/wiki/emonSD-pre-built-SD-card-Download-&-Change-Log
+
+**Option 2: Install full emoncms system including demandshaper module using EmonScripts**
+
+Just run our automated emoncms installation script on a target system of choice, see:<br>
 [https://github.com/openenergymonitor/EmonScripts](https://github.com/openenergymonitor/EmonScripts)
 
-## Option 2: Install demandshaper module within an existing emoncms installation
-
-The following installation instructions uses the new [EmonScripts](https://github.com/openenergymonitor/EmonScripts) emoncms symlinked modules directory location: **/opt/emoncms/modules**. 
-
-If you do not already have this directory, start by creating the directory:
-
-    sudo mkdir /opt/emoncms
-    sudo chown pi:pi /opt/emoncms
-    mkdir /opt/emoncms/modules
-
-Download or git clone the demandshaper repository to your home folder:
-
-    cd /opt/emoncms/modules
-    git clone https://github.com/emoncms/demandshaper.git
-    
- Run demandshaper module installation script:
- 
-    cd demandshaper
-    ./install.sh
-
-Link the 'demandshaper-module' into the emoncms Modules folder:
-
-    ln -s /opt/emoncms/modules/demandshaper/demandshaper-module /var/www/emoncms/Modules/demandshaper
-
-Update emoncms database
-
-    Setup > Administration > Update database > Update & Check
-
-Add enable_UDP_broadcast setting to emoncms/settings.php to enable automatic WIFI device setup:
-
-    $enable_UDP_broadcast = true;
-
-Optional: Enable the periodic UDP broadcast script on the emonbase/emonpi:
-
-<pre>
-    crontab -e
-    * * * * * php /opt/openenergymonitor/emonpi/UDPBroadcast/broadcast.php 2>&1
-</pre>
+**Option 3: [Install demandshaper module within an existing emoncms installation](docs/manual-install.md)**
 
 ### [Sonoff S20 Smart Plug](https://guide.openenergymonitor.org/integrations/demandshaper-sonoff/)
 
