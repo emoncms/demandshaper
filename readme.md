@@ -50,6 +50,23 @@ Just run our automated emoncms installation script on a target system of choice,
 
 The module contains custom interfaces for applications such as EV charging where you can drag drop the battery level state of charge to the desired target, the module then calculates the required run time based on the battery size and charger charge rate.
 
+## Developer Guide
+
+1. [Architecture](docs/architecture.md)
+2. [Add a new forecast](docs/add-a-new-forecast.md)
+3. [Parsing forecasts](docs/forecasts/intro.md)
+4. [Add a new device](docs/add-a-new-device.md)
+5. [The schedule object](docs/schedule-object.md)
+6. [Testing using the CLI scripts](docs/using-cli-tools.md)
+
+**Parsed Forecast Examples**
+
+- [Octopus Agile](docs/forecasts/octopusagile)
+- [CarbonIntensity UK Grid](docs/forecasts/carbonintensity)
+- [Energy Local day ahead forecasts](docs/forecasts/energylocal)
+- [Nordpool](docs/forecasts/nordpool)
+- [ClimaCell Solar Forecast](docs/forecasts/climacell)
+
 ## Security
 
 - The standard configuration on emonSD and EmonScripts based systems include basic authentication for MQTT access. 

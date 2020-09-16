@@ -15,3 +15,11 @@ This is typically achieved by:
 ### Caching
 
 In order to reduce API calls to forcast servers and to speed up schedule recalculation, forecasts should be cached using redis with an expiry time set to that updated forecasts are automatically loaded.
+
+### Parsed Forecast Examples
+
+- [Octopus Agile](docs/forecasts/octopusagile)
+- [CarbonIntensity UK Grid](docs/forecasts/carbonintensity)
+- [Energy Local day ahead forecasts](docs/forecasts/energylocal)
+- [Nordpool](docs/forecasts/nordpool)
+- [ClimaCell Solar Forecast](docs/forecasts/climacell)
