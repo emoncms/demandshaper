@@ -78,7 +78,7 @@ $end = $date->getTimestamp();
 $period = (3600*3);
 
 // Run schedule
-require_once "../scheduler2.php";
+require_once "../lib/scheduler2.php";
 $combined = forecast_calc_min_max($combined);
 
 $s = microtime(true);

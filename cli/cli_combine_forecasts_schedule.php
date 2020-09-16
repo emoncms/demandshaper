@@ -62,7 +62,7 @@ $end = $date->getTimestamp();
 $period = (3600*3);
 
 // Run schedule
-require_once "../scheduler2.php";
+require_once "../lib/scheduler2.php";
 
 $agile = forecast_calc_min_max($agile);
 $solar = forecast_calc_min_max($solar);

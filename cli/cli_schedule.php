@@ -46,7 +46,7 @@ $end = $date->getTimestamp();
 $period = (3600*3);
 
 // Run schedule
-require_once "../scheduler2.php";
+require_once "../lib/scheduler2.php";
 $s = microtime(true);
 $periods = schedule_interruptible($forecast,$period,$end,$params->timezone);
 //$periods = schedule_block($forecast,$period,$end,$params->timezone);
