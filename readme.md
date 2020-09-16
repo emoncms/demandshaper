@@ -52,6 +52,8 @@ The module contains custom interfaces for applications such as EV charging where
 
 ## Developer Guide
 
+In progress of being written...
+
 1. [Architecture](docs/architecture.md)
 2. [Add a new forecast](docs/adding-a-new-forecast.md)
 3. [Parsing forecasts](docs/forecasts/intro.md)
