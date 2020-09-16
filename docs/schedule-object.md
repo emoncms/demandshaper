@@ -42,7 +42,7 @@ The settings section is saved to disk as they should only change during configur
                 "charge_distance": 22.8,
                 "distance_units": "miles",
                 "ovms_vehicleid": "",
-                "ovms_carpass": "skyeleaf",
+                "ovms_carpass": "",
                 "divert_mode": 0
             },
             "runtime":
