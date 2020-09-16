@@ -9,14 +9,12 @@ Developed as part of the CydYnni EnergyLocal project, see:
 
 ![demandshaper.png](images/demandshaper.png?v=1)
 
-**9th November 2018:** The demand shaper module now supports the use of the [UK grid carbon intensity](https://carbonintensity.org.uk) and [Octopus Agile](https://octopus.energy/agile/) forecasts.
-
 ## Requirements
 
-- Emoncms
+- Emoncms Core
 - Emoncms Device module
 - MQTT Mosquitto broker and MQTT emoncms setup as per emonSD image
-- Redis
+- Emoncms dependencies: Apache2, MariaDB, Redis etc.
 
 ## Install
 
@@ -34,106 +32,12 @@ Just run our automated emoncms installation script on a target system of choice,
 
 3. [Install demandshaper module within an existing emoncms installation](docs/manual-install.md)
 
-### [Sonoff S20 Smart Plug](https://guide.openenergymonitor.org/integrations/demandshaper-sonoff/)
+## User Guides
 
-### [OpenEVSE / EmonEVSE electric car smart charging](https://guide.openenergymonitor.org/integrations/demandshaper-openevse/)
+- [Sonoff S20 Smart Plug](https://guide.openenergymonitor.org/integrations/demandshaper-sonoff/)
+- [OpenEVSE / EmonEVSE electric car smart charging](https://guide.openenergymonitor.org/integrations/demandshaper-openevse/)
 
-The module contains custom interfaces for applications such as EV charging where you can drag drop the battery level state of charge to the desired target, the module then calculates the required run time based on the battery size and charger charge rate (hard coded at present, but will be configurable from the interface):
-
-![demandshaper.png](images/demandshaper.png)
-
-### Heatpump Control
-
-Integrates the ability to control a Mitsubushi EcoDan heatpump with FTC2B controller connected to the OpenEnergyMonitor HeatpumpMonitor. Flow temperature and heating On/Off is settable from the interface.
-
-![heatpump.png](images/heatpump.png)
-
----
-
-Submit schedule:
-
-    /emoncms/demandshaper/submit?schedule={
-        "active":1,
-        "period":3,
-        "end":16,
-        "repeat":[1,1,1,1,1,1,1],
-        "interruptible":0,
-        "runonce":false,
-        "basic":0,
-        "signal":"carbonintensity",
-        "device":"openevse"
-    }
-    
-    
-Get schedule:
-
-    /emoncms/demandshaper/get?device=mynode
-
-Response:
-
-    {
-        "schedule":
-        {
-            "settings":
-            {
-                "name": "mynode",
-                "device": "mynode",
-                "device_type": "smartplug",
-                "ctrlmode": "smart",
-                "signal": "carbonintensity",
-                "period": 3,
-                "end": 16,
-                "interruptible": 0,
-                "timer_start1": 0,
-                "timer_stop1": 0,
-                "timer_start2": 0,
-                "timer_stop2": 0,
-                "repeat":
-                [
-                    1,
-                    1,
-                    1,
-                    1,
-                    1,
-                    1,
-                    1
-                ],
-                "runonce": false,
-                "flowT": 30,
-                "openevsecontroltype": "time",
-                "batterycapacity": 20,
-                "chargerate": 3.8,
-                "ovms_vehicleid": "",
-                "ovms_carpass": "",
-                "balpercentage": 0.9,
-                "baltime": 45,
-                "ev_soc": 0.2,
-                "ev_target_soc": 0.8,
-                "ip": "",
-                "end_timestamp": 1590418800
-            },
-            "runtime":
-            {
-                "periods":
-                [
-                    {
-                        "start":
-                        [
-                            1590408000,
-                            13
-                        ],
-                        "end":
-                        [
-                            1590418800,
-                            16
-                        ]
-                    }
-                ],
-                "timeleft": 10800,
-                "last_update_from_device": 0
-            }
-        }
-    }
+The module contains custom interfaces for applications such as EV charging where you can drag drop the battery level state of charge to the desired target, the module then calculates the required run time based on the battery size and charger charge rate.
 
 ## Remote Cache
 
@@ -141,6 +45,7 @@ The remote cache currently run's on emoncms.org to reduce the potential API load
 
     https://emoncms.org/demandshaper/carbonintensity
     https://emoncms.org/demandshaper/octopus?gsp=A
+    https://dashboard.energylocal.org.uk/club/forecast?name=CLUB_NAME
 
 To install and use the cache on your own server. Symlink emoncms-remote module to Modules folder:
 
