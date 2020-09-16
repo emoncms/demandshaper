@@ -58,7 +58,5 @@ Add the cron entry:
 
 ## Security
 
-Already, MQTT control requires a password, this provides a basic level of security..
-To minimise additional risk, be sure to create an admin username and password in emonESP, this will limit access to the device.
-
-![admin_user_pass.png](images/admin_pass.png)
+- The standard configuration on emonSD and EmonScripts based systems include basic authentication for MQTT access. 
+- Devices running EmonESP such as the SmartPlug can be configured with an admin username and password to limit access.
