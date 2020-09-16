@@ -22,6 +22,8 @@ Developed as part of the CydYnni EnergyLocal project, see:
 
 The DemandShaper module is pre-installed on the emonSD image that is shipped with OpenEnergyMonitor EmonPi and EmonBase devices. If you dont have a EmonPi or EmonBase but do have a spare RaspberryPi, the easiest way to use the DemandShaper module is to download the latest emonSD SD card image so that you have the full Emoncms stack. Alternatively it is possible to build the Emoncms stack from scratch (useful for non-Pi systems e.g a cloud VM) using EmonScripts, or if you already have an manual Emoncms installation see steps for manual installation below.
 
+**Installation Options:**
+
 1. **Use pre-built emonSD SD card image for a RaspberryPi**<br>
 Download the latest image here:<br>
 https://github.com/openenergymonitor/emonpi/wiki/emonSD-pre-built-SD-card-Download-&-Change-Log
@@ -30,7 +32,7 @@ https://github.com/openenergymonitor/emonpi/wiki/emonSD-pre-built-SD-card-Downlo
 Just run our automated emoncms installation script on a target system of choice, see:<br>
 [https://github.com/openenergymonitor/EmonScripts](https://github.com/openenergymonitor/EmonScripts)
 
-3. **[Install demandshaper module within an existing emoncms installation](docs/manual-install.md)**
+3. [Install demandshaper module within an existing emoncms installation](docs/manual-install.md)
 
 ### [Sonoff S20 Smart Plug](https://guide.openenergymonitor.org/integrations/demandshaper-sonoff/)
 
