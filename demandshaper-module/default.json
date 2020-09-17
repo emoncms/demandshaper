@@ -1,0 +1,21 @@
+{
+    "settings": {
+        "device": "default",
+        "device_type": "smartplug",
+        "device_name": "default",
+        "ctrlmode": "smart",
+        "period":3,
+        "end":8,
+        "end_timestamp":0,
+        "interruptible": 0,
+        "runone":0,
+        "forecast_config": [{"name":"energylocal","club":"bethesda","weight":1.0}],
+        "forecast_units":"generic",
+        "ip":""
+    },
+    "runtime": {
+        "started": false,
+        "periods": [],
+        "timeleft": 10800
+    }
+}

@@ -11,19 +11,19 @@ if ($session['write']) {
         'data'=> array('sidebar' => '#sidebar_demandshaper')
     );
 
-    require_once "Modules/demandshaper/demandshaper_model.php";
-    $demandshaper = new DemandShaper($mysqli,$redis);
-
     require_once "Modules/device/device_model.php";
     $device = new Device($mysqli,$redis);
 
-    $devices = $demandshaper->get_list($device,$session['userid']);
+    require_once "Modules/demandshaper/demandshaper_model.php";
+    $demandshaper = new DemandShaper($mysqli,$redis,$device);
+    
+    $devices = $demandshaper->get_list($session['userid']);
     
     $o=0;
     foreach ($devices as $name=>$d) {
         $menu['sidebar']['demandshaper'][] = array(
             'icon' => $d["type"],
-            'text' => ucfirst($devices[$name]['custom_name']),
+            'text' => ucfirst($devices[$name]['device_name']),
             'path' => "demandshaper?device=".$name,
             'order'=> $o
         );
@@ -33,8 +33,7 @@ if ($session['write']) {
     $menu['sidebar']['demandshaper'][] = array(
         'icon' => "plus",
         'text' => "Add Device",
-        'path' => "demandshaper#add",
-        'id'=> "add-device",
+        'path' => "demandshaper/add-device",
         'order'=> $o
     );
 }

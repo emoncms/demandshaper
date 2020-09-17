@@ -9,133 +9,67 @@ Developed as part of the CydYnni EnergyLocal project, see:
 
 ![demandshaper.png](images/demandshaper.png?v=1)
 
-**9th November 2018:** The demand shaper module now supports the use of the [UK grid carbon intensity](https://carbonintensity.org.uk) and [Octopus Agile](https://octopus.energy/agile/) forecasts.
+## Supported forecasts
+
+- [Octopus Agile](https://octopus.energy/agile)
+- [CarbonIntensity UK Grid](https://www.carbonintensity.org.uk/)
+- [Energy Local day ahead forecasts](https://energylocal.org.uk)
+- [Nordpool](https://www.nordpoolgroup.com/)
+- [Solcast Solar Forecast](https://solcast.com)
+- [ClimaCell Solar Forecast](https://www.climacell.co)
+
+**New in v2:** Multiple forecasts can now be combined such as the Solcast Solar Forecast with the Octopus Agile forecast to allow optimisation of both on-site solar and import from Octopus Agile overnight.
 
 ## Requirements
 
-- Emoncms
+- Emoncms Core
 - Emoncms Device module
 - MQTT Mosquitto broker and MQTT emoncms setup as per emonSD image
-- Redis
+- Emoncms dependencies: Apache2, MariaDB, Redis etc.
 
----
+## Install
 
-## Option 1: Install full emoncms system including demandshaper module
+The DemandShaper module is pre-installed on the emonSD image that is shipped with OpenEnergyMonitor EmonPi and EmonBase devices. If you dont have a EmonPi or EmonBase but do have a spare RaspberryPi, the easiest way to use the DemandShaper module is to download the latest emonSD SD card image so that you have the full Emoncms stack. Alternatively it is possible to build the Emoncms stack from scratch (useful for non-Pi systems e.g a cloud VM) using EmonScripts, or if you already have an manual Emoncms installation see steps for manual installation below.
 
-Just run our automated emoncms installation script on a target system of choice, see:
+**Installation Options:**
 
+1. **Use pre-built emonSD SD card image for a RaspberryPi**<br>
+Download the latest image here:<br>
+https://github.com/openenergymonitor/emonpi/wiki/emonSD-pre-built-SD-card-Download-&-Change-Log
+
+2. **Install full emoncms system including demandshaper module using EmonScripts**<br>
+Just run our automated emoncms installation script on a target system of choice, see:<br>
 [https://github.com/openenergymonitor/EmonScripts](https://github.com/openenergymonitor/EmonScripts)
 
-## Option 2: Install demandshaper module within an existing emoncms installation
+3. [Install demandshaper module within an existing emoncms installation](docs/manual-install.md)
 
-The following installation instructions uses the new [EmonScripts](https://github.com/openenergymonitor/EmonScripts) emoncms symlinked modules directory location: **/opt/emoncms/modules**. 
+## User Guides
 
-If you do not already have this directory, start by creating the directory:
+- [Sonoff S20 Smart Plug](https://guide.openenergymonitor.org/integrations/demandshaper-sonoff/)
+- [OpenEVSE / EmonEVSE electric car smart charging](https://guide.openenergymonitor.org/integrations/demandshaper-openevse/)
 
-    sudo mkdir /opt/emoncms
-    sudo chown pi:pi /opt/emoncms
-    mkdir /opt/emoncms/modules
+The module contains custom interfaces for applications such as EV charging where you can drag drop the battery level state of charge to the desired target, the module then calculates the required run time based on the battery size and charger charge rate.
 
-Download or git clone the demandshaper repository to your home folder:
+## Developer Guide
 
-    cd /opt/emoncms/modules
-    git clone https://github.com/emoncms/demandshaper.git
-    
- Run demandshaper module installation script:
- 
-    cd demandshaper
-    ./install.sh
+In progress of being written...
 
-Link the 'demandshaper-module' into the emoncms Modules folder:
+1. [Architecture](docs/architecture.md)
+2. [Add a new forecast](docs/adding-a-new-forecast.md)
+3. [Parsing forecasts](docs/forecasts/intro.md)
+4. [Add a new device](docs/adding-a-new-device.md)
+5. [The schedule object](docs/schedule-object.md)
+6. [Testing using the CLI scripts](docs/using-cli-tools.md)
 
-    ln -s /opt/emoncms/modules/demandshaper/demandshaper-module /var/www/emoncms/Modules/demandshaper
+**Parsed Forecast Examples**
 
-Update emoncms database
-
-    Setup > Administration > Update database > Update & Check
-
-Add enable_UDP_broadcast setting to emoncms/settings.php to enable automatic WIFI device setup:
-
-    $enable_UDP_broadcast = true;
-
-Optional: Enable the periodic UDP broadcast script on the emonbase/emonpi:
-
-<pre>
-    crontab -e
-    * * * * * php /opt/openenergymonitor/emonpi/UDPBroadcast/broadcast.php 2>&1
-</pre>
-
-### [Sonoff S20 Smart Plug](https://guide.openenergymonitor.org/integrations/demandshaper-sonoff/)
-
-### [OpenEVSE / EmonEVSE electric car smart charging](https://guide.openenergymonitor.org/integrations/demandshaper-openevse/)
-
-The module contains custom interfaces for applications such as EV charging where you can drag drop the battery level state of charge to the desired target, the module then calculates the required run time based on the battery size and charger charge rate (hard coded at present, but will be configurable from the interface):
-
-![demandshaper.png](images/demandshaper.png)
-
-### Heatpump Control
-
-Integrates the ability to control a Mitsubushi EcoDan heatpump with FTC2B controller connected to the OpenEnergyMonitor HeatpumpMonitor. Flow temperature and heating On/Off is settable from the interface.
-
-![heatpump.png](images/heatpump.png)
-
----
-
-Submit schedule:
-
-    /emoncms/demandshaper/submit?schedule={
-        "active":1,
-        "period":3,
-        "end":16,
-        "repeat":[1,1,1,1,1,1,1],
-        "interruptible":0,
-        "runonce":false,
-        "basic":0,
-        "signal":"carbonintensity",
-        "device":"openevse"
-    }
-
-Response:
-
-    {
-        "schedule":{
-            "active":1,
-            "period":3,
-            "end":16,
-            "repeat":[1,1,1,1,1,1,1],
-            "interruptible":0,
-            "runonce":false,
-            "basic":0,
-            "signal":"carbonintensity",
-            "device":"openevse",
-            "timeleft":2982,
-            "end_timestamp":1544803200,
-            "periods":[
-                {"start":[1544799600,15],"end":[1544803200,16]}
-            ],
-            "probability":[[1544799600000,328,15,1,1],[1544801400000,331,15.5,1,1],[1544803200000,333,16,0,0],[1544805000000,334,16.5,0,0],[1544806800000,334,17,0,0],[1544808600000,334,17.5,0,0],[1544810400000,334,18,0,0],[1544812200000,335,18.5,0,0],[1544814000000,337,19,0,0],[1544815800000,339,19.5,0,0],[1544817600000,343,20,0,0],[1544819400000,347,20.5,0,0],[1544821200000,350,21,0,0],[1544823000000,351,21.5,0,0],[1544824800000,348,22,0,0],[1544826600000,337,22.5,0,0],[1544828400000,318,23,0,0],[1544830200000,295,23.5,0,0],[1544832000000,273,0,0,0],[1544833800000,254,0.5,0,0],[1544835600000,239,1,0,0],[1544837400000,228,1.5,0,0],[1544839200000,223,2,0,0],[1544841000000,221,2.5,0,0],[1544842800000,221,3,0,0],[1544844600000,219,3.5,0,0],[1544846400000,214,4,0,0],[1544848200000,208,4.5,0,0],[1544850000000,200,5,0,0],[1544851800000,191,5.5,0,0],[1544853600000,183,6,0,0],[1544855400000,179,6.5,0,0],[1544857200000,177,7,0,0],[1544859000000,180,7.5,0,0],[1544860800000,185,8,0,0],[1544862600000,192,8.5,0,0],[1544864400000,199,9,0,0],[1544866200000,208,9.5,0,0],[1544868000000,219,10,0,0],[1544869800000,232,10.5,0,0],[1544871600000,244,11,0,0],[1544873400000,253,11.5,0,0],[1544875200000,260,12,0,0],[1544877000000,264,12.5,0,0],[1544878800000,266,13,0,0],[1544880600000,266,13.5,0,0],[1544882400000,266,14,0,0]]
-        }
-    }
-
-## Remote Cache
-
-The remote cache currently run's on emoncms.org to reduce the potential API load on the Octopus and CarbonIntensity servers. The cache provides the following routes:
-
-    https://emoncms.org/demandshaper/carbonintensity
-    https://emoncms.org/demandshaper/octopus?gsp=A
-
-To install and use the cache on your own server. Symlink emoncms-remote module to Modules folder:
-
-    ln -s /home/username/demandshaper/emoncms-remote /var/www/emoncms/Modules/demandshaper
-
-
-Add the cron entry:
-
-    0 * * * * php /home/username/demandshaper/emoncms_remote_cache.php >> /var/log/demandshaper-cache.log
+- [Octopus Agile](docs/forecasts/octopusagile.md)
+- [CarbonIntensity UK Grid](docs/forecasts/carbonintensity.md)
+- [Energy Local day ahead forecasts](docs/forecasts/energylocal.md)
+- [Nordpool](docs/forecasts/nordpool.md)
+- [ClimaCell Solar Forecast](docs/forecasts/climacell.md)
 
 ## Security
 
-Already, MQTT control requires a password, this provides a basic level of security..
-To minimise additional risk, be sure to create an admin username and password in emonESP, this will limit access to the device.
-
-![admin_user_pass.png](images/admin_pass.png)
+- The standard configuration on emonSD and EmonScripts based systems include basic authentication for MQTT access. 
+- Devices running EmonESP such as the SmartPlug can be configured with an admin username and password to limit access.
