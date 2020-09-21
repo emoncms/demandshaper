@@ -35,7 +35,7 @@
           </div>
           
           <div class="heatpumpmonitor hide">
-            <div class="row" style="max-width:700px; margin: 0 auto;">
+            <div class="row" style="max-width:720px; margin: 0 auto;">
               <div class="span4 offset2" style="margin-bottom:20px"><br>
                 <p>Flow Temperature <span id="heatpump_flowT"></span>C<br><span style="font-weight:normal; font-size:12px">Heat Output <span id="heatpump_heat">0</span>W</span></p>
               </div>
