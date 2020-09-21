@@ -38,7 +38,11 @@ function demandshaper_controller()
     
 
     
-    if ($session['userid']) $timezone = $user->get_timezone($session['userid']);
+    if ($session['userid']) {
+        $timezone = $user->get_timezone($session['userid']);
+    } else {
+        $timezone = "Europe/London";
+    }
     
     $forecast_list = $demandshaper->get_forecast_list();
     
@@ -92,14 +96,14 @@ function demandshaper_controller()
         case "forecast":
             if (isset($_POST['config'])) {
                 $config = json_decode($_POST['config']);
-                return $demandshaper->get_combined_forecast($config);
+                return $demandshaper->get_combined_forecast($config,$timezone);
             } 
             break;
             
         case "schedule":
             if (isset($_POST['config'])) {
                 $config = json_decode($_POST['config']);
-                $combined = $demandshaper->get_combined_forecast($config);
+                $combined = $demandshaper->get_combined_forecast($config,$timezone);
                 
                 $period = (int) post('period');               // period in seconds
                 $end = (int) post('end');                     // end timestamp
@@ -108,10 +112,11 @@ function demandshaper_controller()
                 // Run schedule
                 require_once "$linked_modules_dir/demandshaper/lib/scheduler2.php";
                 $combined = forecast_calc_min_max($combined);
+                
                 if ($interruptible) {
-                    return schedule_interruptible($combined,$period,$end,"Europe/London");
+                    return schedule_interruptible($combined,$period,$end,$timezone);
                 } else {
-                    return schedule_block($combined,$period,$end,"Europe/London");
+                    return schedule_block($combined,$period,$end,$timezone);
                 }
             }
             break;

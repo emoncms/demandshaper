@@ -236,7 +236,7 @@ while(true)
                         $schedule = $device_class[$device_type]->auto_update_timeleft($schedule);
                     
                         // 1. Compile combined forecast
-                        $combined = $demandshaper->get_combined_forecast($schedule->settings->forecast_config);
+                        $combined = $demandshaper->get_combined_forecast($schedule->settings->forecast_config,$timezone);
                         // 2. Calculate forecast min/max 
                         $combined = forecast_calc_min_max($combined);
                         // 3. Calculate schedule
