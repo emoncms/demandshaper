@@ -50,7 +50,7 @@
           <!---------------------------------------------------------------------------------------------------------------------------->
           <div class="smart">
           
-            <div class="row" style="max-width:700px; margin: 0 auto;">
+            <div class="row" style="max-width:720px; margin: 0 auto;">
               <div class="span4" style="margin-bottom:8px">
                 <div id="run_period">
                   <p>Run period:</p>
@@ -89,7 +89,7 @@
           </div>
           <!---------------------------------------------------------------------------------------------------------------------------->
           <div class="timer hide">
-            <div class="row" style="max-width:700px; margin: 0 auto;">
+            <div class="row" style="max-width:720px; margin: 0 auto;">
               <div class="span2">
                 <br><br>
                 <p>Timer 1</p>
@@ -110,7 +110,7 @@
             
             <br>
             
-            <div class="row timer hide" style="max-width:700px; margin: 0 auto;">
+            <div class="row timer hide" style="max-width:720px; margin: 0 auto;">
               <div class="span2">
                 <br><br>
                 <p>Timer 2</p>
