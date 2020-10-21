@@ -93,7 +93,7 @@ function get_forecast_nordpool($redis,$params)
             $timevalues[$timestamp] = number_format($row->value*$vat*0.1,3,'.','');
         }
     }
-        
+    
     // 3. Map forecast to request start, end and interval
     $profile = array();
     for ($time=$params->start; $time<$params->end; $time+=$params->interval) {
@@ -101,20 +101,15 @@ function get_forecast_nordpool($redis,$params)
         
         if (isset($timevalues[$forecast_time])) {
             $value = $timevalues[$forecast_time];
-            $last_time_value = $forecast_time;
-        } else if (isset($timevalues[$forecast_time+(3600)])) { // if not available, this may be feed that only shows forecasts starting from next hour
-            $value = $timevalues[$forecast_time+(3600)];
-        } else {
-            $value = null;
+        } else if (isset($timevalues[$forecast_time-(24*3600)])) { // if not available try to use value 24h in past
+            $value = $timevalues[$forecast_time-(24*3600)]; 
+        } else if (isset($timevalues[$forecast_time+(24*3600)])) { // if not available try to use value 24h in future
+            $value = $timevalues[$forecast_time+(24*3600)]; 
         }
         
-        $profile[] = $value == null ? null : 1*$value;
+        $profile[] = 1*$value;
     }
     
-    // remove empty array items
-    $profile = array_filter($profile);
-    // adjust end value accordingly
-    $params->end = $last_time_value;
 
     $result = new stdClass();
     $result->start = $params->start;

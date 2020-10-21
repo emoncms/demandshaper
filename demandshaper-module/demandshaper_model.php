@@ -299,9 +299,7 @@ class DemandShaper
         $params->start = floor($now/$params->interval)*$params->interval;
         $params->end = $params->start + (3600*24);
 
-        // initial assumed profile length
         $profile_length = ($params->end-$params->start)/$params->interval;        
-
         $combined = false;
         foreach ($config as $config_item) {
             $name = $config_item->name;
@@ -320,9 +318,6 @@ class DemandShaper
                 // Fetch forecast
                 $fn = "get_forecast_$name";
                 if ($forecast = $fn($this->redis,$params)) {
-                    // calculate actual profile length
-                    $profile_length = count($forecast->profile);
-
                     // Clone first, combine 2nd, 3rd etc
                     if ($combined==false) {
                         $combined = clone $forecast;
