@@ -44,14 +44,8 @@ function get_forecast(callback) {
 // FETCH CALCULATED SCHEDULE
 function calc_schedule(callback) {
 
-    // Convert hour into end timestamp
-    let end_hour = Math.floor(schedule.settings.end);
-    let end_minutes = (schedule.settings.end - end_hour)*60;
-    date = new Date();
-    now = date.getTime()*0.001;
-    date.setHours(end_hour,end_minutes,0,0);
-    schedule.settings.end_timestamp = date.getTime()*0.001;
-    if (schedule.settings.end_timestamp<now) schedule.settings.end_timestamp+=3600*24
+    // Convert hour into end timestamp    
+    schedule.settings.end_timestamp = hour_to_timestamp(schedule.settings.end)
 
     if (schedule.settings.ctrlmode=="smart") {
         
@@ -68,6 +62,20 @@ function calc_schedule(callback) {
             }
         });
     
+    } else if (schedule.settings.ctrlmode=="timer") {
+        
+        $.ajax({
+            type: 'POST',
+            data: "config="+JSON.stringify(schedule.settings.timer)+"&forecast_start="+forecast.start+"&forecast_end="+forecast.end,
+            url: path+"demandshaper/timer", 
+            dataType: 'json', 
+            async: true, 
+            success: function(result) {
+                schedule.runtime.periods = result;
+                $("#schedule_json").html(JSON.stringify(schedule.runtime.periods));
+                callback();
+            }
+        });
     } else {
         schedule.runtime.periods = [];
         callback();
@@ -113,6 +121,12 @@ function update_input_UI() {
     $("#end input[type=time]").val(timestr(schedule.settings.end,false));
     $(".scheduler-checkbox[name='interruptible']").attr("state",schedule.settings.interruptible);
     
+    // Basic timer feature
+    $("#timer_start1 input[type=time]").val(timestr(schedule.settings.timer[0].start,false));
+    $("#timer_stop1 input[type=time]").val(timestr(schedule.settings.timer[0].end,false));
+    $("#timer_start2 input[type=time]").val(timestr(schedule.settings.timer[1].start,false));
+    $("#timer_stop2 input[type=time]").val(timestr(schedule.settings.timer[1].end,false));
+    
     var fn_name = "update_input_UI_"+schedule.settings.device_type;
     if (window[fn_name]!=undefined) window[fn_name]();
     
@@ -148,10 +162,11 @@ function update_output_UI() {
         periods.push(timestr(h1+m1,true)+" to "+timestr(h2+m2,true));
     }
     var out = ""; 
-    if (periods.length) {
+    if (periods.length && schedule.settings.ctrlmode=="smart") {
         out = jsUcfirst(schedule.settings.device_name)+" scheduled to run: <b>"+periods.join(", ")+"</b><br>";
     }
     $("#schedule-output").html(out);
+    if (out=="") $("#schedule-output").hide(); else $("#schedule-output").show();
     $("#timeleft").html(Math.round(schedule.runtime.timeleft/60)+" mins left to run");
 
     // Used for description below graph
@@ -298,9 +313,16 @@ $(".input-time input[type=time]").change(function() {
     var timestring = $(this).val();
     var parts = timestring.split(":");
     var hour = parseInt(parts[0])+(parseInt(parts[1])/60.0)
-    schedule.settings[name] = hour
     
-    if (name=="period") schedule.runtime.timeleft = schedule.settings.period * 3600;
+    if (name=="period" || name=="end") {
+        schedule.settings[name] = hour
+        if (name=="period") schedule.runtime.timeleft = schedule.settings.period * 3600;
+    }
+    // Basic timer feature
+    else if (name=="timer_start1") schedule.settings.timer[0].start = hour;
+    else if (name=="timer_stop1") schedule.settings.timer[0].end = hour;
+    else if (name=="timer_start2") schedule.settings.timer[1].start = hour;
+    else if (name=="timer_stop2") schedule.settings.timer[1].end = hour;
     
     on_UI_change();
 });
@@ -435,6 +457,31 @@ function timestr(hour,type){
         }
     }
     return str;
+}
+
+function hour_to_timestamp(hour_fraction) {
+    // Convert hour into end timestamp
+    var hour = Math.floor(hour_fraction);
+    var minutes = (hour_fraction - hour)*60;
+    var date = new Date();
+    now = date.getTime()*0.001;
+    date.setHours(hour,minutes,0,0);
+    var timestamp = date.getTime()*0.001;
+    if (timestamp<now) timestamp+=3600*24
+    return timestamp;
+}
+
+function timestamp_to_hour(timestamp) {
+    var date = new Date();
+    date.setTime(timestamp*1000);
+    return date.getHours()+(date.getMinutes()/60);
+}
+
+function date_setHours(date,hour) {
+    var h = Math.floor(hour);
+    var m = Math.round((hour - h) * 60);
+    date.setHours(h,m,0,0);
+    return date;
 }
 
 function jsUcfirst(string) {return string.charAt(0).toUpperCase() + string.slice(1);}

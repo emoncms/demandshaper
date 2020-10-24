@@ -227,11 +227,11 @@ while(true)
                     schedule_log("$device schedule complete");
                 }
                 
-                // If the schedule has not yet started it is ok to recalculate the schedule periods to find a more optimum time
-                if (!isset($schedule->runtime->started) || $schedule->settings->interruptible) {
-                    
-                    if ($schedule->settings->ctrlmode=="smart") {
-                    
+                if ($schedule->settings->ctrlmode=="smart") {
+                
+                    // If the schedule has not yet started it is ok to recalculate the schedule periods to find a more optimum time
+                    if (!isset($schedule->runtime->started) || $schedule->settings->interruptible) {
+                        
                         // Automatic update of time left for schedule e.g take into account updated battery SOC of electric car, home battery, device
                         $schedule = $device_class[$device_type]->auto_update_timeleft($schedule);
                     
@@ -245,10 +245,21 @@ while(true)
                         } else {
                             $schedule->runtime->periods = schedule_block($combined,$schedule->runtime->timeleft,$schedule->settings->end_timestamp,$timezone);
                         }
-                    } 
-                    $schedule = json_decode(json_encode($schedule));
-                    $log->info("  reschedule ".json_encode($schedule->runtime->periods));
+                            
+                        $schedule = json_decode(json_encode($schedule));
+                        $log->info("  reschedule ".json_encode($schedule->runtime->periods));
+                    }
                 }
+                else if ($schedule->settings->ctrlmode=="timer") {
+                    // 1. Compile combined forecast, not really needed here but we need forecast start and end times
+                    $combined = $demandshaper->get_combined_forecast($schedule->settings->forecast_config,$timezone);
+                    // 2. Calculate periods from timers
+                    $schedule->runtime->periods = schedule_timer($combined->start,$combined->end,$schedule->settings->timer,$timezone);
+                    // 3. Log output for debug
+                    $log->info("  timer schedule ".json_encode($schedule->runtime->periods));
+                }
+                
+                
                 $schedules->$sid = $schedule;
                 
             } // foreach schedules
