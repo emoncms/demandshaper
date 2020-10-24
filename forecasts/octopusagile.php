@@ -63,8 +63,7 @@ function get_forecast_octopusagile($redis,$params)
     $octopus = array();
     if ($result!=null && isset($result->results)) {
         foreach ($result->results as $row) {
-            $date = new DateTime($row->valid_from);
-            $date->setTimezone($timezone);
+            $date = new DateTime($row->valid_from,$timezone);
             $timestamp = $date->getTimestamp();
             $octopus[$timestamp] = $row->value_inc_vat;
         }
