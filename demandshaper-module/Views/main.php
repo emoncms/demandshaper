@@ -1,4 +1,4 @@
-<?php global $path; $v=8; ?>
+<?php global $path; $v=11; ?>
 <link rel="stylesheet" href="<?php echo $path; ?>Modules/demandshaper/demandshaper.css?v=<?php echo $v; ?>">
 
 <script language="javascript" type="text/javascript" src="<?php echo $path; ?>Lib/flot/jquery.flot.min.js"></script>
@@ -90,8 +90,7 @@
           <!---------------------------------------------------------------------------------------------------------------------------->
           <div class="timer hide">
             <div class="row" style="max-width:720px; margin: 0 auto;">
-              <div class="span2">
-                <br><br>
+              <div class="span2 timer-title">
                 <p>Timer 1</p>
               </div>
               <div class="span4">
@@ -111,8 +110,7 @@
             <br>
             
             <div class="row timer hide" style="max-width:720px; margin: 0 auto;">
-              <div class="span2">
-                <br><br>
+              <div class="span2 timer-title">
                 <p>Timer 2</p>
               </div>
               <div class="span4">
