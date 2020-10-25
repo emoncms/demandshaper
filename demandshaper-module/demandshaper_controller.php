@@ -120,6 +120,20 @@ function demandshaper_controller()
                 }
             }
             break;
+
+        case "timer":
+            if (isset($_POST['config'])) {
+                $timers = json_decode($_POST['config']);
+                
+                $forecast_start = (int) post('forecast_start');
+                $forecast_end = (int) post('forecast_end');
+                
+                // Run schedule
+                require_once "$linked_modules_dir/demandshaper/lib/scheduler2.php";
+                
+                return schedule_timer($forecast_start,$forecast_end,$timers,$timezone);
+            }
+            break;
             
         case "save": 
             if ($session["write"]) {

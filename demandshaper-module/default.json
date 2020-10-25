@@ -11,6 +11,7 @@
         "runone":0,
         "forecast_config": [{"name":"energylocal","club":"bethesda","weight":1.0}],
         "forecast_units":"generic",
+        "timer":[{"start":0,"end":0},{"start":0,"end":0}],
         "ip":""
     },
     "runtime": {
