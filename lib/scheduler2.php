@@ -195,35 +195,64 @@ function schedule_interruptible($forecast,$period,$end,$timezone)
     return $periods;
 }
 
-function schedule_timer($forecast,$start1,$stop1,$start2,$stop2,$resolution,$timezone) {
-    
-    $tstart1 = 0; $tstop1 = 0;
-    $tstart2 = 0; $tstop2 = 0;
+function schedule_timer($forecast_start,$forecast_end,$timers,$timezone) {
 
-    $profile_start = $forecast->profile[0][0];
-    $profile_end = $forecast->profile[count($forecast->profile)-1][0];
-
-    $date = new DateTime();
-    $date->setTimezone(new DateTimeZone($timezone));
-    
-    for ($td=$profile_start; $td<$profile_end; $td+=$resolution) {
-        $date->setTimestamp($td);
-        $h = 1*$date->format('H');
-        $m = 1*$date->format('i')/60;
-        $hour = $h + $m;
-       
-        if ($hour==$start1) $tstart1 = $td;
-        if ($hour==$stop1) $tstop1 = $td;
-        if ($hour==$start2) $tstart2 = $td;
-        if ($hour==$stop2) $tstop2 = $td;
-    }
-
-    if ($tstart1>$tstop1) $tstart1 -= 3600*24;
-    if ($tstart2>$tstop2) $tstart2 -= 3600*24;
-           
     $periods = array();
-    $periods[] = array("start"=>array($tstart1,$start1), "end"=>array($tstop1,$stop1));
-    $periods[] = array("start"=>array($tstart2,$start2), "end"=>array($tstop2,$stop2));
+    
+    $d = new DateTime();
+    $d->setTimezone(new DateTimeZone($timezone));
+    $d->setTimestamp($forecast_start);
+    
+    $start_hour = (1*$d->format('H'))+(1*$d->format('i')/60);
+    
+    $d->modify("midnight");
+    $today = $d->getTimestamp();
+    $d->modify("+1 day");
+    $tomorrow = $d->getTimestamp();
+    $d->modify("+1 day");
+    $dayafter = $d->getTimestamp();
+    $d->modify("-3 day");
+    $yesterday = $d->getTimestamp();
+    
+    foreach ($timers as $timer) {
+        
+        if ($timer->start!=$timer->end) {
+
+            // 1. Yesterday
+            $d->setTimestamp($yesterday);
+            $d = date_setHours($d,$timer->start);
+            $start = $d->getTimestamp();
+            if ($timer->start>$timer->end) $d->setTimestamp($today);      // if timer overlaps midnight end time is day+1 
+            $d = date_setHours($d,$timer->end);
+            $end = $d->getTimestamp();
+            // Only include if in the view
+            if ($end>=$forecast_start) {
+                $periods[] = array("start"=>array($start,$timer->start),"end"=>array($end,$timer->end));
+            }
+
+            // 2. Today
+            $d->setTimestamp($today);
+            $d = date_setHours($d,$timer->start);
+            $start = $d->getTimestamp();
+            if ($timer->start>$timer->end) $d->setTimestamp($tomorrow);   // if timer overlaps midnight end time is day+1 
+            $d = date_setHours($d,$timer->end);
+            $end = $d->getTimestamp();
+            // Only include if in the view
+            $periods[] = array("start"=>array($start,$timer->start),"end"=>array($end,$timer->end));
+            
+            // 3. Tomorrow
+            $d->setTimestamp($tomorrow);
+            $d = date_setHours($d,$timer->start);
+            $start = $d->getTimestamp();
+            if ($timer->start>$timer->end) $d->setTimestamp($dayafter);   // if timer overlaps midnight end time is day+1 
+            $d = date_setHours($d,$timer->end);
+            $end = $d->getTimestamp();
+            // Only include if in the view
+            if ($start<=$forecast_end) {
+                $periods[] = array("start"=>array($start,$timer->start),"end"=>array($end,$timer->end));
+            }
+        }
+    }
     return $periods;
 }
 
@@ -232,6 +261,13 @@ function get_hour($date,$timestamp) {
     $h = 1*$date->format('H');
     $m = number_format(1*$date->format('i')/60,3,'.','');
     return $h + $m;
+}
+
+function date_setHours($d,$hour) {
+    $h = floor($hour);
+    $m = round(($hour - $h) * 60);
+    $d->setTime($h,$m);
+    return $d;
 }
 
 function forecast_calc_min_max($forecast) {

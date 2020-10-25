@@ -108,13 +108,18 @@ function openevse_calc_modes(reset_timeleft) {
             schedule.settings.charge_distance = schedule.settings.charge_energy * schedule.settings.car_economy
             // 4. Charge period is energy divided by charge rate
             schedule.settings.period = schedule.settings.charge_energy / schedule.settings.charge_rate
+            // 5. Apply balancing time
+            if (schedule.settings.balpercentage < schedule.settings.target_soc) {
+                schedule.settings.period += schedule.settings.baltime;
+            }
         break; 
     }
-    
     schedule.settings.charge_energy = 1.0*(schedule.settings.charge_energy.toFixed(2))
     schedule.settings.charge_distance = 1.0*(schedule.settings.charge_distance.toFixed(1))
     
     if (reset_timeleft) schedule.runtime.timeleft = schedule.settings.period * 3600;
+    
+    
 }
 
 function schedule_info_openevse(forecast_units,mean,peak) {
@@ -173,7 +178,6 @@ function openevse_events() {
     }
 
     $("#battery").on("bchange",function() {
-        schedule.settings.period = battery.period
         schedule.settings.target_soc = battery.target_soc
         openevse_calc_modes(true);
         on_UI_change();

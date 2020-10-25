@@ -385,3 +385,18 @@ body {padding:0}
 .scheduler-config input {
     margin-bottom:0px;
 }
+
+.timer-title {
+    padding-top:35px;
+}
+
+.timer p {
+    margin-top:5px;
+    margin-bottom:5px;
+}
+
+@media (max-width: 767px) {
+  .timer-title {
+      padding-top:0px;
+  }
+}
