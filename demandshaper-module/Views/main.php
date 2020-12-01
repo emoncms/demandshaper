@@ -1,4 +1,4 @@
-<?php global $path; $v=11; ?>
+<?php global $path; $v=12; ?>
 <link rel="stylesheet" href="<?php echo $path; ?>Modules/demandshaper/demandshaper.css?v=<?php echo $v; ?>">
 
 <script language="javascript" type="text/javascript" src="<?php echo $path; ?>Lib/flot/jquery.flot.min.js"></script>
@@ -181,6 +181,13 @@
               <tr class="ovms-options hide"><td>OVMS Car Password:</td><td><input class="input" name="ovms_carpass" type="text" style="width:80px"/></td></tr> 
             </table>      
           </div>          
+
+          <div class="general" style="border: 1px solid #ccc; padding:10px; margin-top:10px; background-color:#f0f0f0">
+            <p><b>General Settings</b></p>
+            <table class="table" style="margin:0">
+              <tr><td>At end of smart schedule:</td><td><select class="input" id="on_completion"><option value="smart">Reschedule</option><option value="off">Turn off</option><option value="on">Turn on</option></select></td></tr>
+            </table>      
+          </div> 
           
       </div>
     </div> <!-- scheduler-inner -->
