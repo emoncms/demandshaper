@@ -126,6 +126,9 @@ function update_input_UI() {
     $("#timer_stop1 input[type=time]").val(timestr(schedule.settings.timer[0].end,false));
     $("#timer_start2 input[type=time]").val(timestr(schedule.settings.timer[1].start,false));
     $("#timer_stop2 input[type=time]").val(timestr(schedule.settings.timer[1].end,false));
+
+    // General settings
+    $("#on_completion").val(schedule.settings.on_completion)
     
     var fn_name = "update_input_UI_"+schedule.settings.device_type;
     if (window[fn_name]!=undefined) window[fn_name]();
@@ -343,6 +346,11 @@ $(".input-time button").click(function() {
     
     if (name=="period") schedule.runtime.timeleft = schedule.settings.period * 3600;
     
+    on_UI_change();
+});
+
+$("#on_completion").change(function() {
+    schedule.settings.on_completion = $(this).val();
     on_UI_change();
 });
 

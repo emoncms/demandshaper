@@ -225,6 +225,13 @@ while(true)
                     unset($schedule->runtime->started);
                                                 
                     schedule_log("$device schedule complete");
+                    
+                    if ($schedule->settings->ctrlmode=="smart") {
+                        if (in_array($schedule->settings->on_completion,array("on","off","smart"))) {
+                            $schedule->settings->ctrlmode = $schedule->settings->on_completion;
+                            schedule_log("$device next ctrlmode: ".$schedule->settings->on_completion);
+                        }
+                    }
                 }
                 
                 if ($schedule->settings->ctrlmode=="smart") {
