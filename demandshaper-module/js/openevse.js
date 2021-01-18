@@ -1,7 +1,7 @@
 function update_input_UI_openevse() {
     $(".openevse").show();
     
-    if (schedule.settings.soc_source=="input" || schedule.settings.soc_source=="ovms") {
+    if (schedule.settings.soc_source=="input" || schedule.settings.soc_source=="ovms" || schedule.settings.soc_source=="api") {
         $("#run_period").hide();
         $("#charge_energy_div").hide();
         $("#charge_distance_div").hide();
@@ -100,6 +100,7 @@ function openevse_calc_modes(reset_timeleft) {
             if (schedule.settings.target_soc>1.0) schedule.settings.target_soc = 1.0
         break;
         case "input":
+        case "api":
         case "ovms":
             // 1. Start with current and target SOC
             // 2. Charge energy
