@@ -148,13 +148,14 @@ class openevse
     }
 
     public function auto_update_timeleft($schedule) {
+        $userid = 1;
         
         if ((time()-$this->last_soc_update)>600 && $schedule->settings->soc_source!='time') {
             $this->last_soc_update = time();
             
             if ($schedule->settings->soc_source=='input') {
                 global $input;
-                if ($feedid = $input->exists_nodeid_name($userid,$device,"soc")) {
+                if ($feedid = $input->exists_nodeid_name($userid,"openevse","soc")) {
                     $schedule->settings->current_soc = $input->get_last_value($feedid)*0.01;
                     schedule_log("Recalculating EVSE schedule based on emoncms input: ".$schedule->settings->current_soc);
                 }

@@ -170,7 +170,7 @@
           <div class="openevse hide" style="border: 1px solid #ccc; padding:10px; margin-top:10px; background-color:#f0f0f0">
             <p><b>OpenEVSE Settings</b></p>
             <table class="table">
-              <tr><td>Control based on:</td><td><select class="input" name="soc_source"><option value="time">Charge time</option><option value="energy">Charge energy</option><option value="distance">Travel distance</option><option value="input">Battery charge level (Input)</option><option value="ovms">Battery charge level (OVMS)</option></select></td></tr>
+              <tr><td>Control based on:</td><td><select class="input" name="soc_source"><option value="time">Charge time</option><option value="energy">Charge energy</option><option value="distance">Travel distance</option><option value="input">Battery charge level (Input)</option><option value="ovms">Battery charge level (OVMS)</option><option value="api">set-device-settings api</option></select></td></tr>
               <tr><td>Useable Battery Capacity:</td><td><input class="input" name="battery_capacity" type="text" style="width:80px"/> kWh</td></tr>
               <tr><td>AC Charge Rate:</td><td><input class="input" name="charge_rate" type="text" style="width:80px"/> kW</td></tr>
               <tr><td>Car economy:</td><td><input class="input" name="car_economy" type="text" style="width:80px"/> <span id="car_economy_units">miles/kWh</span></td></tr>
