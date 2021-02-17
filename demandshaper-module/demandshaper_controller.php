@@ -17,7 +17,7 @@ defined('EMONCMS_EXEC') or die('Restricted access');
 
 function demandshaper_controller()
 {
-    global $mysqli, $redis, $session, $route, $settings, $linked_modules_dir, $user;
+    global $mysqli, $redis, $session, $route, $settings, $linked_modules_dir, $user, $input;
     $result = false;
 
     define("MAX",1);
@@ -35,8 +35,9 @@ function demandshaper_controller()
 
     include "Modules/demandshaper/demandshaper_model.php";
     $demandshaper = new DemandShaper($mysqli,$redis,$device);
-    
-
+        
+    require_once "Modules/input/input_model.php";
+    $input = new Input($mysqli,$redis,false);
     
     if ($session['userid']) {
         $timezone = $user->get_timezone($session['userid']);
@@ -164,6 +165,50 @@ function demandshaper_controller()
                     }
                     return array("schedule"=>$schedule);
                 }
+            }
+            break;
+
+        case "set-device-settings": 
+            if ($session["write"]) {
+                $route->format = "json";
+                if (!isset($_GET['device'])) return "device missing";
+                if (!isset($_GET['settings'])) return "settings missing";
+                $device_name = $_GET['device'];
+                $settings = json_decode($_GET['settings']);
+                if ($settings==null) return "invalid settings";
+                
+                // Load schedule
+                $schedules = $demandshaper->get($session["userid"]);
+                if (!isset($schedules->$device_name)) return "device does not exist";
+                $schedule = $schedules->$device_name;
+                $device_type = $schedule->settings->device_type;
+
+                // Apply settings
+                foreach ($settings as $setting_name=>$setting_val) {
+                    if (isset($schedule->settings->$setting_name)) $schedule->settings->$setting_name = $setting_val;
+                }
+
+                // Automatic update of time left for schedule e.g take into account updated battery SOC of electric car, home battery, device
+                $schedule = $demandshaper->device_class[$device_type]->auto_update_timeleft($schedule);
+
+                // 1. Compile combined forecast
+                $combined = $demandshaper->get_combined_forecast($schedule->settings->forecast_config,$timezone);
+                // 2. Calculate forecast min/max 
+                require_once "$linked_modules_dir/demandshaper/lib/scheduler2.php";
+                $combined = forecast_calc_min_max($combined);
+                // 3. Calculate schedule
+                if ($schedule->settings->interruptible) {                            
+                    $schedule->runtime->periods = schedule_interruptible($combined,$schedule->runtime->timeleft,$schedule->settings->end_timestamp,$timezone);
+                } else {
+                    $schedule->runtime->periods = schedule_block($combined,$schedule->runtime->timeleft,$schedule->settings->end_timestamp,$timezone);
+                }
+                $schedule->runtime->started = false;
+          
+                $schedules->$device_name = $schedule;
+                $demandshaper->set($session["userid"],$schedules);
+                $redis->rpush("demandshaper:trigger",$session["userid"]);
+                
+                return $schedule->runtime;
             }
             break;
 
