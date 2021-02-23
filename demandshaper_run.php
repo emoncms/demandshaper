@@ -246,12 +246,21 @@ while(true)
                         $combined = $demandshaper->get_combined_forecast($schedule->settings->forecast_config,$timezone);
                         // 2. Calculate forecast min/max 
                         $combined = forecast_calc_min_max($combined);
+                        
                         // 3. Calculate schedule
                         if ($schedule->settings->interruptible) {                            
-                            $schedule->runtime->periods = schedule_interruptible($combined,$schedule->runtime->timeleft,$schedule->settings->end_timestamp,$timezone);
+                            $periods = schedule_interruptible($combined,$schedule->runtime->timeleft,$schedule->settings->end_timestamp,$timezone);
                         } else {
-                            $schedule->runtime->periods = schedule_block($combined,$schedule->runtime->timeleft,$schedule->settings->end_timestamp,$timezone);
+                            $periods = schedule_block($combined,$schedule->runtime->timeleft,$schedule->settings->end_timestamp,$timezone);
                         }
+                        
+                        // If current period is already running and end time has not changed then dont modify start time
+                        if ($status==1 && isset($periods[0])) {
+                            if ($periods[0]['end'][0]==$schedule->runtime->periods[0]->end[0]) {
+                                $periods[0]['start'] = $schedule->runtime->periods[0]->start;
+                            }
+                        }
+                        $schedule->runtime->periods = $periods;
                             
                         $schedule = json_decode(json_encode($schedule));
                         $log->info("  reschedule ".json_encode($schedule->runtime->periods));
