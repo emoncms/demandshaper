@@ -159,6 +159,10 @@ class openevse
                     $schedule->settings->current_soc = $input->get_last_value($feedid)*0.01;
                     schedule_log("Recalculating EVSE schedule based on emoncms input: ".$schedule->settings->current_soc);
                 }
+                if ($feedid = $input->exists_nodeid_name($userid,"openevse","target_soc")) {
+                    $schedule->settings->target_soc = $input->get_last_value($feedid)*0.01;
+                    schedule_log("Recalculating EVSE schedule based on emoncms target soc input: ".$schedule->settings->target_soc);
+                }
             }
             else if ($schedule->settings->soc_source=='ovms') {
                 if ($schedule->settings->ovms_vehicleid!='' && $schedule->settings->ovms_carpass!='') {
@@ -168,7 +172,7 @@ class openevse
                     schedule_log("Recalculating EVSE schedule based on ovms: ".$schedule->settings->current_soc);
                 }
             }
-            $kwh_required = ($schedule->settings->target_soc-$schedule->settings->current_soc)*$schedule->settings->battery_capacity;
+            $kwh_required = max(($schedule->settings->target_soc-$schedule->settings->current_soc)*$schedule->settings->battery_capacity,0);
             $schedule->settings->period = $kwh_required/$schedule->settings->charge_rate;      
             
             if (isset($schedule->settings->balpercentage) && $schedule->settings->balpercentage < $schedule->settings->target_soc) {
