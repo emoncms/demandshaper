@@ -157,7 +157,7 @@ class openevse
                 global $input;
                 if ($feedid = $input->exists_nodeid_name($userid,"openevse","soc")) {
                     $schedule->settings->current_soc = $input->get_last_value($feedid)*0.01;
-                    schedule_log("Recalculating EVSE schedule based on emoncms input: ".$schedule->settings->current_soc);
+                    schedule_log("Recalculating EVSE schedule based on emoncms current soc input: ".$schedule->settings->current_soc);
                 }
                 if ($feedid = $input->exists_nodeid_name($userid,"openevse","target_soc")) {
                     $schedule->settings->target_soc = $input->get_last_value($feedid)*0.01;
