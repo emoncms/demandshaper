@@ -106,8 +106,8 @@ function demandshaper_controller()
                 $config = json_decode(prop('config'));
                 $combined = $demandshaper->get_combined_forecast($config,$timezone,$session["userid"]);
                 
-                $period = (int) post('period');               // period in seconds
-                $end = (int) post('end');                     // end timestamp
+                $period = (int) prop('period');               // period in seconds
+                $end = (int) prop('end');                     // end timestamp
                 $interruptible = (int) post('interruptible');
 
                 // Run schedule
