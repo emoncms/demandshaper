@@ -95,15 +95,15 @@ function demandshaper_controller()
             return $forecast_list;
                         
         case "forecast":
-            if (isset($_POST['config'])) {
-                $config = json_decode($_POST['config']);
+            if (isset($_POST['config']) || isset($_GET['config'])) {
+                $config = json_decode(prop('config'));
                 return $demandshaper->get_combined_forecast($config,$timezone,$session["userid"]);
             } 
             break;
             
         case "schedule":
-            if (isset($_POST['config'])) {
-                $config = json_decode($_POST['config']);
+            if (isset($_POST['config']) || isset($_GET['config'])) {
+                $config = json_decode(prop('config'));
                 $combined = $demandshaper->get_combined_forecast($config,$timezone,$session["userid"]);
                 
                 $period = (int) post('period');               // period in seconds
@@ -123,11 +123,11 @@ function demandshaper_controller()
             break;
 
         case "timer":
-            if (isset($_POST['config'])) {
-                $timers = json_decode($_POST['config']);
+            if (isset($_POST['config']) || isset($_GET['config'])) {
+                $timers = json_decode(prop('config'));
                 
-                $forecast_start = (int) post('forecast_start');
-                $forecast_end = (int) post('forecast_end');
+                $forecast_start = (int) prop('forecast_start');
+                $forecast_end = (int) prop('forecast_end');
                 
                 // Run schedule
                 require_once "$linked_modules_dir/demandshaper/lib/scheduler2.php";
