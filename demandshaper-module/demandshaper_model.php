@@ -285,10 +285,11 @@ class DemandShaper
         return $forecast_list;
     }
     
-    public function get_combined_forecast($config,$timezone) {
+    public function get_combined_forecast($config,$timezone,$userid) {
         
         $params = new stdClass();
         $params->timezone = $timezone;
+        $params->userid = $userid;
 
         // 1. Set desired forecast interval
         // This will downsample or upsample original forecast

@@ -243,7 +243,7 @@ while(true)
                         $schedule = $device_class[$device_type]->auto_update_timeleft($schedule);
                     
                         // 1. Compile combined forecast
-                        $combined = $demandshaper->get_combined_forecast($schedule->settings->forecast_config,$timezone);
+                        $combined = $demandshaper->get_combined_forecast($schedule->settings->forecast_config,$timezone,$userid);
                         // 2. Calculate forecast min/max 
                         $combined = forecast_calc_min_max($combined);
                         // 3. Calculate schedule
@@ -259,7 +259,7 @@ while(true)
                 }
                 else if ($schedule->settings->ctrlmode=="timer") {
                     // 1. Compile combined forecast, not really needed here but we need forecast start and end times
-                    $combined = $demandshaper->get_combined_forecast($schedule->settings->forecast_config,$timezone);
+                    $combined = $demandshaper->get_combined_forecast($schedule->settings->forecast_config,$timezone,$userid);
                     // 2. Calculate periods from timers
                     $schedule->runtime->periods = schedule_timer($combined->start,$combined->end,$schedule->settings->timer,$timezone);
                     // 3. Log output for debug

@@ -97,14 +97,14 @@ function demandshaper_controller()
         case "forecast":
             if (isset($_POST['config'])) {
                 $config = json_decode($_POST['config']);
-                return $demandshaper->get_combined_forecast($config,$timezone);
+                return $demandshaper->get_combined_forecast($config,$timezone,$session["userid"]);
             } 
             break;
             
         case "schedule":
             if (isset($_POST['config'])) {
                 $config = json_decode($_POST['config']);
-                $combined = $demandshaper->get_combined_forecast($config,$timezone);
+                $combined = $demandshaper->get_combined_forecast($config,$timezone,$session["userid"]);
                 
                 $period = (int) post('period');               // period in seconds
                 $end = (int) post('end');                     // end timestamp
@@ -192,7 +192,7 @@ function demandshaper_controller()
                 $schedule = $demandshaper->device_class[$device_type]->auto_update_timeleft($schedule);
 
                 // 1. Compile combined forecast
-                $combined = $demandshaper->get_combined_forecast($schedule->settings->forecast_config,$timezone);
+                $combined = $demandshaper->get_combined_forecast($schedule->settings->forecast_config,$timezone,$session["userid"]);
                 // 2. Calculate forecast min/max 
                 require_once "$linked_modules_dir/demandshaper/lib/scheduler2.php";
                 $combined = forecast_calc_min_max($combined);
