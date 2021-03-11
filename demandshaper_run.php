@@ -197,7 +197,12 @@ while(true)
                         if (count($schedule->runtime->periods)) {
                             $s1 = time_offset($schedule->runtime->periods[$active_period]->start[1],-$timeOffset);
                             $e1 = time_offset($schedule->runtime->periods[$active_period]->end[1],-$timeOffset);
-                            $device_class[$device_type]->timer($device,$s1,$e1,$s2,$e2);
+                            // $device_class[$device_type]->timer($device,$s1,$e1,$s2,$e2);
+                            if ($status) {
+                                $device_class[$device_type]->on($device);
+                            } else {
+                                $device_class[$device_type]->off($device);
+                            }
                         }
                     }
                     else if ($schedule->settings->ctrlmode=="on") $device_class[$device_type]->on($device);

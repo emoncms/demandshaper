@@ -79,6 +79,9 @@ class emonesp
     
     public function handle_state_response($schedule,$message,$timezone) {
     
+        // disable for now
+        return false;
+        
         $device = $schedule->settings->device;
         
         if ($message->topic==$this->basetopic."/$device/out/state") {
