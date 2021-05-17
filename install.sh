@@ -1,5 +1,4 @@
 #!/bin/bash
-echo "DemandShaper module installation script"
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 # ---------------------------------------------------------
@@ -10,7 +9,7 @@ service=demandshaper
 if [ -f /lib/systemd/system/$service.service ]; then
     echo "- reinstalling $service.service"
     sudo systemctl stop $service.service
-    sudo systemctl disable $service.service
+    sudo systemctl disable $service.service > /dev/null 2>&1
     sudo rm /lib/systemd/system/$service.service
 else
     echo "- installing $service.service"
@@ -25,10 +24,10 @@ sudo sed -i "s~ExecStart=.*~ExecStart=/usr/bin/php $DIR/demandshaper_run.php~" /
 # echo $'[Service]\nUser='$user > demandshaper.conf
 # sudo mv demandshaper.conf /lib/systemd/system/demandshaper.service.d/demandshaper.conf
 
-sudo systemctl enable $service.service
+sudo systemctl enable $service.service > /dev/null 2>&1
 sudo systemctl restart $service.service
 
 state=$(systemctl show $service | grep ActiveState)
-echo "- Service $state"
+echo "- demandshaper service: $state"
 
 # ---------------------------------------------------------
