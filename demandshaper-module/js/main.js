@@ -31,7 +31,7 @@ function get_forecast(callback) {
     $.ajax({
         type: 'POST',
         data: "config="+JSON.stringify(schedule.settings.forecast_config),
-        url: path+"demandshaper/forecast", 
+        url: emoncmspath+"demandshaper/forecast", 
         dataType: 'json', 
         async: true, 
         success: function(result) {
@@ -52,7 +52,7 @@ function calc_schedule(callback) {
         $.ajax({
             type: 'POST',
             data: "config="+JSON.stringify(schedule.settings.forecast_config)+"&interruptible="+schedule.settings.interruptible+"&period="+schedule.runtime.timeleft+"&end="+schedule.settings.end_timestamp,
-            url: path+"demandshaper/schedule", 
+            url: emoncmspath+"demandshaper/schedule", 
             dataType: 'json', 
             async: true, 
             success: function(result) {
@@ -67,7 +67,7 @@ function calc_schedule(callback) {
         $.ajax({
             type: 'POST',
             data: "config="+JSON.stringify(schedule.settings.timer)+"&forecast_start="+forecast.start+"&forecast_end="+forecast.end,
-            url: path+"demandshaper/timer", 
+            url: emoncmspath+"demandshaper/timer", 
             dataType: 'json', 
             async: true, 
             success: function(result) {
@@ -138,7 +138,7 @@ function update_input_UI() {
 }
 
 function update_UI_from_input_values(){
-    $.ajax({ url: path+"input/get/"+schedule.settings.device, dataType: 'json', async: true, success: function(inputs) {
+    $.ajax({ url: emoncmspath+"input/get/"+schedule.settings.device, dataType: 'json', async: true, success: function(inputs) {
         if (inputs!=null) {
             var fn_name = schedule.settings.device_type+"_update_UI_from_input_values";
             if (window[fn_name]!=undefined) window[fn_name](inputs);
@@ -270,7 +270,7 @@ function save_schedule() {
             $.ajax({
                 type: 'POST',
                 data: "schedule="+JSON.stringify(schedule),
-                url: path+"demandshaper/save", 
+                url: emoncmspath+"demandshaper/save", 
                 dataType: 'text', 
                 async: true, 
                 success: function(result) {
@@ -398,11 +398,11 @@ $("#delete-device-confirm").click(function(){
     on_UI_change();
     apikeystr = "";
     // 1. Delete demandshaper schedule entry
-    $.ajax({ url: path+"demandshaper/delete?device="+schedule.settings.device+apikeystr, async: true, success: function(data) {
+    $.ajax({ url: emoncmspath+"demandshaper/delete?device="+schedule.settings.device+apikeystr, async: true, success: function(data) {
         // 2. Delete device
-        $.ajax({ url: path+"device/delete.json", data: "id="+device_id+apikeystr, async: true, success: function(data) {
+        $.ajax({ url: emoncmspath+"device/delete.json", data: "id="+device_id+apikeystr, async: true, success: function(data) {
             // 3. Delete device inputs
-            $.ajax({ url: path+"input/list.json"+apikeystr, async: true, success: function(data) {
+            $.ajax({ url: emoncmspath+"input/list.json"+apikeystr, async: true, success: function(data) {
                 // get list of device inputs
                 var device_inputs = [];
                 for (var z in data) {
@@ -412,7 +412,7 @@ $("#delete-device-confirm").click(function(){
                 }
                 console.log("Deleting inputs:");
                 console.log(device_inputs);
-                $.ajax({ url: path+"input/delete.json"+apikeystr, data: "inputids="+JSON.stringify(device_inputs), async: true, success: function(data){
+                $.ajax({ url: emoncmspath+"input/delete.json"+apikeystr, data: "inputids="+JSON.stringify(device_inputs), async: true, success: function(data){
                     location.href = path+"demandshaper";
                 }});
             }});

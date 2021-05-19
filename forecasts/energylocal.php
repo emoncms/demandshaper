@@ -11,8 +11,10 @@ function get_list_entry_energylocal()
                 "type"=>"select",
                 "options"=>array(
                     "bethesda"=>"Bethesda",
-                    "bethesda_solar"=>"Bethesda Solar",
-                    "repower"=>"Repower"
+                    "corwen"=>"Corwen",
+                    "crickhowell"=>"Crickhowell",
+                    "bethesda_solar"=>"Solar",
+                    "repower"=>"Repower",
                 ),
                 "default"=>"bethesda"
             )

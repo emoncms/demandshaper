@@ -13,6 +13,7 @@ http://openenergymonitor.org
 $v=2;
 global $path;
 $emoncmspath = $path;
+if ($remoteaccess) $emoncmspath .= "remoteaccess/";
 // if ($remoteaccess) $emoncmspath .= "remoteaccess/";
 if (isset($_GET['apikey'])) $apikeystr = "&apikey=".$_GET['apikey']; else $apikeystr = "";
 ?>

@@ -17,7 +17,7 @@ defined('EMONCMS_EXEC') or die('Restricted access');
 
 function demandshaper_controller()
 {
-    global $mysqli, $redis, $session, $route, $settings, $linked_modules_dir, $user, $input;
+    global $mysqli, $redis, $session, $route, $settings, $linked_modules_dir, $user, $input, $demandshaper_cloud;
     $result = false;
 
     define("MAX",1);
@@ -26,12 +26,19 @@ function demandshaper_controller()
     $route->format = "json";
     $result = false;
 
-    $remoteaccess = false;
-    
     require_once "$linked_modules_dir/demandshaper/lib/misc.php";
 
-    require_once "Modules/device/device_model.php";
-    $device = new Device($mysqli,$redis);
+    if ($session['userid'] && in_array($session['userid'],$demandshaper_cloud)) {
+        $remoteaccess = false;
+        require_once "Modules/device/device_model.php";
+        $device = new Device($mysqli,$redis);
+    } else {
+        $remoteaccess = true;
+        $device = false;
+        
+        require_once "Modules/remoteaccess/RemoteAccess.php";
+        $remoteaccess_class = new RemoteAccess($session["username"]);
+    }
 
     include "Modules/demandshaper/demandshaper_model.php";
     $demandshaper = new DemandShaper($mysqli,$redis,$device);
@@ -57,7 +64,11 @@ function demandshaper_controller()
         case "":
             $route->format = "html";
             if ($session["write"]) {
-                $schedules = $demandshaper->get($session["userid"]);
+                if ($remoteaccess) {
+                    $schedules = $remoteaccess_class->request("demandshaper","schedules","",array("userid"=>$session["userid"]),1.5);
+                } else {
+                    $schedules = $demandshaper->get($session["userid"]);
+                }
                 if (isset($_GET['device'])) {
                     $device_name = $_GET['device'];
                 } else {
@@ -68,9 +79,10 @@ function demandshaper_controller()
                 
                 if (isset($schedules->$device_name)) {
                     return view("Modules/demandshaper/Views/main.php", array(
+                        "remoteaccess"=>$remoteaccess,
                         "forecast_list"=>$forecast_list,
                         "schedule"=>$schedules->$device_name,
-                        "device_id"=>$device->exists_nodeid($session["userid"], $device_name)
+                        "device_id"=>0 //$device->exists_nodeid($session["userid"], $device_name)
                     ));
                 }
             }
@@ -79,7 +91,9 @@ function demandshaper_controller()
         case "add-device":
             $route->format = "html";
             if ($session["write"]) {
-                return view("Modules/demandshaper/Views/add_device.php", array());
+                return view("Modules/demandshaper/Views/add_device.php", array(
+                    "remoteaccess"=>$remoteaccess
+                ));
             }
             break;
 
@@ -137,7 +151,7 @@ function demandshaper_controller()
             break;
             
         case "save": 
-            if ($session["write"]) {
+            if (!$remoteaccess && $session["write"]) {
                 if (isset($_POST['schedule']) || isset($_GET['schedule'])) {
                     $schedule = json_decode(prop('schedule'));
                     
@@ -262,7 +276,7 @@ function demandshaper_controller()
                     include "Modules/demandshaper/MQTTRequest.php";
                     $mqtt_request = new MQTTRequest($settings['mqtt']);
                     
-                    $demandshaper->device_class[$schedules->$device->settings->device_type]->set_basetopic($settings['mqtt']['basetopic']);
+                    $demandshaper->device_class[$schedules->$device->settings->device_type]->set_basetopic($basetopic);
                     return $demandshaper->device_class[$schedules->$device->settings->device_type]->get_state($mqtt_request,$device,$timezone);
                 }
             }   

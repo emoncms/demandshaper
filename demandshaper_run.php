@@ -127,7 +127,7 @@ while(true)
             // Get time of start of day
             $timezone = $user->get_timezone($userid);
             $date = new DateTime();
-            $date->setTimezone(new DateTimeZone($timezone));
+            $date->setTimezone(new DateTimeZone("Europe/London"));
             $date->setTimestamp($now);
             $date->modify("midnight");
             $daystart = $date->getTimestamp();
