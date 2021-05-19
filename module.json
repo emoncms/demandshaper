@@ -1,0 +1,7 @@
+{
+    "name"         : "DemandShaper",
+    "version"      : "2.1.3",
+    "location"     : "/opt/emoncms/modules",
+    "branches_available": ["stable","master","menu_v3"],
+    "requires": ["device"]
+}
