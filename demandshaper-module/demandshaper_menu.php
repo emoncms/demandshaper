@@ -4,7 +4,7 @@ global $mysqli,$redis,$session;
 
 if ($session['write']) {
 
-    $menu["demandshaper"] = array("name"=>"DemandShaper", "order"=>3, "icon"=>"calendar", "l2"=>array());
+    $menu["demandshaper"] = array("name"=>"DemandShaper", "order"=>3, "icon"=>"calendar", "default"=>"demandshaper/add-device", "l2"=>array());
 
     require_once "Modules/device/device_model.php";
     $device = new Device($mysqli,$redis);
@@ -23,6 +23,7 @@ if ($session['write']) {
             "icon"=>$d["type"],
             "order"=>$o
         );
+        $menu["demandshaper"]["default"] = "demandshaper?device=".$name;
         $o++;
     }
     
