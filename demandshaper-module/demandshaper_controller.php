@@ -17,7 +17,7 @@ defined('EMONCMS_EXEC') or die('Restricted access');
 
 function demandshaper_controller()
 {
-    global $mysqli, $redis, $session, $route, $settings, $linked_modules_dir, $user, $input, $demandshaper_cloud;
+    global $mysqli, $redis, $session, $route, $settings, $linked_modules_dir, $user, $input, $demandshaper_hub;
     $result = false;
 
     define("MAX",1);
@@ -28,16 +28,16 @@ function demandshaper_controller()
 
     require_once "$linked_modules_dir/demandshaper/lib/misc.php";
 
-    if ($session['userid'] && in_array($session['userid'],$demandshaper_cloud)) {
-        $remoteaccess = false;
-        require_once "Modules/device/device_model.php";
-        $device = new Device($mysqli,$redis);
-    } else {
+    if ($session['userid'] && in_array($session['userid'],$demandshaper_hub)) {
         $remoteaccess = true;
         $device = false;
         
         require_once "Modules/remoteaccess/RemoteAccess.php";
         $remoteaccess_class = new RemoteAccess($session["username"]);
+    } else {
+        $remoteaccess = false;
+        require_once "Modules/device/device_model.php";
+        $device = new Device($mysqli,$redis);
     }
 
     include "Modules/demandshaper/demandshaper_model.php";

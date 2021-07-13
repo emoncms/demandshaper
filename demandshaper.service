@@ -51,7 +51,7 @@ Documentation=https://github.com/emoncms/demandshaper/blob/master/readme.md
 [Service]
 Type=idle
 ExecStart=/usr/bin/php /home/pi/demandshaper/demandshaper_run.php
-User=pi
+User=cydynni
 
 # Restart script if stopped
 Restart=always
