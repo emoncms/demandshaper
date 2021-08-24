@@ -74,6 +74,7 @@ function demandshaper_controller()
                     ));
                 }
             }
+            return false;
             break;
 
         case "add-device":
@@ -81,6 +82,7 @@ function demandshaper_controller()
             if ($session["write"]) {
                 return view("Modules/demandshaper/Views/add_device.php", array());
             }
+            return false;
             break;
 
         case "forecast_test":
@@ -307,5 +309,5 @@ function demandshaper_controller()
             break;   
     }   
     
-    return array('content'=>'#UNDEFINED#');
+    return array('content'=>EMPTY_ROUTE);
 }
