@@ -11,11 +11,19 @@ http://openenergymonitor.org
 
 */
 $v=2;
-global $path;
+global $path, $mysqli, $redis, $user, $session, $system; // TODO system doesn't import
 $emoncmspath = $path;
 if ($remoteaccess) $emoncmspath .= "remoteaccess/";
 // if ($remoteaccess) $emoncmspath .= "remoteaccess/";
 if (isset($_GET['apikey'])) $apikeystr = "&apikey=".$_GET['apikey']; else $apikeystr = "";
+
+$device = false;
+if (file_exists("Modules/device/device_model.php")) {
+  require_once "Modules/device/device_model.php";
+  $device = new Device($mysqli, $redis);
+}
+
+$u = $user->get($session['userid'])
 ?>
 
 <style>#icon-list svg { opacity: .7; }</style>
@@ -56,6 +64,24 @@ if (isset($_GET['apikey'])) $apikeystr = "&apikey=".$_GET['apikey']; else $apike
     
           <p>4. With the smartplug WIFI settings configured, connect back to you home network and keep this window open. After a couple of minutes a notice will appear asking whether to allow device at the given ip address to connect. Click allow and wait a couple of minutes for the smart plug to appear in the left hand menu. Click on the smart plug to start scheduling it.</p>
           </div>
+
+          <div class="wizard-option-l2" name="tasmota"><svg class="icon"><use xlink:href="#icon-smartplug"></use></svg> Tasmota Smart Plug</div>
+          <div class="wizard-option-l3 hide" name="tasmota">
+          <p>1. Commission your device as per the Tasmota instructions.</p>
+          <p>2. In the Tasmota device configuration select Configuration &gt; Configure Other and set MQTT enabled.</p>
+          <p>3. In the Tasmota device configuration select Configuration &gt; Configure MQTT.</p>
+          <p>Set:
+            <ul>
+              <li>Host: <b><?= $system['mqtt_server'] ?></b></li>
+              <li>Port: <b><?= $system['mqtt_port'] ?></b></li>
+              <li>User: <b><?= $u->username ?></b></li>
+              <li>Password (API write key): <b><?= $u->apikey_write ?></b></li>
+              <li>Topic: <b>tasmota_%06X</b></li>
+              <li>Full topic: <b>user/<?=$u->id?>/%topic%/%prefix%</b></li>
+            </ul>
+          </p>
+          </div>
+
           <div class="wizard-option-l2" name="emonevse"><svg class="icon"><use xlink:href="#icon-openevse"></use></svg> OpenEVSE Charging Station</div>
           <div class="wizard-option-l3 hide" name="emonevse">
           

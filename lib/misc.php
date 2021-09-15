@@ -7,6 +7,7 @@ function time_offset($t,$timeOffset) {
     return $t;
 }
 
+// time_conv and conv_time???
 function time_conv($t,$timeOffset){
     $t = floor($t*0.01) + ($t*0.01 - floor($t*0.01))/0.6;
     $t += $timeOffset;
@@ -24,6 +25,8 @@ function conv_time($time,$timeOffset) {
     return $t;
 }
 
+
+// Converts fractional time to human readable time, e.g. 14.5 to "14$div30"
 function time_conv_dec_str($t,$div="") {
     $h = floor($t); 
     $m = round(($t-$h)*60);
