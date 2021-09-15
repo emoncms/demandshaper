@@ -11,7 +11,7 @@ http://openenergymonitor.org
 
 */
 $v=2;
-global $path, $mysqli, $redis, $user, $session, $system; // TODO system doesn't import
+global $path, $mysqli, $redis, $user, $session, $settings;
 $emoncmspath = $path;
 if ($remoteaccess) $emoncmspath .= "remoteaccess/";
 // if ($remoteaccess) $emoncmspath .= "remoteaccess/";
@@ -72,8 +72,8 @@ $u = $user->get($session['userid'])
           <p>3. In the Tasmota device configuration select Configuration &gt; Configure MQTT.</p>
           <p>Set:
             <ul>
-              <li>Host: <b><?= $system['mqtt_server'] ?></b></li>
-              <li>Port: <b><?= $system['mqtt_port'] ?></b></li>
+              <li>Host: <b><?= $_SERVER['HTTP_HOST']  ?></b></li>
+              <li>Port: <b><?= $settings['mqtt']['port'] ?></b></li>
               <li>User: <b><?= $u->username ?></b></li>
               <li>Password (API write key): <b><?= $u->apikey_write ?></b></li>
               <li>Topic: <b>tasmota_%06X</b></li>
