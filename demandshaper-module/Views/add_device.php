@@ -65,21 +65,25 @@ $u = $user->get($session['userid'])
           <p>4. With the smartplug WIFI settings configured, connect back to you home network and keep this window open. After a couple of minutes a notice will appear asking whether to allow device at the given ip address to connect. Click allow and wait a couple of minutes for the smart plug to appear in the left hand menu. Click on the smart plug to start scheduling it.</p>
           </div>
 
-          <div class="wizard-option-l2" name="tasmota"><svg class="icon"><use xlink:href="#icon-smartplug"></use></svg> Tasmota Smart Plug</div>
+          <div class="wizard-option-l2" name="tasmota"><svg class="icon"><use xlink:href="#icon-smartplug"></use></svg> Tasmota Device</div>
           <div class="wizard-option-l3 hide" name="tasmota">
-          <p>1. Commission your device as per the Tasmota instructions.</p>
-          <p>2. In the Tasmota device configuration select Configuration &gt; Configure Other and set MQTT enabled.</p>
-          <p>3. In the Tasmota device configuration select Configuration &gt; Configure MQTT.</p>
-          <p>Set:
-            <ul>
-              <li>Host: <b><?= $_SERVER['HTTP_HOST']  ?></b></li>
-              <li>Port: <b><?= $settings['mqtt']['port'] ?></b></li>
-              <li>User: <b><?= $u->username ?></b></li>
-              <li>Password (API write key): <b><?= $u->apikey_write ?></b></li>
-              <li>Topic: <b>tasmota_%06X</b></li>
-              <li>Full topic: <b>user/<?=$u->id?>/%topic%/%prefix%</b></li>
-            </ul>
-          </p>
+            <ol>
+              <li><p>Commission your device as per the <a href="https://tasmota.github.io/docs/" target="_blank">Tasmota</a> instructions.</p></li>
+              <li><p>Navigate to your Tasmota device configuration in your webbrowser.</p></li>
+              <li><p>Select Configuration &gt; Configure Other and set MQTT enabled. Save, and return to Configuration.</p></li>
+              <li>
+                <p>Select Configure MQTT. Enter (or copy and paste) the values below before saving:</p>
+                <ul>
+                  <li>Host: <b><?= $_SERVER['HTTP_HOST']  ?></b></li>
+                  <li>Port: <b><?= $settings['mqtt']['port'] ?></b></li>
+                  <li>User: <b><?= $u->username ?></b></li>
+                  <li>Password (API write key): <b><?= $u->apikey_write ?></b></li>
+                  <li>Topic: <b>tasmota_%06X</b></li>
+                  <li>Full topic: <b>user/<?=$u->id?>/%topic%/%prefix%</b></li>
+                </ul>
+              </li>
+              <li>A new Tasmota entry should appear in the devices menu shortly.</li>
+            </ol>
           </div>
 
           <div class="wizard-option-l2" name="emonevse"><svg class="icon"><use xlink:href="#icon-openevse"></use></svg> OpenEVSE Charging Station</div>
