@@ -15,6 +15,7 @@ if ($remoteaccess) $emoncmspath .= "remoteaccess/";
 <script language="javascript" type="text/javascript" src="<?php echo $path; ?>Modules/demandshaper/js/battery.js?v=<?php echo $v; ?>"></script>
 <script language="javascript" type="text/javascript" src="<?php echo $path; ?>Modules/demandshaper/js/openevse.js?v=<?php echo $v; ?>"></script>
 <script language="javascript" type="text/javascript" src="<?php echo $path; ?>Modules/demandshaper/js/hpmon.js?v=<?php echo $v; ?>"></script>
+<script language="javascript" type="text/javascript" src="<?php echo $path; ?>Modules/demandshaper/js/tasmota.js?v=<?php echo $v; ?>"></script>
 <div id="scheduler-top"></div>
 
 <div id="scheduler-outer">
