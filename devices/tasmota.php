@@ -39,7 +39,7 @@ class tasmota
             // user/1/tasmota/cmnd/tasmota_AABB3F/POWER -m 'OFF'
             $this->mqtt_client->publish("$this->basetopic/$device/cmnd/timers","0",0);
             $this->mqtt_client->publish("$this->basetopic/$device/cmnd/POWER","ON",0);
-            schedule_log("Tasmota $device switch on");
+            schedule_log("Tasmota $device switch on sent");
         }
     }
 
@@ -52,7 +52,7 @@ class tasmota
             $this->last_ctrlmode[$device] = "off";
             $this->mqtt_client->publish("$this->basetopic/$device/cmnd/timers","0",0);
             $this->mqtt_client->publish("$this->basetopic/$device/cmnd/POWER","OFF",0);
-            schedule_log("Tasmota $device switch off");
+            schedule_log("Tasmota $device switch off sent");
         }
     }
 
@@ -65,7 +65,7 @@ class tasmota
         $payloads = [];
         $UTC = new DateTimeZone("UTC");
         $now = new DateTime("now", $UTC);
-        foreach ([$s1, $e1, $s2, $e2] as $i => $t) {
+        foreach ([$s1, $e1] as $i => $t) { // Only one time slot is currently in use - , $s2, $e2
           $dt = DateTime::createFromFormat("Hi", time_conv_dec_str($t), $UTC);
           schedule_log($dt->format('H:i'));
 
@@ -78,39 +78,38 @@ class tasmota
           $dt->setTimezone(new DateTimeZone(date_default_timezone_get())); // TODO should get the remote timezone rather than assume it is the same as the server
           schedule_log($dt->format('H:i'));
 
-          array_push($payloads, json_encode(array(
+          $payload = json_encode(array(
             "Enable" => 1,
             "Mode" => 0,
             "Time" => $dt->format("H:i"),
             "Days" => "SMTWTFS",
             "Repeat" => 1,
             "Action" => $action
-          )));
+          ));
+          array_push($payloads, $payload);
+          schedule_log($payload);
         }
 
-        schedule_log($payloads[0]);
         schedule_log($payloads[1]);
         schedule_log($payloads[2]);
         schedule_log($payloads[3]);
 
         if (!isset($this->last_ctrlmode[$device])) $this->last_ctrlmode[$device] = "";
+        if (!isset($this->last_timer[$device])) $this->last_timer[$device] = "";
 
-        if ($this->last_ctrlmode[$device]!="timer") {
+
+        $timer_str = time_conv_dec_str($s1)." ".time_conv_dec_str($e1)." ".time_conv_dec_str($s2)." ".time_conv_dec_str($e2);
+
+        // If state or time has changed
+        if ($this->last_ctrlmode[$device]!="timer" || $timer_str!=$this->last_timer[$device]) {
           $this->last_ctrlmode[$device] = "timer";
+          $this->last_timer[$device] = $timer_str;
           foreach($payloads as $i => $payload) {
             $this->mqtt_client->publish("$this->basetopic/$device/cmnd/Timer".($i+1), $payload, 0);
           }
           $this->mqtt_client->publish("$this->basetopic/$device/cmnd/Timers", 1 ,0); // Enable timers
+          schedule_log("Tasmota $device set timer $timer_str");
         }
-
-       // $timer_str = time_conv_dec_str($s1)." ".time_conv_dec_str($e1)." ".time_conv_dec_str($s2)." ".time_conv_dec_str($e2);
-       // if (!isset($this->last_timer[$device])) $this->last_timer[$device] = "";
-
-        /* if ($timer_str!=$this->last_timer[$device]) {
-            $this->last_timer[$device] = $timer_str;
-            $this->mqtt_client->publish("$device/in/timer",$timer_str,0);
-            schedule_log("Tasmota $device set timer $timer_str");
-        } */
     }
 
     public function send_state_request($device) {
