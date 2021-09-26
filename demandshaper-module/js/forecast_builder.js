@@ -88,44 +88,48 @@ var forecast_builder = {
         // Foreach forecast in forecast_list
         for (var forecast_id in forecast_builder.config) {
             var forecast_key = forecast_builder.config[forecast_id].name;
-
-            out += "<tr>";
-            out += "<td>"+forecast_list[forecast_key].name+"</td>";
-            out += "<td>";
             
-            // For each parameter in forecast
-            for (var param_key in forecast_list[forecast_key].params) {
-                var param_name = forecast_list[forecast_key].params[param_key].name;
-                out += "<div>";
-                out +="<div class='param_name'>"+param_name+"</div>";
+            if (forecast_list[forecast_key]!=undefined) {
+
+                out += "<tr>";
+                out += "<td>"+forecast_list[forecast_key].name+"</td>";
+                out += "<td>";
                 
-                // If text entry box:
-                if (forecast_list[forecast_key].params[param_key].type=="text") {
-                    var value = "";
-                    if (forecast_builder.config[forecast_id][param_key]!=undefined) value = forecast_builder.config[forecast_id][param_key];
-                    out += "<input class='param' type='text' data-param='"+param_key+"' data-fid="+forecast_id+" value='"+value+"' />";
+                // For each parameter in forecast
+                for (var param_key in forecast_list[forecast_key].params) {
+                    var param_name = forecast_list[forecast_key].params[param_key].name;
+                    out += "<div>";
+                    out +="<div class='param_name'>"+param_name+"</div>";
                     
-                // If dropdown selector
-                } else if (forecast_list[forecast_key].params[param_key].type=="select") {
-                    // each option in selector
-                    var options = "";
-                    for (var param_val in forecast_list[forecast_key].params[param_key].options) {
-                        var selected = "";
-                        if (forecast_builder.config[forecast_id][param_key]==param_val) selected = "selected";
-                        options += "<option value='"+param_val+"' "+selected+">"+forecast_list[forecast_key].params[param_key].options[param_val]+"</option>";
+                    // If text entry box:
+                    if (forecast_list[forecast_key].params[param_key].type=="text") {
+                        var value = "";
+                        if (forecast_builder.config[forecast_id][param_key]!=undefined) value = forecast_builder.config[forecast_id][param_key];
+                        out += "<input class='param' type='text' data-param='"+param_key+"' data-fid="+forecast_id+" value='"+value+"' />";
+                        
+                    // If dropdown selector
+                    } else if (forecast_list[forecast_key].params[param_key].type=="select") {
+                        // each option in selector
+                        var options = "";
+                        for (var param_val in forecast_list[forecast_key].params[param_key].options) {
+                            var selected = "";
+                            if (forecast_builder.config[forecast_id][param_key]==param_val) selected = "selected";
+                            options += "<option value='"+param_val+"' "+selected+">"+forecast_list[forecast_key].params[param_key].options[param_val]+"</option>";
+                        }
+                        out += "<select class='param' data-param='"+param_key+"' data-fid="+forecast_id+" style='margin-bottom:0'>"+options+"</select>";
                     }
-                    out += "<select class='param' data-param='"+param_key+"' data-fid="+forecast_id+" style='margin-bottom:0'>"+options+"</select>";
+                    out += "</div>";
                 }
-                out += "</div>";
-            }
-            out += "</td>";
-            
-            var value = "";
-            if (forecast_builder.config[forecast_id].weight!=undefined) value = forecast_builder.config[forecast_id].weight;
+                out += "</td>";
+                
+                var value = "";
+                if (forecast_builder.config[forecast_id].weight!=undefined) value = forecast_builder.config[forecast_id].weight;
 
-            out += "<td><input class='weight' type='text' data-fid="+forecast_id+" value='"+value+"' />";
-            out += "<td><i class='icon-trash remove' data-fid="+forecast_id+" style='cursor:pointer'></i></td>";
-            out += "</tr>";
+                out += "<td><input class='weight' type='text' data-fid="+forecast_id+" value='"+value+"' />";
+                out += "<td><i class='icon-trash remove' data-fid="+forecast_id+" style='cursor:pointer'></i></td>";
+                out += "</tr>";
+            
+            }
         }
         $(forecast_builder.table_element).html(out);
     }
