@@ -75,8 +75,12 @@ function get_forecast_nordpool($redis,$params)
             "t"=>time()
         );
         if ($result = http_request("GET","http://datafeed.expektra.se/datafeed.svc/spotprice",$req_params)) {
-            $redis->set($key,$result);
-            $redis->expire($key,3600);
+            $ob = json_decode($result);
+            // only store valid JSON
+            if($ob != null) {            
+                $redis->set($key,$result);
+                $redis->expire($key,3600);
+            }
         }
     }
     $result = json_decode($result);
@@ -100,14 +104,12 @@ function get_forecast_nordpool($redis,$params)
         $forecast_time = floor($time / $forecast_interval) * $forecast_interval;
         
         if (isset($timevalues[$forecast_time])) {
-            $value = $timevalues[$forecast_time];
-        } else if (isset($timevalues[$forecast_time-(24*3600)])) { // if not available try to use value 24h in past
-            $value = $timevalues[$forecast_time-(24*3600)]; 
-        } else if (isset($timevalues[$forecast_time+(24*3600)])) { // if not available try to use value 24h in future
-            $value = $timevalues[$forecast_time+(24*3600)]; 
+            $value = $timevalues[$forecast_time];        
+        } else {
+            $value = null;
         }
-        
-        $profile[] = 1*$value;
+    
+        $profile[] = $value == null ? null : 1*$value;
     }
     
 
