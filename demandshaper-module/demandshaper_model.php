@@ -321,13 +321,19 @@ class DemandShaper
                     // Clone first, combine 2nd, 3rd etc
                     if ($combined==false) {
                         $combined = clone $forecast;
-                        for ($td=0; $td<$profile_length; $td++) $combined->profile[$td] = 0;
+                        
+                        // do not set NordPool nulls to 0 as the values don't really exist
+                        if($name!="nordpool") {
+                            for ($td=0; $td<$profile_length; $td++) $combined->profile[$td] = 0;
+                        }
                     }
                     
-                    // Combine
+                    // Combine, but ignore null values
                     for ($td=0; $td<$profile_length; $td++) {
-                        $combined->profile[$td] += ($forecast->profile[$td]*$config_item->weight);
-                    }
+                        if(isset($forecast->profile[$td])) {
+                            $combined->profile[$td] += ($forecast->profile[$td]*$config_item->weight);
+                        }
+                    }                    
                 }
             }
         }
