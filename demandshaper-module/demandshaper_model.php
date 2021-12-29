@@ -326,14 +326,18 @@ class DemandShaper
                         if($name!="nordpool") {
                             for ($td=0; $td<$profile_length; $td++) $combined->profile[$td] = 0;
                         }
-                    }
-                    
-                    // Combine, but ignore null values
-                    for ($td=0; $td<$profile_length; $td++) {
-                        if(isset($forecast->profile[$td])) {
-                            $combined->profile[$td] += ($forecast->profile[$td]*$config_item->weight);
+                    } 
+                    else {
+                        for ($td=0; $td<$profile_length; $td++) {
+                            if(isset($forecast->profile[$td])) {
+                                if($combined->profile[$td] == null) {
+                                    $combined->profile[$td] = 0;
+                                } 
+                                    
+                                $combined->profile[$td] += ($forecast->profile[$td]*$config_item->weight);                                
+                            }
                         }
-                    }                    
+                    }                   
                 }
             }
         }

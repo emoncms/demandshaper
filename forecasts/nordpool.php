@@ -47,7 +47,7 @@ function get_forecast_nordpool($redis,$params)
         "DK1"=>array("currency"=>"DKK","vat"=>"25"),
         "DK2"=>array("currency"=>"DKK","vat"=>"25"),
         "EE"=>array("currency"=>"EUR","vat"=>"20"),
-        "FI"=>array("currency"=>"EUR","vat"=>"24"),
+        "FI"=>array("currency"=>"EUR","vat"=>0,"tax"=>2.79372,"sellermargin"=>0.17),
         "LT"=>array("currency"=>"EUR","vat"=>"21"),
         "NO1"=>array("currency"=>"NOK","vat"=>"25"),
         "NO2"=>array("currency"=>"NOK","vat"=>"25"),
@@ -90,11 +90,13 @@ function get_forecast_nordpool($redis,$params)
     $timevalues = array();
     if ($result!=null && isset($result->data)) {
         $vat = (100.0+$nordpool[$params->area]["vat"])/100.0;
+        $tax = isset($nordpool[$params->area]["tax"]) ? $nordpool[$params->area]["tax"] : 0;
+        $sellermargin = isset($nordpool[$params->area]["sellermargin"]) ? $nordpool[$params->area]["sellermargin"] : 0;
         foreach ($result->data as $row) {
             $date = new DateTime($row->utc);
             $date->setTimezone($timezone);
             $timestamp = $date->getTimestamp();
-            $timevalues[$timestamp] = number_format($row->value*$vat*0.1,3,'.','');
+            $timevalues[$timestamp] = number_format($row->value*$vat*0.1+$tax+$sellermargin,3,'.','');
         }
     }
     
