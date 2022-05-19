@@ -74,11 +74,11 @@ class openevse
         $timer_str = time_conv_dec_str($s1," ")." ".time_conv_dec_str($e1," ");
         if (!isset($this->last_timer[$device])) $this->last_timer[$device] = "";
         
-        //if ($timer_str!=$this->last_timer[$device]) {
+        if ($timer_str!=$this->last_timer[$device]) {
             $this->last_timer[$device] = $timer_str;
             $this->mqtt_client->publish("$device/rapi/in/\$ST",$timer_str,0);
             schedule_log("$device set timer $timer_str");
-        //}
+        }
     }
     
     public function set_divert_mode($device,$mode) {
