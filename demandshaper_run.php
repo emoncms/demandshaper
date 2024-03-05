@@ -237,7 +237,7 @@ while(true)
                 if ($schedule->settings->ctrlmode=="smart") {
                 
                     // If the schedule has not yet started it is ok to recalculate the schedule periods to find a more optimum time
-                    if (!isset($schedule->runtime->started) || $schedule->settings->interruptible) {
+                    if (!isset($schedule->runtime->started) || !$schedule->runtime->started || $schedule->settings->interruptible) {
                         
                         // Automatic update of time left for schedule e.g take into account updated battery SOC of electric car, home battery, device
                         $schedule = $device_class[$device_type]->auto_update_timeleft($schedule);

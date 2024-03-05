@@ -47,7 +47,7 @@ function get_forecast_nordpool($redis,$params)
         "DK1"=>array("currency"=>"DKK","vat"=>"25"),
         "DK2"=>array("currency"=>"DKK","vat"=>"25"),
         "EE"=>array("currency"=>"EUR","vat"=>"20"),
-        "FI"=>array("currency"=>"EUR","vat"=>"24"),
+        "FI"=>array("currency"=>"EUR","vat"=>0,"tax"=>2.79372,"sellermargin"=>0.17),
         "LT"=>array("currency"=>"EUR","vat"=>"21"),
         "NO1"=>array("currency"=>"NOK","vat"=>"25"),
         "NO2"=>array("currency"=>"NOK","vat"=>"25"),
@@ -75,8 +75,12 @@ function get_forecast_nordpool($redis,$params)
             "t"=>time()
         );
         if ($result = http_request("GET","http://datafeed.expektra.se/datafeed.svc/spotprice",$req_params)) {
-            $redis->set($key,$result);
-            $redis->expire($key,3600);
+            $ob = json_decode($result);
+            // only store valid JSON
+            if($ob != null) {            
+                $redis->set($key,$result);
+                $redis->expire($key,3600);
+            }
         }
     }
     $result = json_decode($result);
@@ -86,11 +90,13 @@ function get_forecast_nordpool($redis,$params)
     $timevalues = array();
     if ($result!=null && isset($result->data)) {
         $vat = (100.0+$nordpool[$params->area]["vat"])/100.0;
+        $tax = isset($nordpool[$params->area]["tax"]) ? $nordpool[$params->area]["tax"] : 0;
+        $sellermargin = isset($nordpool[$params->area]["sellermargin"]) ? $nordpool[$params->area]["sellermargin"] : 0;
         foreach ($result->data as $row) {
             $date = new DateTime($row->utc);
             $date->setTimezone($timezone);
             $timestamp = $date->getTimestamp();
-            $timevalues[$timestamp] = number_format($row->value*$vat*0.1,3,'.','');
+            $timevalues[$timestamp] = number_format($row->value*$vat*0.1+$tax+$sellermargin,3,'.','');
         }
     }
     
@@ -100,14 +106,12 @@ function get_forecast_nordpool($redis,$params)
         $forecast_time = floor($time / $forecast_interval) * $forecast_interval;
         
         if (isset($timevalues[$forecast_time])) {
-            $value = $timevalues[$forecast_time];
-        } else if (isset($timevalues[$forecast_time-(24*3600)])) { // if not available try to use value 24h in past
-            $value = $timevalues[$forecast_time-(24*3600)]; 
-        } else if (isset($timevalues[$forecast_time+(24*3600)])) { // if not available try to use value 24h in future
-            $value = $timevalues[$forecast_time+(24*3600)]; 
+            $value = $timevalues[$forecast_time];        
+        } else {
+            $value = null;
         }
-        
-        $profile[] = 1*$value;
+    
+        $profile[] = $value == null ? null : 1*$value;
     }
     
 
