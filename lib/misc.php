@@ -43,8 +43,9 @@ function exceptions_error_handler($severity, $message, $filename, $lineno) {
 
 function schedule_log($message){
     if ($fh = @fopen("/var/log/emoncms/demandshaper.log","a")) {
-        $now = microtime(true);
-        $micro = sprintf("%03d",($now - ($now >> 0)) * 1000);
+        $now = microtime(true); 
+        $micro = sprintf("%03d", (int)(($now - (int)$now) * 1000));
+
         $now = DateTime::createFromFormat('U', (int)$now); // Only use UTC for logs
         $now = $now->format("Y-m-d H:i:s").".$micro";
         @fwrite($fh,$now." | ".$message."\n");
