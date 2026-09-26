@@ -69,4 +69,4 @@
     </div>
 </div>
 
-<script type="text/javascript" src="<?php echo $path; ?>Modules/demandshaper/emonth.js?v=6"></script>
+<script type="text/javascript" src="<?php echo $path; ?>Modules/demandshaper/emonth.js?v=7"></script>

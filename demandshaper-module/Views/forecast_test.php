@@ -1,7 +1,5 @@
 <?php global $path; ?>
-<script language="javascript" type="text/javascript" src="<?php echo $path; ?>Lib/flot/jquery.flot.min.js"></script>
-<script language="javascript" type="text/javascript" src="<?php echo $path; ?>Lib/flot/jquery.flot.time.min.js"></script>
-<script language="javascript" type="text/javascript" src="<?php echo $path; ?>Lib/flot/date.format.min.js"></script>
+<script language="javascript" type="text/javascript" src="<?php echo $path; ?>Lib/js/flot-5.1.0.mod.min.js"></script>
 <script language="javascript" type="text/javascript" src="<?php echo $path; ?>Modules/demandshaper/js/forecast_builder.js"></script>
 <h3>Forecast Viewer</h3>
 
@@ -156,6 +154,7 @@ function draw_graph() {
     var options = {
         xaxis: { 
             mode: "time", 
+            timeBase: "milliseconds", 
             timezone: "browser", 
             font: {size:12, color:"#666"}, 
             reserveSpace:false
@@ -170,13 +169,13 @@ function draw_graph() {
             borderWidth:0,
             hoverable: true
         },
-        bars: { show: true, barWidth:1800*1000*0.8, lineWidth:0 }
+        series: { bars: { show: true, barWidth:[1800*1000*0.8, true], lineWidth:0 } }
     };
 
     var width = $("#placeholder_bound").width();
     if (width>0) {
         $("#placeholder").width(width);
-        $.plot($('#placeholder'), [{data:graph_profile,color:"#aaa"},{data:graph_active,color:"#ea510e"}], options);
+        Flot.plot(document.getElementById('placeholder'), [{data:graph_profile,color:"#aaa"},{data:graph_active,color:"#ea510e"}], options);
     }
 }
 

@@ -11,7 +11,7 @@ class openevse
     public function __construct($mqtt_client,$basetopic) {
         $this->mqtt_client = $mqtt_client;
         $this->basetopic = $basetopic;
-        $this->host = "192.168.1.118";
+        $this->host = "192.168.1.197";
     }
     
     public function default_settings() {

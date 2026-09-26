@@ -231,6 +231,7 @@ function draw_profile_graph(){
     var options = {
         xaxis: { 
             mode: "time", 
+            timeBase: "milliseconds", 
             timezone: "browser", 
             font: {size:12, color:"#666"}, 
             reserveSpace:false
@@ -245,7 +246,7 @@ function draw_profile_graph(){
             borderWidth:0,
             hoverable: true
         },
-        bars: { show: true, barWidth:1800*1000*0.8, lineWidth:0 }
+        series: { bars: { show: true, barWidth:[1800*1000*0.8, true], lineWidth:0 } }
     };
     
     // Shade out time after end of schedule
@@ -258,7 +259,7 @@ function draw_profile_graph(){
     var width = $("#placeholder_bound").width();
     if (width>0) {
         $("#placeholder").width(width);
-        $.plot($('#placeholder'), profile_graph_data, options);
+        Flot.plot(document.getElementById('placeholder'), profile_graph_data, options);
     }
 }
 
@@ -373,7 +374,9 @@ $(".config-device").click(function(){
     $(".scheduler-config").parent().toggle();
 });
 
-$("#placeholder").bind("plothover", function (event, pos, item) {
+// Flot 5 dispatches native events, the item is the second entry of event.detail
+document.getElementById("placeholder").addEventListener("plothover", function (event) {
+    var item = event.detail[1];
     if (item) {
         if (previousPoint != item.datapoint) {
             previousPoint = item.datapoint;

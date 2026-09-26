@@ -115,6 +115,7 @@ function draw_graph() {
     var options = {
         xaxis: { 
             mode: "time", 
+            timeBase: "milliseconds", 
             timezone: "browser", 
             font: {size:flot_font_size, color:"#666"}, 
             // labelHeight:-5
@@ -140,7 +141,7 @@ function draw_graph() {
     var width = $("#placeholder_bound").width();
     if (width>0) {
         $("#placeholder").width(width);
-        $.plot($('#placeholder'), [{data:temperature_data,color:"#e14040",yaxis:1},{data:humidity_data,color:"#4072e1",yaxis:2}], options);
+        Flot.plot(document.getElementById('placeholder'), [{data:temperature_data,color:"#e14040",yaxis:1},{data:humidity_data,color:"#4072e1",yaxis:2}], options);
     }
 }
 
