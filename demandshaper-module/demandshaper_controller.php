@@ -265,6 +265,9 @@ function demandshaper_controller()
                     $mqtt_request = new MQTTRequest($settings['mqtt']);
                     
                     $demandshaper->device_class[$schedules->$device->settings->device_type]->set_basetopic($settings['mqtt']['basetopic']);
+                    if (method_exists($demandshaper->device_class[$schedules->$device->settings->device_type],'set_host')) {
+                        $demandshaper->device_class[$schedules->$device->settings->device_type]->set_host($device,$schedules->$device->settings->ip);
+                    }
                     return $demandshaper->device_class[$schedules->$device->settings->device_type]->get_state($mqtt_request,$device,$timezone);
                 }
             }   

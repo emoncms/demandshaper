@@ -1,4 +1,4 @@
-<?php global $path; $v=16; ?>
+<?php global $path; $v=17; ?>
 <link rel="stylesheet" href="<?php echo $path; ?>Modules/demandshaper/demandshaper.css?v=<?php echo $v; ?>">
 
 <script language="javascript" type="text/javascript" src="<?php echo $path; ?>Lib/js/flot-5.1.0.mod.min.js"></script>
@@ -168,6 +168,7 @@
           <div class="openevse hide" style="border: 1px solid #ccc; padding:10px; margin-top:10px; background-color:#f0f0f0">
             <p><b>OpenEVSE Settings</b></p>
             <table class="table">
+              <tr><td>OpenEVSE IP address:</td><td><input class="input" name="openevse_ip" type="text" style="width:120px" placeholder="openevse.local"/></td></tr>
               <tr><td>Control based on:</td><td><select class="input" name="soc_source"><option value="time">Charge time</option><option value="energy">Charge energy</option><option value="distance">Travel distance</option><option value="input">Battery charge level (Input)</option><option value="ovms">Battery charge level (OVMS)</option><option value="api">set-device-settings api</option></select></td></tr>
               <tr><td>Useable Battery Capacity:</td><td><input class="input" name="battery_capacity" type="text" style="width:80px"/> kWh</td></tr>
               <tr><td>AC Charge Rate:</td><td><input class="input" name="charge_rate" type="text" style="width:80px"/> kW</td></tr>

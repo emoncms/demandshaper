@@ -41,6 +41,7 @@ function update_input_UI_openevse() {
         }    
     }
     
+    $(".input[name=openevse_ip]").val(schedule.settings.ip);
     $(".input[name=soc_source]").val(schedule.settings.soc_source);
     $(".input[name=battery_capacity]").val(schedule.settings.battery_capacity);
     $(".input[name=charge_rate]").val(schedule.settings.charge_rate);
@@ -183,6 +184,11 @@ function openevse_events() {
         openevse_calc_modes(true);
         on_UI_change();
     });  
+
+    $('.input[name="openevse_ip"]').change(function(){
+        schedule.settings.ip = $(this).val().trim().replace(/^https?:\/\//i,'').replace(/\/+$/,'');
+        on_UI_change();
+    });
 
     $('.input[name="soc_source"]').change(function(){
         schedule.settings.soc_source =  $(this).val();

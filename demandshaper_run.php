@@ -144,6 +144,11 @@ while(true)
                 if (isset($settings['mqtt']['multiuser']) && $settings['mqtt']['multiuser']) {
                     $device_class[$device_type]->set_basetopic($settings['mqtt']['basetopic']."/".$userid);
                 }
+
+                // Devices controlled over http e.g OpenEVSE WiFi v4
+                if (method_exists($device_class[$device_type],'set_host')) {
+                    $device_class[$device_type]->set_host($device,$schedule->settings->ip);
+                }
                 
                 $log->info(date("Y-m-d H:i:s")." Schedule:$device ".$schedule->settings->ctrlmode);
                 $log->info("  end timestamp: ".$schedule->settings->end_timestamp." ".date("Y-m-d H:i:s",$schedule->settings->end_timestamp));

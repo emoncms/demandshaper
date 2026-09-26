@@ -7,11 +7,27 @@ class openevse
     private $last_timer = array();
     private $last_soc_update = 0;
     private $host = "openevse.local";
+    private $device_host = array();
 
     public function __construct($mqtt_client,$basetopic) {
         $this->mqtt_client = $mqtt_client;
         $this->basetopic = $basetopic;
-        $this->host = "192.168.1.197";
+    }
+
+    // Set the OpenEVSE IP address or hostname (from the device settings) used by the http api calls
+    public function set_host($device,$host) {
+        $host = preg_replace('#^https?://#i','',trim($host));
+        $host = rtrim($host,'/');
+        if (!preg_match('/^[A-Za-z0-9.\-]+(:[0-9]{1,5})?$/',$host)) $host = "openevse.local";
+
+        // Resend control state if the host has changed
+        $device = $this->basetopic."/$device";
+        if (isset($this->device_host[$device]) && $this->device_host[$device]!=$host) {
+            unset($this->last_ctrlmode[$device]);
+            unset($this->last_timer[$device]);
+        }
+        $this->device_host[$device] = $host;
+        $this->host = $host;
     }
     
     public function default_settings() {
