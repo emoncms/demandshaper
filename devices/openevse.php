@@ -5,6 +5,7 @@ class openevse
     private $basetopic = "";
     private $last_ctrlmode = array();
     private $last_timer = array();
+    private $last_divert_mode = array();
     private $last_soc_update = 0;
     private $host = "openevse.local";
     private $device_host = array();
@@ -64,10 +65,11 @@ class openevse
         $this->last_timer[$device] = "00 00 00 00";
 
         if ($this->last_ctrlmode[$device]!="on") {
-            $this->last_ctrlmode[$device] = "on";
             $result = $this->http_post('/override',array(
               'state' => 'active'
             ));
+            if ($result===false) return;
+            $this->last_ctrlmode[$device] = "on";
             schedule_log("$device switch on $result");
         }
     }
@@ -79,10 +81,11 @@ class openevse
         $this->last_timer[$device] = "00 00 00 00";
         
         if ($this->last_ctrlmode[$device]!="off") {
-            $this->last_ctrlmode[$device] = "off";
             $result = $this->http_post('/override',array(
               'state' => 'disabled'
             ));
+            if ($result===false) return;
+            $this->last_ctrlmode[$device] = "off";
             schedule_log("$device switch off $result");
         }
     }
@@ -95,14 +98,18 @@ class openevse
         if (!isset($this->last_timer[$device])) $this->last_timer[$device] = "";
         
         if ($timer_str!=$this->last_timer[$device]) {
-            $this->last_timer[$device] = $timer_str;
 
-            // clear override
+            // clear override (may fail if no override is set)
             $this->http_delete('/override');
 
             // get list of events
             $result = $this->http_get('/schedule');
+            if ($result===false) return;
             $events = json_decode($result);
+            if (!is_array($events)) {
+                schedule_log("$device openevse invalid schedule response: $result");
+                return;
+            }
 
             // if there are more than 2 events, delete the rest
             if (count($events) > 2) {
@@ -120,6 +127,7 @@ class openevse
               'time' => $active_time_str,
               'days' => ['sunday','monday','tuesday','wednesday','thursday','friday','saturday']
             ));
+            if ($result===false) return;
 
             // set event 2
             $disabled_time_str = time_conv_dec_str($e1,":").":00";
@@ -128,7 +136,9 @@ class openevse
               'time' => $disabled_time_str,
               'days' => ['sunday','monday','tuesday','wednesday','thursday','friday','saturday']
             ));
+            if ($result===false) return;
 
+            $this->last_timer[$device] = $timer_str;
             schedule_log("$device set timer active ".$active_time_str." disabled ".$disabled_time_str);
         }
     }
@@ -162,10 +172,11 @@ class openevse
 
         // Get OpenEVSE timer state using curl
         $result = $this->http_get('/schedule');
+        if ($result===false) return false;
         $events = json_decode($result);
 
         // there should be 2 events
-        if (count($events) == 2) {
+        if (is_array($events) && count($events) == 2) {
             // split by :
             $parts = explode(":",$events[0]->time);
             $state->timer_start1 = ((int)$parts[0])+((int)$parts[1]/60);
@@ -179,6 +190,7 @@ class openevse
 
         // Get OpenEVSE state 
         $result = $this->http_get('/override');
+        if ($result===false) return false;
         $override = json_decode($result);
         if (isset($override->state)) {
             if ($override->state == "active") {
@@ -233,56 +245,48 @@ class openevse
         return $schedule;
     }
 
-    // curl post
     public function http_post($url,$data) {
-        $url = "http://".$this->host.$url;
-
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        curl_setopt($ch, CURLOPT_POST, 1);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-        $headers = array(
-          'Accept: application/json',
-          'Content-Type: application/json',
-        );
-        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-        $result = curl_exec($ch);
-        if (curl_errno($ch)) {
-          echo 'Error:' . curl_error($ch);
-        }
-        curl_close ($ch);
-        return $result;
+        return $this->http_request('POST',$url,json_encode($data));
     }
 
-    // curl get
     public function http_get($url) {
-        $url = "http://".$this->host.$url;
-
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        $result = curl_exec($ch);
-        if (curl_errno($ch)) {
-          echo 'Error:' . curl_error($ch);
-        }
-        curl_close ($ch);
-        return $result;
+        return $this->http_request('GET',$url);
     }
 
-    // curl delete
     public function http_delete($url) {
+        return $this->http_request('DELETE',$url);
+    }
+
+    // Returns the response body, or false if the OpenEVSE could not be reached or returned an error
+    private function http_request($method,$url,$body=null) {
         $url = "http://".$this->host.$url;
 
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'DELETE');
-        $result = curl_exec($ch);
-        if (curl_errno($ch)) {
-          echo 'Error:' . curl_error($ch);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
+        if ($body!==null) {
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+              'Accept: application/json',
+              'Content-Type: application/json',
+            ));
         }
-        curl_close ($ch);
+        $result = curl_exec($ch);
+        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $error = curl_errno($ch) ? curl_error($ch) : false;
+        curl_close($ch);
+
+        if ($error!==false) {
+            schedule_log("openevse $method $url error: $error");
+            return false;
+        }
+        if ($http_code>=400) {
+            schedule_log("openevse $method $url http $http_code: $result");
+            return false;
+        }
         return $result;
     }
 }
