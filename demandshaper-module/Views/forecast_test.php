@@ -1,13 +1,15 @@
-<?php global $path; ?>
-<script language="javascript" type="text/javascript" src="<?php echo $path; ?>Lib/js/flot-5.1.0.mod.min.js"></script>
-<script language="javascript" type="text/javascript" src="<?php echo $path; ?>Modules/demandshaper/js/forecast_builder.js"></script>
+<?php
+global $path;
+load_js("Lib/js/flot-5.1.0.mod.min.js");
+load_js("Modules/demandshaper/js/forecast_builder.js");
+?>
 <h3>Forecast Viewer</h3>
 
-<div class="input-prepend input-append">
-  <span class="add-on">Period</span>
-  <input id="period" type="text" style="width:50px" />
-  <span class="add-on">End</span>
-  <input id="end" type="text" style="width:50px" />
+<div class="input-group">
+  <span class="input-group-text">Period</span>
+  <input id="period" class="form-control input-75" type="text" />
+  <span class="input-group-text">End</span>
+  <input id="end" class="form-control input-75" type="text" />
 </div>
 
 <style>
@@ -17,17 +19,13 @@
     width:120px;
 }
 
-.weight {
-    width:50px;
-    margin-bottom:0;
-}
 </style>
 
 <table class="table">
   <tr><th>Forecast name</th><th>Parameters</th><th>Weight</th><th></th></tr>
   <tbody id="forecasts"></tbody>
 </table>
-<div class="input-prepend input-append"><span class="add-on">Add forecast</span><select id="forecast_list"></select></div>
+<div class="input-group"><span class="input-group-text">Add forecast</span><select id="forecast_list" class="form-select input-auto"></select></div>
 
 <pre id="forecast_config_json"></pre>
 

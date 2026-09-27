@@ -10,7 +10,6 @@ Part of the OpenEnergyMonitor project:
 http://openenergymonitor.org
 
 */
-$v=2;
 global $path;
 $emoncmspath = $path;
 // if ($remoteaccess) $emoncmspath .= "remoteaccess/";
@@ -18,13 +17,13 @@ if (isset($_GET['apikey'])) $apikeystr = "&apikey=".$_GET['apikey']; else $apike
 ?>
 
 <style>#icon-list svg { opacity: .7; }</style>
-<link rel="stylesheet" href="<?php echo $path; ?>Modules/demandshaper/demandshaper.css?v=<?php echo $v; ?>">
+<?php load_css("Modules/demandshaper/demandshaper.css"); ?>
 
   <div id="scheduler-top"></div>
   
   <div id="auth-check" class="hide">
       <i class="icon-exclamation-sign icon-white"></i> Device on ip address: <span id="auth-check-ip"></span> would like to connect 
-      <button class="btn btn-small auth-check-btn auth-check-allow">Allow</button>
+      <button class="btn btn-default btn-sm auth-check-btn auth-check-allow">Allow</button>
   </div>
 
   <div id="wizard">

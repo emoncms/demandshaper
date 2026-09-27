@@ -55,16 +55,16 @@
 </div> <!-- table -->
 </div>
 
-<div id="DeleteDeviceModal" class="modal hide" tabindex="-1" role="dialog" aria-labelledby="DeleteDeviceModalLabel" aria-hidden="true" data-backdrop="static">
+<div id="DeleteDeviceModal" class="modal hide" tabindex="-1" role="dialog" aria-labelledby="DeleteDeviceModalLabel" aria-hidden="true" data-bs-backdrop="static">
     <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+        <button type="button" class="close" data-bs-dismiss="modal" aria-hidden="true">×</button>
         <h3 id="feedDeleteModalLabel">Delete Device: <span class='device-name'></span></h3>
     </div>
     <div class="modal-body">
          <p>Are you sure you want to delete device <span class='device-name'></span>?</p>
     </div>
     <div class="modal-footer">
-        <button class="btn" data-dismiss="modal" aria-hidden="true"><?php echo _('Close'); ?></button>
+        <button class="btn btn-default" data-bs-dismiss="modal" aria-hidden="true"><?php echo _('Close'); ?></button>
         <button id="delete-device-confirm" class="btn btn-danger"><?php echo _('Confirm'); ?></button>
     </div>
 </div>

@@ -1,13 +1,13 @@
-<?php global $path; $v=17; ?>
-<link rel="stylesheet" href="<?php echo $path; ?>Modules/demandshaper/demandshaper.css?v=<?php echo $v; ?>">
-
-<script language="javascript" type="text/javascript" src="<?php echo $path; ?>Lib/js/flot-5.1.0.mod.min.js"></script>
-
-<script language="javascript" type="text/javascript" src="<?php echo $path; ?>Modules/demandshaper/js/forecast_builder.js?v=<?php echo $v; ?>"></script>
-<script language="javascript" type="text/javascript" src="<?php echo $path; ?>Modules/demandshaper/js/get_device_state.js?v=<?php echo $v; ?>"></script>
-<script language="javascript" type="text/javascript" src="<?php echo $path; ?>Modules/demandshaper/js/battery.js?v=<?php echo $v; ?>"></script>
-<script language="javascript" type="text/javascript" src="<?php echo $path; ?>Modules/demandshaper/js/openevse.js?v=<?php echo $v; ?>"></script>
-<script language="javascript" type="text/javascript" src="<?php echo $path; ?>Modules/demandshaper/js/hpmon.js?v=<?php echo $v; ?>"></script>
+<?php
+global $path;
+load_css("Modules/demandshaper/demandshaper.css");
+load_js("Lib/js/flot-5.1.0.mod.min.js");
+load_js("Modules/demandshaper/js/forecast_builder.js");
+load_js("Modules/demandshaper/js/get_device_state.js");
+load_js("Modules/demandshaper/js/battery.js");
+load_js("Modules/demandshaper/js/openevse.js");
+load_js("Modules/demandshaper/js/hpmon.js");
+?>
 <div id="scheduler-top"></div>
 
 <div id="scheduler-outer">
@@ -21,7 +21,7 @@
           <!---------------------------------------------------------------------------------------------------------------------------->
           <!-- CONTROLS -->
           <!---------------------------------------------------------------------------------------------------------------------------->                
-          <div id="mode" class="btn-group">
+          <div id="mode" class="ds-group">
             <button mode="on">On</button><button mode="off">Off</button><button mode="smart" class="active">Smart</button><button mode="timer">Timer</button>
           </div><br><br>
           
@@ -33,13 +33,13 @@
           </div>
           
           <div class="heatpumpmonitor hide">
-            <div class="row" style="max-width:720px; margin: 0 auto;">
-              <div class="span4 offset2" style="margin-bottom:20px"><br>
+            <div class="row g-0 justify-content-center ds-row">
+              <div class="col-12 col-md-auto" style="margin-bottom:20px"><br>
                 <p>Flow Temperature <span id="heatpump_flowT"></span>C<br><span style="font-weight:normal; font-size:12px">Heat Output <span id="heatpump_heat">0</span>W</span></p>
               </div>
-              <div class="span4" style="margin-bottom:20px">
+              <div class="col-12 col-md-auto" style="margin-bottom:20px">
                 <p>Target Temperature</p>
-                <div id="flowT" class="btn-group">
+                <div id="flowT" class="ds-group">
                   <button>-</button><input class="input" name="flowT" type="text" val="0" style="width:60px"><button>+</button>
                 </div>
               </div>
@@ -48,38 +48,38 @@
           <!---------------------------------------------------------------------------------------------------------------------------->
           <div class="smart">
           
-            <div class="row" style="max-width:720px; margin: 0 auto;">
-              <div class="span4" style="margin-bottom:8px">
+            <div class="row g-0 justify-content-center ds-row">
+              <div class="col-12 col-md-auto" style="margin-bottom:8px">
                 <div id="run_period">
                   <p>Run period:</p>
-                  <div id="period" class="btn-group input-time">
+                  <div id="period" class="ds-group input-time">
                     <button>-</button><input type="time" val="00:00"><button>+</button>
                   </div>
                 </div>
                 <div id="charge_energy_div" class="hide">
                   <p>Energy (kWh):</p>
-                  <div id="charge_energy" class="btn-group">
+                  <div id="charge_energy" class="ds-group">
                     <button>-</button><input class="input" name="charge_energy" type="text" val="0" style="width:30px; text-align:center"><button>+</button>
                   </div>
                 </div>
                 <div id="charge_distance_div" class="hide">
                   <p>Distance (<span id="charge_distance_units">miles</span>):</p>
-                  <div id="charge_distance" class="btn-group">
+                  <div id="charge_distance" class="ds-group">
                     <button>-</button><input class="input" name="charge_distance" type="text" val="0" style="width:30px; text-align:center"><button>+</button>
                   </div>
                 </div>
               </div>
-              <div class="span4" style="margin-bottom:8px">
+              <div class="col-12 col-md-auto" style="margin-bottom:8px">
                 <p>Complete by:</p>
-                <div id="end" class="btn-group input-time">
+                <div id="end" class="ds-group input-time">
                   <button>-</button><input type="time" val="00:00"><button>+</button>
                 </div>
               </div>
-              <div class="span4" style="margin-bottom:8px">
+              <div class="col-12 col-md-auto" style="margin-bottom:8px">
                 <p>Ok to interrupt:</p>
                 <div name="interruptible" state=0 class="scheduler-checkbox" style="margin:0 auto"></div>
               </div>
-              <div class="span4 hide" style="margin-bottom:8px">
+              <div class="col-12 col-md-auto hide" style="margin-bottom:8px">
                 <p title="Solar PV Divert">Eco mode:</p>
                 <div title="Solar PV Divert" name="divert_mode" state=0 class="scheduler-checkbox" style="margin:0 auto"></div>
               </div>
@@ -87,19 +87,19 @@
           </div>
           <!---------------------------------------------------------------------------------------------------------------------------->
           <div class="timer hide">
-            <div class="row" style="max-width:720px; margin: 0 auto;">
-              <div class="span2 timer-title">
+            <div class="row g-0 justify-content-center ds-row">
+              <div class="col-12 col-md-auto timer-title">
                 <p>Timer 1</p>
               </div>
-              <div class="span4">
+              <div class="col-12 col-md-auto">
                 <p>Start</p>
-                <div id="timer_start1" class="btn-group input-time">
+                <div id="timer_start1" class="ds-group input-time">
                   <button>-</button><input type="time" val="00:00"><button>+</button>
                 </div>
               </div>
-              <div class="span4">
+              <div class="col-12 col-md-auto">
                 <p>Stop</p>
-                <div id="timer_stop1" class="btn-group input-time">
+                <div id="timer_stop1" class="ds-group input-time">
                   <button>-</button><input type="time" val="00:00"><button>+</button>
                 </div>
               </div>
@@ -107,19 +107,19 @@
             
             <br>
             
-            <div class="row timer hide" style="max-width:720px; margin: 0 auto;">
-              <div class="span2 timer-title">
+            <div class="row g-0 justify-content-center ds-row">
+              <div class="col-12 col-md-auto timer-title">
                 <p>Timer 2</p>
               </div>
-              <div class="span4">
+              <div class="col-12 col-md-auto">
                 <p>Start</p>
-                  <div id="timer_start2" class="btn-group input-time">
+                  <div id="timer_start2" class="ds-group input-time">
                   <button>-</button><input type="time" val="00:00"><button>+</button>
                 </div>
               </div>
-              <div class="span4">
+              <div class="col-12 col-md-auto">
                 <p>Stop</p>
-                <div id="timer_stop2" class="btn-group input-time">
+                <div id="timer_stop2" class="ds-group input-time">
                   <button>-</button><input type="time" val="00:00"><button>+</button>
                 </div>
               </div>
@@ -148,7 +148,7 @@
         <div class="scheduler-config" style="text-align:left">
 
           <div style="border: 1px solid #ccc; padding:10px; background-color:#f0f0f0;">
-          <div style="display:inline-block; width:200px">Device name:</div><input class="device_name" type="text" style="width:150px">   
+          <div style="display:inline-block; width:200px">Device name:</div><input class="device_name form-control input-165" type="text">   
           </div>
         
           <div style="border: 1px solid #ccc; padding:10px; margin-top:10px; background-color:#f0f0f0;">
@@ -157,8 +157,8 @@
               <tr><th>Forecast name</th><th>Parameters</th><th>Weight</th><th></th></tr>
               <tbody id="forecasts"></tbody>
             </table>
-            <div class="input-prepend input-append"><span class="add-on">Add forecast</span><select id="forecast_list"></select></div><br>
-            <div class="input-prepend input-append" style="margin-bottom:0px"><span class="add-on">Schedule info</span><select class="forecast_units" style="width:120px">
+            <div class="input-group mb-2"><span class="input-group-text">Add forecast</span><select id="forecast_list" class="form-select input-auto"></select></div><br>
+            <div class="input-group"><span class="input-group-text">Schedule info</span><select class="forecast_units form-select input-auto">
               <option value="generic">Generic</option>
               <option value="pkwh">p/kWh</option>
               <option value="gco2">gCO2</option>
@@ -168,23 +168,23 @@
           <div class="openevse hide" style="border: 1px solid #ccc; padding:10px; margin-top:10px; background-color:#f0f0f0">
             <p><b>OpenEVSE Settings</b></p>
             <table class="table">
-              <tr><td>OpenEVSE IP address:</td><td><input class="input" name="openevse_ip" type="text" style="width:120px" placeholder="openevse.local"/></td></tr>
-              <tr><td>Control based on:</td><td><select class="input" name="soc_source"><option value="time">Charge time</option><option value="energy">Charge energy</option><option value="distance">Travel distance</option><option value="input">Battery charge level (Input)</option><option value="ovms">Battery charge level (OVMS)</option><option value="api">set-device-settings api</option></select></td></tr>
-              <tr><td>Useable Battery Capacity:</td><td><input class="input" name="battery_capacity" type="text" style="width:80px"/> kWh</td></tr>
-              <tr><td>AC Charge Rate:</td><td><input class="input" name="charge_rate" type="text" style="width:80px"/> kW</td></tr>
-              <tr><td>Car economy:</td><td><input class="input" name="car_economy" type="text" style="width:80px"/> <span id="car_economy_units">miles/kWh</span></td></tr>
-              <tr><td>Distance units:</td><td><select class="input" name="distance_units" style="width:100px"><option>miles</option><option>km</option></td></tr>
-              <tr class="openevse-balancing hide"><td>Balancing Percentage::</td><td><input class="input" name="balpercentage" type="text" style="width:80px"/> %</td></tr>
-              <tr class="openevse-balancing hide"><td>Balancing Time:</td><td><input class="input" name="baltime" type="text" style="width:80px"/> Mins</td></tr>
-              <tr class="ovms-options hide"><td>OVMS Vehicle ID:</td><td><input class="input" name="ovms_vehicleid" type="text" style="width:80px"/></td></tr>
-              <tr class="ovms-options hide"><td>OVMS Car Password:</td><td><input class="input" name="ovms_carpass" type="text" style="width:80px"/></td></tr> 
+              <tr><td>OpenEVSE IP address:</td><td><input class="input form-control input-165" name="openevse_ip" type="text" placeholder="openevse.local"/></td></tr>
+              <tr><td>Control based on:</td><td><select class="input form-select input-auto" name="soc_source"><option value="time">Charge time</option><option value="energy">Charge energy</option><option value="distance">Travel distance</option><option value="input">Battery charge level (Input)</option><option value="ovms">Battery charge level (OVMS)</option><option value="api">set-device-settings api</option></select></td></tr>
+              <tr><td>Useable Battery Capacity:</td><td><input class="input form-control input-105" name="battery_capacity" type="text"/> kWh</td></tr>
+              <tr><td>AC Charge Rate:</td><td><input class="input form-control input-105" name="charge_rate" type="text"/> kW</td></tr>
+              <tr><td>Car economy:</td><td><input class="input form-control input-105" name="car_economy" type="text"/> <span id="car_economy_units">miles/kWh</span></td></tr>
+              <tr><td>Distance units:</td><td><select class="input form-select input-105" name="distance_units"><option>miles</option><option>km</option></select></td></tr>
+              <tr class="openevse-balancing hide"><td>Balancing Percentage::</td><td><input class="input form-control input-105" name="balpercentage" type="text"/> %</td></tr>
+              <tr class="openevse-balancing hide"><td>Balancing Time:</td><td><input class="input form-control input-105" name="baltime" type="text"/> Mins</td></tr>
+              <tr class="ovms-options hide"><td>OVMS Vehicle ID:</td><td><input class="input form-control input-105" name="ovms_vehicleid" type="text"/></td></tr>
+              <tr class="ovms-options hide"><td>OVMS Car Password:</td><td><input class="input form-control input-105" name="ovms_carpass" type="text"/></td></tr> 
             </table>      
           </div>          
 
           <div class="general" style="border: 1px solid #ccc; padding:10px; margin-top:10px; background-color:#f0f0f0">
             <p><b>General Settings</b></p>
             <table class="table" style="margin:0">
-              <tr><td>At end of smart schedule:</td><td><select class="input" id="on_completion"><option value="smart">Reschedule</option><option value="off">Turn off</option><option value="on">Turn on</option></select></td></tr>
+              <tr><td>At end of smart schedule:</td><td><select class="input form-select input-auto" id="on_completion"><option value="smart">Reschedule</option><option value="off">Turn off</option><option value="on">Turn on</option></select></td></tr>
             </table>      
           </div> 
           
@@ -193,17 +193,21 @@
   </div> <!-- node-scheduler -->
 </div> <!-- scheduler-outer -->
 
-<div id="DeleteDeviceModal" class="modal hide" tabindex="-1" role="dialog" aria-labelledby="DeleteDeviceModalLabel" aria-hidden="true" data-backdrop="static">
-    <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
-        <h3 id="feedDeleteModalLabel">Delete Device: <span class='device-name'></span></h3>
-    </div>
-    <div class="modal-body">
-         <p>Are you sure you want to delete device <span class='device-name'></span>?</p>
-    </div>
-    <div class="modal-footer">
-        <button class="btn" data-dismiss="modal" aria-hidden="true"><?php echo _('Close'); ?></button>
-        <button id="delete-device-confirm" class="btn btn-danger"><?php echo _('Confirm'); ?></button>
+<div id="DeleteDeviceModal" class="modal" tabindex="-1" aria-labelledby="DeleteDeviceModalLabel" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="feedDeleteModalLabel" class="modal-title">Delete Device: <span class='device-name'></span></h3>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                 <p>Are you sure you want to delete device <span class='device-name'></span>?</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-default" data-bs-dismiss="modal" aria-hidden="true"><?php echo _('Close'); ?></button>
+                <button id="delete-device-confirm" class="btn btn-danger"><?php echo _('Confirm'); ?></button>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -212,4 +216,4 @@ var forecast_list = <?php echo json_encode($forecast_list); ?>;
 var schedule = <?php echo json_encode($schedule); ?>;
 var device_id = <?php echo $device_id; ?>;
 </script>
-<script language="javascript" type="text/javascript" src="<?php echo $path; ?>Modules/demandshaper/js/main.js?v=<?php echo $v; ?>"></script>
+<?php load_js("Modules/demandshaper/js/main.js"); ?>

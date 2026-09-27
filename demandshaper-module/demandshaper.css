@@ -29,24 +29,6 @@
     padding:20px;
 }
 
-.weekly-scheduler-day {
-    display:inline-block;
-    margin-right:5px;
-    width:50px; 
-    height:50px; 
-    background-image:url("img/day.png");
-    background-size:50px;
-    color:#fff;
-    font-weight:bold;
-    text-align:center;
-    cursor:pointer;
-    font-size:16px;
-}
-
-.weekly-scheduler-day[val="1"] {
-    background-image:url("img/day-enabled.png");
-}
-
 .scheduler-checkbox {
     display:inline-block;
     width:50px;
@@ -56,66 +38,11 @@
     cursor:pointer;
 }
 
-.scheduler-checkbox-label {
-  padding-top:7px;
-  padding-left:10px;
-  float:left;
-}
-
 .scheduler-checkbox[state="1"] {
     background-image:url("img/checkbox_active.png");
 }
 
 .saved { color:#888 }
-
-.scheduler-title {
-    padding-top:5px;
-    padding-bottom:10px;
-}
-
-.scheduler-startsin {
-    padding:3px;
-    padding-left:10px;
-    padding-right:10px;
-    background-color:#f29200;
-    float:right;
-    color:#fff;
-    border-radius: 10px;
-    font-size:14px;
-}
-
-.schedule-output-heading {
-    background-color:#f29200;
-    color:#fff;
-    padding:10px;
-    cursor:pointer;
-}
-
-.schedule-output-box {
-    background-color:#fff;
-    padding:10px;
-    font-weight:normal;
-}
-
-.triangle-dropdown {
-    margin-top:5px;
-    float:right;
-    width: 0;
-    height: 0;
-    border-left: 8px solid transparent;
-    border-right: 8px solid transparent;
-    border-top: 10px solid #fff;
-}
-
-.triangle-pushup {
-    margin-top:5px;
-    float:right;
-    width: 0;
-    height: 0;
-    border-left: 8px solid transparent;
-    border-right: 8px solid transparent;
-    border-bottom: 10px solid #fff;
-}
 
 body {padding:0}
 
@@ -125,17 +52,15 @@ body {padding:0}
     margin-left: 0px;
     margin-right: 0px;
 }
-
-.navbar-fixed-top {
-    margin-left: 0px;
-    margin-right: 0px;
-}
-
-.weekly-scheduler-text {
-    margin-top:15px;
-}
   
-.btn-group button{
+/* Pill control groups: - value + and the mode switch. Page component, not Bootstrap .btn-group */
+.ds-group {
+  display:inline-flex;
+  vertical-align:middle;
+  white-space:nowrap;
+}
+
+.ds-group button{
   width:auto;
   height:40px;
   padding:10px 20px 10px 20px;
@@ -144,10 +69,14 @@ body {padding:0}
   background-color:#666;
   color:#fff;
   cursor:pointer;
+  font-size:14px;
+  line-height:20px;
 }
 
-.btn-group input{
+.ds-group input{
+  box-sizing:content-box;
   width:auto;
+  height:20px;
   padding:10px 20px 10px 20px;
   border:none;
   border-right:1px solid #888;
@@ -159,28 +88,27 @@ body {padding:0}
   -webkit-border-radius: 0px;
   -moz-border-radius: 0px;
   -webkit-appearance: none;
+  font-size:14px;
+  line-height:20px;
 }
 
-.btn-group button:hover{
-  /*background-color:#888;*/
-}
-
-.btn-group .active{
+.ds-group .active{
   background-color:#888;
 }
 
-.btn-group button:first-child {
+.ds-group button:first-child {
   border-radius: 20px 0px 0px 20px;
 }
 
-.btn-group button:last-child {
+.ds-group button:last-child {
   border-radius: 0px 20px 20px 0px;
 }
 
-.btn-group .green {background-color:#76de32;}
-.btn-group .red {background-color:#ff5d32;}
+.ds-group .green {background-color:#76de32;}
+.ds-group .red {background-color:#ff5d32;}
 
 #wizard {
+    box-sizing:content-box;
     margin-left:10px;
     margin-right:10px;
     padding:20px;
@@ -212,18 +140,6 @@ body {padding:0}
     padding:0px;
     background-color:none;
   }
-  
-  .weekly-scheduler-day {
-    margin-right:0px;
-    width:42px; 
-    height:42px; 
-    background-size:42px;
-    font-size:12px;
-  }
-  
-  .weekly-scheduler-text {
-      margin-top:12px;
-  }
 
   #wizard {
       margin-left:5px;
@@ -244,6 +160,7 @@ body {padding:0}
 }
 
 #auth-check {
+    box-sizing:content-box;
     padding:10px;
     background-color:#dc9696;
     margin:10px;
@@ -291,40 +208,14 @@ body {padding:0}
     font-weight:normal;
 }
 
-.span4 {
-    width: auto; !important
+/* Centred control columns, Bootstrap 2 span margins */
+.ds-row {
+    max-width:720px;
+    margin:0 auto;
 }
-
-.wizard-box-controls {
-    border:1px solid #fff;
-    border-bottom:none;
-    background-color:rgba(255,255,255,0.1);
-    height:40px;
-}
-
-.wizard-title {
-    display:inline-block;
-    padding:10px;
-    float:left;
-}
-
-.wizard-next,.wizard-back {
-    display:inline-block;
-    border-left:1px solid #fff;
-    cursor:pointer;
-    padding:10px;
-    float:right;
-}
-
-.wizard-box-controls div:hover {
-    background-color:rgba(255,255,255,0.1);
-}
-
-.wizard-box {
-    border:1px solid #fff;
-    padding:10px;
-    text-align:left;
-    cursor:pointer;
+.ds-row > * {
+    padding-left:15px;
+    padding-right:15px;
 }
 
 .wizard-option-l1 {
@@ -373,18 +264,6 @@ body {padding:0}
     width:120px;
 }
 
-.weight {
-    width:50px;
-    margin-bottom:0;
-}
-
-.scheduler-config select {
-    margin-bottom:0px;
-}
-
-.scheduler-config input {
-    margin-bottom:0px;
-}
 
 .timer-title {
     padding-top:35px;

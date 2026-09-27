@@ -7,7 +7,7 @@
     <tr><th>Forecast name</th><th>Parameters</th><th>Weight</th><th></th></tr>
     <tbody id="forecasts"></tbody>
   </table>
-  <div class="input-prepend input-append"><span class="add-on">Add forecast</span><select id="forecast_list"></select></div>
+  <div class="input-group"><span class="input-group-text">Add forecast</span><select id="forecast_list" class="form-select input-auto"></select></div>
 */
 
 var forecast_builder = {
@@ -105,7 +105,7 @@ var forecast_builder = {
                     if (forecast_list[forecast_key].params[param_key].type=="text") {
                         var value = "";
                         if (forecast_builder.config[forecast_id][param_key]!=undefined) value = forecast_builder.config[forecast_id][param_key];
-                        out += "<input class='param' type='text' data-param='"+param_key+"' data-fid="+forecast_id+" value='"+value+"' />";
+                        out += "<input class='param form-control input-165' type='text' data-param='"+param_key+"' data-fid="+forecast_id+" value='"+value+"' />";
                         
                     // If dropdown selector
                     } else if (forecast_list[forecast_key].params[param_key].type=="select") {
@@ -116,7 +116,7 @@ var forecast_builder = {
                             if (forecast_builder.config[forecast_id][param_key]==param_val) selected = "selected";
                             options += "<option value='"+param_val+"' "+selected+">"+forecast_list[forecast_key].params[param_key].options[param_val]+"</option>";
                         }
-                        out += "<select class='param' data-param='"+param_key+"' data-fid="+forecast_id+" style='margin-bottom:0'>"+options+"</select>";
+                        out += "<select class='param form-select input-auto' data-param='"+param_key+"' data-fid="+forecast_id+">"+options+"</select>";
                     }
                     out += "</div>";
                 }
@@ -125,7 +125,7 @@ var forecast_builder = {
                 var value = "";
                 if (forecast_builder.config[forecast_id].weight!=undefined) value = forecast_builder.config[forecast_id].weight;
 
-                out += "<td><input class='weight' type='text' data-fid="+forecast_id+" value='"+value+"' />";
+                out += "<td><input class='weight form-control input-75' type='text' data-fid="+forecast_id+" value='"+value+"' />";
                 out += "<td><i class='icon-trash remove' data-fid="+forecast_id+" style='cursor:pointer'></i></td>";
                 out += "</tr>";
             

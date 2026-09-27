@@ -6,7 +6,7 @@ function update_input_UI_openevse() {
         $("#charge_energy_div").hide();
         $("#charge_distance_div").hide();
         
-        $("#run_period").parent().addClass('span1').removeClass('span4');
+        $("#run_period").parent().hide();
         $(".openevse-balancing").show();
         $("#battery_bound").show();
         if (schedule.settings.soc_source=="ovms") $(".ovms-options").show();
@@ -24,7 +24,7 @@ function update_input_UI_openevse() {
         $(".openevse-balancing").hide(); 
         $("#battery_bound").hide(); 
         $(".ovms-options").hide();
-        $("#run_period").parent().addClass('span4').removeClass('span2');
+        $("#run_period").parent().show();
         
         if (schedule.settings.soc_source=="time") {
             $("#run_period").show();

@@ -392,7 +392,7 @@ document.getElementById("placeholder").addEventListener("plothover", function (e
 // ----------------------------------
 
 $(".delete-device").click(function(){
-    $("#DeleteDeviceModal").modal();
+    $("#DeleteDeviceModal").modal("show");
     $(".device-name").html(schedule.settings.device);
 });
 
