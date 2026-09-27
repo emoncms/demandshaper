@@ -35,7 +35,6 @@ if (isset($_GET['apikey'])) $apikeystr = "&apikey=".$_GET['apikey']; else $apike
         <svg class="icon plus"><use xlink:href="#icon-smartplug"></use></svg>
         <svg class="icon plus"><use xlink:href="#icon-hpmon"></use></svg>
         <svg class="icon plus"><use xlink:href="#icon-openevse"></use></svg>
-        <svg class="icon plus"><use xlink:href="#icon-emonth"></use></svg>
       </h2>
       <div style="height:10px"></div>
 
@@ -82,10 +81,6 @@ if (isset($_GET['apikey'])) $apikeystr = "&apikey=".$_GET['apikey']; else $apike
     
           <p>4. With the heat pump monitor WIFI settings configured, connect back to you home network and keep this window open. After a couple of minutes a notice will appear asking whether to allow device at the given ip address to connect. Click allow and wait a couple of minutes for the heat pump monitor to appear in the left hand menu. Click on the heat pump monitor to start scheduling it.</p>
           </div>      
-          <div class="wizard-option-l2" name="emonth"><svg class="icon"><use xlink:href="#icon-emonth"></use></svg> EmonTH Temperature & Humidity node</div>
-          <div class="wizard-option-l3 hide" name="emonth">
-          <p>In addition to smart control the Demand Shaper interface is designed to show small pre-built dashboards for different monitoring devices. To see data from an EmonTH Temperature & Humidity node, simply insert batteries to power up and wait a couple of minutes for the EmonTH to appear in the left hand menu.</p>
-          </div>       
       </div>
       
       <div class="wizard-option-l1" name="troubleshooting"><svg class="icon"><use xlink:href="#icon-apps"></use></svg>Troubleshooting</div> 

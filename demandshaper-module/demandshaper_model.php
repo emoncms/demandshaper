@@ -96,11 +96,6 @@ class DemandShaper
             if (in_array($d['type'],$this->device_class_list))
                 $devices[$name] = array("id"=>$d["id"]*1,"type"=>$d["type"]);
         }
-        // foreach ($devices_all as $d) {
-        //     $name = $d["nodeid"];
-        //     if (in_array($d['type'],array("emonth")))
-        //         $devices[$name] = array("id"=>$d["id"]*1,"type"=>$d["type"]);
-        // }
         
         return $devices;
     }
