@@ -56,7 +56,7 @@ if (isset($_GET['apikey'])) $apikeystr = "&apikey=".$_GET['apikey']; else $apike
           <div class="wizard-option-l2" name="emonevse"><svg class="icon"><use xlink:href="#icon-openevse"></use></svg> OpenEVSE Charging Station</div>
           <div class="wizard-option-l3 hide" name="emonevse">
           
-          <p>See <b><a href="https://guide.openenergymonitor.org/integrations/evse-setup/" target="_blank" style="color:#fff">https://guide.openenergymonitor.org/integrations/evse-setup/</a></b> for main OpenEVSE setup guide.</p>
+          <p>See <b><a href="https://docs.openenergymonitor.org/emonevse/setup.html" target="_blank" style="color:#fff">https://docs.openenergymonitor.org/emonevse/setup.html</a></b> for main OpenEVSE setup guide.</p>
           
           <p>1. Once powered up the OpenEVSE will create a Wifi Access Point. Keeping this window open, add a new browser tab and then connect to the OpenEVSE WiFi Access Point with SSID OpenEVSE_xxxx and password openevse. You should get directed to a captive portal where you choose to join a local network. If the captive portal does not work, browse to <b><a href="http://192.168.4.1" target="_blank" style="color:#fff" >http://192.168.4.1</a></b></p>
     

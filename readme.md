@@ -1,6 +1,6 @@
 # Demand Shaper
 
-Appliance, Smartplug, [WiFi Relay](https://shop.openenergymonitor.com/wifi-mqtt-relay-thermostat/), [EmonEVSE / OpenEVSE EV Charging Station](https://guide.openenergymonitor.org/integrations/ev-charging/), [HeatpumpMonitor](https://heatpumpmonitor.org/) demand shaper: Find the best time to run a household load.
+Appliance, Smartplug, [WiFi Relay](https://shop.openenergymonitor.com/wifi-mqtt-relay-thermostat/), [EmonEVSE / OpenEVSE EV Charging Station](https://docs.openenergymonitor.org/emonevse/overview.html), [HeatpumpMonitor](https://heatpumpmonitor.org/) demand shaper: Find the best time to run a household load.
 
 **Note: OpenEVSE WiFi V4.x is now supported.** Demand Shaper controls the OpenEVSE using the WiFi V4 HTTP API (override and schedule), older OpenEVSE WiFi firmware versions are no longer supported. Enter the OpenEVSE IP address or hostname in the OpenEVSE settings on the device page (defaults to `openevse.local`). Divert mode control is not yet implemented.
 
@@ -47,8 +47,8 @@ Just run our automated emoncms installation script on a target system of choice,
 
 ## User Guides
 
-- [Sonoff S20 Smart Plug](https://guide.openenergymonitor.org/integrations/demandshaper-sonoff/)
-- [OpenEVSE / EmonEVSE electric car smart charging](https://guide.openenergymonitor.org/integrations/demandshaper-openevse/)
+- [Sonoff S20 Smart Plug](https://docs.openenergymonitor.org/emoncms/demandshaper.html#sonoff-wifi-smart-plug)
+- [OpenEVSE / EmonEVSE electric car smart charging](https://docs.openenergymonitor.org/emoncms/demandshaper.html#smart-ev-charging)
 
 The module contains custom interfaces for applications such as EV charging where you can drag drop the battery level state of charge to the desired target, the module then calculates the required run time based on the battery size and charger charge rate.
 
